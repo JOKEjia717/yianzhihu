@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhihu.mapper.NursingHomeMapper">
+
+    <select id="findNursingHomeByPage" resultType="com.zhihu.po.NursingHome">
+        SELECT * FROM `zh-dean`.`nursing_home` <!-- 修改点1：用反引号包裹带连字符的数据库名 -->
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%',#{name},'%') <!-- 修改点2：条件前加AND -->
+            </if>
+            <if test="address != null and address != ''">
+                AND address LIKE CONCAT('%',#{address},'%') <!-- 修改点2：条件前加AND -->
+            </if>
+        </where>
+        LIMIT #{page},#{size}
+    </select>
+
+    <select id="findNursingHomeCount" resultType="long">
+        SELECT COUNT(1) FROM `zh-dean`.`nursing_home` <!-- 修改点1：同样处理count查询 -->
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%',#{name},'%')
+            </if>
+            <if test="address != null and address != ''">
+                AND address LIKE CONCAT('%',#{address},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

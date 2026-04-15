@@ -1,0 +1,60 @@
+server:
+  port: 8085
+spring:
+  profiles:
+    active: dev
+  datasource:
+    url: #改成自己信息
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username:  #改成自己信息
+    password:  #改成自己信息
+    hikari:
+      # 连接池核心配置（解决 "Too many connections" 关键参数）
+      maximum-pool-size: 5          # 最大连接数（建议≤数据库max_connections的80%，假设数据库max_connections=150，则设为120）
+      minimum-idle: 2                # 最小空闲连接数（根据基础并发量调整）
+      connection-timeout: 30000        # 连接超时时间（30秒，避免长时间等待无效连接）
+      connection-test-query: SELECT 1  # 测试连接有效性的SQL（必填，避免获取无效连接）
+      idle-timeout: 600000            # 空闲连接存活时间（10分钟，及时释放空闲连接）
+      max-lifetime: 1800000           # 连接最大存活时间（30分钟，防止连接老化）
+  application:
+    name: caretaker-service
+  cloud:
+    nacos:
+      server-addr: #改成自己信息
+  redis:
+    host: #改成自己信息
+    port: #改成自己信息
+    password: #改成自己信息
+  rabbitmq:
+    host: #改成自己信息
+    port: #改成自己信息
+    virtual-host: /yian
+    username: #改成自己信息
+    password: #改成自己信息
+    #开启连接失败重试
+    connection-timeout: 1s
+    template:
+      retry:
+        enabled: true
+  servlet:
+    multipart:
+      # 单个文件最大大小
+      max-file-size: 10MB
+      # 所有上传文件最大大小
+      max-request-size: 10MB
+zhihu:
+  alioss:
+    access-key-id: #改成自己信息
+    endpoint: #改成自己信息
+    access-key-secret: #改成自己信息
+    bucket-name: #改成自己信息
+  ai:
+    a-p-i-key: #改成自己信息
+    a-p-i-secret: #改成自己信息
+    api: Bearer ${gallery.ai.a-p-i-key}:${gallery.ai.a-p-i-secret}
+  baiduai:
+    client-id: #改成自己信息
+    client-secret: #改成自己信息
+feign:
+  okhttp:
+    enabled: true # 开启OKHttp功能

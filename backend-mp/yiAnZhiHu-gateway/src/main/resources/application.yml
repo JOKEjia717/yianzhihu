@@ -1,0 +1,71 @@
+server:
+  port: 8080
+spring:
+  main: #解决冲突
+    web-application-type: reactive
+  profiles:
+    active: dev
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      server-addr: #改成自己信息
+    gateway:
+      routes:
+        - id: children # 路由规则id，自定义，唯一
+          uri: lb://children-service # 路由的目标服务，lb代表负载均衡，会从注册中心拉取服务列表
+          predicates: # 路由断言，判断当前请求是否符合当前规则，符合则路由到目标服务
+            - Path=/children/**,/nursing-homes/** #这里是以请求路径作为判断规则
+        - id: admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/admin/**
+        - id: dean
+          uri: lb://dean-service
+          predicates:
+            - Path=/home/**,/dean/**,/elder/**
+        - id: goods
+          uri: lb://goods-service
+          predicates:
+            - Path=/goods/**
+        - id: activity
+          uri: lb://activity-service
+          predicates:
+            - Path=/activity/**
+        - id: caretaker
+          uri: lb://caretaker-service
+          predicates:
+            - Path=/caretaker/**,/daily/**,/health/**,/personal-item/**,/deepSeek/**
+      globalcors:
+        # 是否将当前cors配置加入到SimpleUrlHandlerMapping中，解决options请求被拦截问题
+        add-to-simple-url-handler-mapping: true
+        # cors配置
+        cors-configurations:
+          # 拦截所有
+          '[/**]':
+            allowedOrigins: "*"          # 允许哪些网站的跨域请求（尽量使用域名）
+            allowedMethods:              # 允许的的请求方式（*表示全部）
+              - "GET"
+              - "POST"
+              - "DELETE"
+              - "PUT"
+              - "OPTIONS"
+            allowedHeaders: "*"           # 允许在请求中携带的头信息（*表示全部）
+            #allowCredentials: true        # 是否允许携带cookie
+            maxAge: 360000                # 跨域检测的有效期
+
+  redis:
+    host: #改成自己信息
+    port: #改成自己信息
+    password: #改成自己信息
+zhihu:
+  auth:
+    exclude-paths:
+      - /children/loginByUsername
+      - /children/register
+      - /admin/login
+      - /admin/dean/login
+      - /dean/login
+      - /caretaker/login
+      - /deepSeek/generate
+      - /deepSeek/stream

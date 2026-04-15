@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhihu.mapper.ActivityApplicationMapper">
+    <update id="updateByCondition">
+        UPDATE activity_application
+        <set>
+            ispass = #{newIsPass}
+        </set>
+        WHERE
+        activity_id = #{activityId}
+        AND elder_id = #{elderId}
+        <if test="oldIsPass != null">
+            AND ispass = #{oldIsPass}
+        </if>
+    </update>
+</mapper>

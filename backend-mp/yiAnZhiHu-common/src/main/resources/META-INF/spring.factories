@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.zhihu.config.MyBatisConfig,\
+  com.zhihu.config.MvcConfig
