@@ -1,0 +1,643 @@
+﻿<template>
+  <view class="page">
+    <!-- 顶部绿色导航栏 -->
+    <view class="header">
+      <text class="header-title">员工</text>
+    </view>
+    
+    <!-- 搜索框 -->
+    <view class="search-box">
+		<image class="search-icon" src="/static/images/Serch.png" mode=""></image>
+		<input type="text" v-model="searchKey" placeholder="查找员工" @input="searchStaff" confirm-type="search" />
+    </view>
+    
+    <!-- 我的员工区域 -->
+    <view class="content-section">
+      <view class="section-title">
+        <text>我的员工</text>
+      </view>
+      
+      <!-- 员工列表 -->
+      <view class="staff-list">
+        <view v-for="(staff, index) in filteredStaffList" :key="staff.caretakerId" class="staff-item">
+          <image class="staff-avatar" :src="staff.avatar || '/static/images/default-avatar.png'" mode="aspectFill"></image>
+          <view class="staff-info">
+            <text class="staff-name">{{staff.name}}</text>
+            <text class="staff-position">{{staff.specialty}} · {{staff.phone}}</text>
+          </view>
+          <view class="view-btn" @click="viewStaffDetail(staff.caretakerId)">
+            <text>查看详情</text>
+          </view>
+        </view>
+        
+        <!-- 分页控件 -->
+        <view v-if="total > 0" class="pagination">
+          <view :class="['page-btn', {'disabled': pageNo <= 1}]" @click="prevPage">
+            <text>上一页</text>
+          </view>
+          <view class="page-info">
+            <text>{{pageNo}}/{{pages}} 页 (共{{total}}条)</text>
+          </view>
+          <view :class="['page-btn', {'disabled': pageNo >= pages}]" @click="nextPage">
+            <text>下一页</text>
+          </view>
+        </view>
+        
+        <!-- 空状态提示 -->
+        <view v-if="staffList.length === 0 && !loading" class="empty-state">
+          <text>暂无员工数据</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 添加员工按钮 -->
+    <view 
+      class="add-btn" 
+      :style="{ left: btnPosition.left + 'px', top: btnPosition.top + 'px', right: 'auto', bottom: 'auto' }"
+      @click="addNewStaff" 
+      @longpress="startMoveBtn"
+      @touchmove="moveBtn"
+      @touchend="endMoveBtn"
+    >
+      <text class="add-icon">+</text>
+      <text v-if="isMoving" class="moving-tip">松开手指放置</text>
+    </view>
+    
+    <!-- 底部导航栏 -->
+    <view class="tabbar">
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/index')">
+        <image class="tabbar-icon" src="/static/images/home.png"></image>
+        <text class="tabbar-text">详情</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/dispute')">
+        <image class="tabbar-icon" src="/static/images/dispute.png"></image>
+        <text class="tabbar-text">纠纷</text>
+      </view>
+      <view class="tabbar-item active" @click="redirectTo('/pages/dean/staff')">
+        <image class="tabbar-icon" src="/static/images/staff.png"></image>
+        <text class="tabbar-text active">员工</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/activity')">
+        <image class="tabbar-icon" src="/static/images/activity.png"></image>
+        <text class="tabbar-text">活动</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/management')">
+        <image class="tabbar-icon" src="/static/images/management.png"></image>
+        <text class="tabbar-text">院下管理</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/profile')">
+        <image class="tabbar-icon" src="/static/images/user.png"></image>
+        <text class="tabbar-text">我的</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+  interface Staff {
+    caretakerId: string
+    deanId: string
+    name: string
+    avatar: string
+    phone: string
+    specialty: string
+    isEnable: number
+  }
+  
+  interface ApiResponse {
+    code: number
+    msg: string | null
+    data: {
+      total: number
+      pages: number
+      list: Staff[]
+    }
+  }
+  
+  interface Position {
+    left: number
+    top: number
+  }
+  
+  export default {
+    data() {
+      return {
+        searchKey: '',
+        pageNo: 1,
+        pageSize: 6,
+        staffList: [] as Staff[],
+        total: 0,
+        pages: 0,
+        loading: false,
+        isMoving: false,
+        btnPosition: {
+          left: -1,
+          top: -1
+        } as Position,
+        defaultPosition: {
+          right: 40,
+          bottom: 120
+        },
+        allStaffList: [] as Staff[], // 存储所有已加载的员工数据
+        loadedStaffIds: new Set<string>() // 存储已加载的员工ID集合
+      }
+    },
+    onLoad() {
+      this.fetchStaffList()
+      // 从本地存储中获取按钮位置
+      this.loadBtnPosition()
+    },
+    computed: {
+      filteredStaffList(): Staff[] {
+        if (!this.searchKey.trim()) {
+          return this.staffList
+        }
+        
+        return this.staffList.filter(staff => {
+          return staff.name.includes(this.searchKey) || 
+                 staff.specialty.includes(this.searchKey) ||
+                 staff.phone.includes(this.searchKey)
+        })
+      }
+    },
+    methods: {
+      async fetchStaffList() {
+        try {
+          this.loading = true
+          uni.showLoading({
+            title: '加载中...'
+          })
+          
+          // 从本地存储获取Token
+          const accessToken = uni.getStorageSync('accessToken') as string
+          const refreshToken = uni.getStorageSync('refreshToken') as string
+          
+          if (!accessToken || !refreshToken) {
+            uni.showToast({
+              title: '请先登录',
+              icon: 'none'
+            })
+            uni.redirectTo({
+              url: '/pages/dean/login'
+            })
+            return
+          }
+          
+          // 发送请求获取员工列表
+          const result = await uni.request({
+            url: 'http://localhost:8080/dean/caretaker/page',
+            method: 'GET',
+            data: {
+              pageNo: this.pageNo.toString(),
+              pageSize: this.pageSize.toString(),
+              name: '',
+              phone: '',
+              specialty: ''
+            },
+            header: {
+              'accessToken': accessToken,
+              'refreshToken': refreshToken
+            }
+          })
+          
+          uni.hideLoading()
+          this.loading = false
+          
+          const response = result.data as ApiResponse
+          if (response.code === 1 && response.data) {
+            this.total = response.data.total
+            this.pages = response.data.pages
+            
+            // 新的分页处理逻辑
+            this.handlePagination(response.data.list)
+          } else {
+            uni.showToast({
+              title: '获取员工列表失败',
+              icon: 'none'
+            })
+          }
+        } catch (error) {
+          uni.hideLoading()
+          this.loading = false
+          console.error('请求失败:', error)
+          uni.showToast({
+            title: '网络错误',
+            icon: 'none'
+          })
+        }
+      },
+      
+      // 新的分页处理逻辑
+      handlePagination(newStaffList: Staff[]) {
+        // 记录当前请求的数据
+        console.log(`第${this.pageNo}页数据:`, newStaffList)
+        
+        if (this.pageNo === 1) {
+          // 第一页时重置所有数据
+          this.loadedStaffIds.clear()
+          this.allStaffList = []
+        }
+        
+        // 将新获取的数据添加到总列表中（仅添加不重复的数据）
+        newStaffList.forEach(staff => {
+          if (!this.loadedStaffIds.has(staff.caretakerId)) {
+            this.allStaffList.push(staff)
+            this.loadedStaffIds.add(staff.caretakerId)
+          } else {
+            console.log('过滤掉重复数据:', staff.name, staff.caretakerId)
+          }
+        })
+        
+        // 根据当前页码计算需要显示的数据
+        this.updateDisplayedData()
+        
+        // 输出调试信息
+        console.log('当前显示的员工列表:', this.staffList.length)
+        console.log('已加载的员工总数:', this.allStaffList.length)
+        console.log('应有的员工总数:', this.total)
+        
+        // 检查是否缺少数据，且还有更多页可加载
+        if (this.allStaffList.length < this.total && this.pageNo < this.pages) {
+          // 这里我们不自动加载，让用户手动点击下一页
+          console.log('还有更多数据可加载')
+        } else if (this.allStaffList.length >= this.total) {
+          console.log('已加载全部员工数据')
+          // 确保加载了所有数据后更新显示
+          this.updateDisplayedData()
+        }
+      },
+      
+      // 更新当前页面显示的数据
+      updateDisplayedData() {
+        // 我们每次显示完整的6条数据，不管是第几页
+        // 当前页的起始索引
+        const startIndex = 0
+        // 当前页显示的条数
+        const displayCount = Math.min(this.pageSize, this.allStaffList.length)
+        
+        // 如果是第一页，显示前6条
+        if (this.pageNo === 1) {
+          this.staffList = this.allStaffList.slice(0, displayCount)
+          return
+        }
+        
+        // 如果是其他页，显示后面的数据
+        const afterFirstPage = this.allStaffList.slice(this.pageSize)
+        console.log('第一页之后的数据:', afterFirstPage)
+        
+        if (afterFirstPage.length > 0) {
+          this.staffList = afterFirstPage
+        } else if (this.pageNo > 1 && afterFirstPage.length === 0) {
+          // 如果后面没有数据了，显示"没有更多数据"
+          uni.showToast({
+            title: '没有更多员工数据',
+            icon: 'none'
+          })
+        }
+      },
+      
+      loadBtnPosition() {
+        try {
+          const position = uni.getStorageSync('addBtnPosition')
+          if (position) {
+            const pos = JSON.parse(position) as Position
+            this.btnPosition = pos
+          } else {
+            // 设置默认位置 (页面右下角)
+            const systemInfo = uni.getSystemInfoSync()
+            this.btnPosition = {
+              left: systemInfo.windowWidth - 140,
+              top: systemInfo.windowHeight - 220
+            }
+          }
+        } catch (error) {
+          console.error('获取按钮位置失败:', error)
+          const systemInfo = uni.getSystemInfoSync()
+          this.btnPosition = {
+            left: systemInfo.windowWidth - 140,
+            top: systemInfo.windowHeight - 220
+          }
+        }
+      },
+      startMoveBtn(e: any) {
+        this.isMoving = true
+        uni.showToast({
+          title: '按住拖动',
+          icon: 'none',
+          duration: 1000
+        })
+      },
+      moveBtn(e: any) {
+        if (!this.isMoving) return
+        
+        // 防止事件冒泡和默认行为
+        e.stopPropagation()
+        e.preventDefault()
+        
+        // 更新按钮位置
+        const touch = e.touches[0]
+        this.btnPosition.left = touch.clientX - 50 // 按钮宽度的一半
+        this.btnPosition.top = touch.clientY - 50 // 按钮高度的一半
+      },
+      endMoveBtn() {
+        if (!this.isMoving) return
+        
+        this.isMoving = false
+        
+        // 保存按钮位置到本地存储
+        try {
+          uni.setStorageSync('addBtnPosition', JSON.stringify(this.btnPosition))
+          uni.showToast({
+            title: '位置已保存',
+            icon: 'success',
+            duration: 1000
+          })
+        } catch (error) {
+          console.error('保存按钮位置失败:', error)
+        }
+      },
+      prevPage() {
+        if (this.pageNo > 1) {
+          this.pageNo--
+          this.updateDisplayedData() // 直接更新显示，无需再次请求
+        }
+      },
+      nextPage() {
+        if (this.pageNo < this.pages) {
+          this.pageNo++
+          
+          // 检查是否已加载足够的数据
+          const needFetch = this.pageNo > 1 && this.allStaffList.length <= this.pageSize
+          
+          if (needFetch) {
+            // 需要获取新数据
+            this.fetchStaffList()
+          } else {
+            // 已有足够数据，直接更新显示
+            this.updateDisplayedData()
+          }
+        }
+      },
+      searchStaff() {
+        // 搜索员工的方法，通过computed属性filteredStaffList自动过滤
+        console.log('搜索关键词:', this.searchKey)
+      },
+      viewStaffDetail(id: string) {
+        // 跳转到员工详情页
+        uni.navigateTo({
+          url: `/pages/dean/staff-detail?id=${id}`
+        })
+      },
+      addNewStaff() {
+        // 如果按钮在移动模式下，不触发添加功能
+        if (this.isMoving) return
+        
+        // 跳转到添加员工页面
+        uni.navigateTo({
+          url: '/pages/dean/staff-add'
+        })
+      },
+      redirectTo(url: string) {
+        uni.redirectTo({
+          url: url
+        })
+      }
+    }
+  }
+</script>
+
+<style>
+  .page {
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    position: relative;
+    padding-bottom: 100rpx;
+  }
+  
+  .header {
+    background-color: #26c48b;
+    height: 100rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 30rpx;
+  }
+  
+  .header-title {
+    color: #ffffff;
+    font-size: 36rpx;
+    font-weight: bold;
+  }
+  
+  .search-box {
+    margin: 20rpx 30rpx;
+    background-color: #ffffff;
+    border-radius: 50rpx;
+    display: flex;
+	flex-direction: row;
+    align-items: center;
+    padding: 10rpx 20rpx;
+    box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.05);
+  }
+  
+  .search-icon {
+    width: 40rpx;
+    height: 40rpx;
+    margin-right: 10rpx;
+  }
+  
+  .search-box input {
+    flex: 1;
+    height: 60rpx;
+    font-size: 28rpx;
+  }
+  
+  .content-section {
+    margin: 20rpx 30rpx;
+    background-color: #ffffff;
+    border-radius: 16rpx;
+    overflow: hidden;
+    box-shadow: 10rpx 10rpx 10rpx rgba(0, 0, 0, 0.1);
+  }
+  
+  .section-title {
+    padding: 20rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+  }
+  
+  .section-title text {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333333;
+  }
+  
+  .staff-list {
+    padding: 10rpx 0;
+  }
+  
+  .staff-item {
+    display: flex;
+	flex-direction: row;
+    align-items: center;
+    padding: 35rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+  }
+  
+  .staff-item:last-child {
+    border-bottom: none;
+  }
+  
+  .staff-avatar {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 50%;
+    margin-right: 20rpx;
+  }
+  
+  .staff-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .staff-name {
+    font-size: 28rpx;
+    color: #333333;
+    font-weight: bold;
+    margin-bottom: 4rpx;
+  }
+  
+  .staff-position {
+    font-size: 24rpx;
+    color: #999999;
+  }
+  
+  .view-btn {
+    padding: 10rpx 30rpx;
+    background-color: #26c48b;
+    border-radius: 30rpx;
+  }
+  
+  .view-btn text {
+    color: #ffffff;
+    font-size: 24rpx;
+  }
+  
+  .add-btn {
+    position: fixed;
+    width: 100rpx;
+    height: 100rpx;
+    background-color: #26c48b;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4rpx 16rpx rgba(38, 196, 139, 0.5);
+    z-index: 99;
+  }
+  
+  .add-icon {
+    color: #ffffff;
+    font-size: 60rpx;
+    font-weight: bold;
+    line-height: 90rpx;
+  }
+  
+  .moving-tip {
+    position: absolute;
+    white-space: nowrap;
+    font-size: 20rpx;
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 4rpx 10rpx;
+    border-radius: 10rpx;
+    top: -40rpx;
+    transform: translateX(-50%);
+    left: 50%;
+  }
+  
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100rpx;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-top: 1rpx solid #eeeeee;
+    z-index: 10;
+    padding: 0 10rpx;
+  }
+  
+  .tabbar-item {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5rpx;
+  }
+  
+  .tabbar-icon {
+    width: 40rpx;
+    height: 40rpx;
+    margin-bottom: 4rpx;
+  }
+  
+  .tabbar-text {
+    font-size: 20rpx;
+    color: #999999;
+  }
+  
+  .tabbar-item.active .tabbar-icon {
+    color: #26c48b;
+  }
+  
+  .tabbar-text.active {
+    color: #26c48b;
+  }
+  
+  .pagination {
+    display: flex;
+	flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20rpx;
+    border-top: 1rpx solid #f0f0f0;
+  }
+  
+  .page-btn {
+    padding: 10rpx 20rpx;
+    background-color: #26c48b;
+    border-radius: 8rpx;
+  }
+  
+  .page-btn text {
+    color: #ffffff;
+    font-size: 24rpx;
+  }
+  
+  .page-btn.disabled {
+    background-color: #cccccc;
+    opacity: 0.6;
+  }
+  
+  .page-info {
+    font-size: 24rpx;
+    color: #666666;
+  }
+  
+  .empty-state {
+    padding: 60rpx 0;
+    text-align: center;
+  }
+  
+  .empty-state text {
+    color: #999999;
+    font-size: 28rpx;
+  }
+</style> 

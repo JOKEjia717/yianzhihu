@@ -1,0 +1,106 @@
+<template>
+  <view class="tabbar">
+    <view class="tab-item" @click="navigateTo('/pages/nurse/index')">
+      <image class="tab-icon" :src="currentPath === '/pages/nurse/index' ? '/static/images/home-active.png' : '/static/images/home.png'"></image>
+      <text class="tab-text" :class="{ active: currentPath === '/pages/nurse/index' }">首页</text>
+    </view>
+    <view class="tab-item" @click="navigateTo('/pages/nurse/activity')">
+      <image class="tab-icon" :src="currentPath === '/pages/nurse/activity' ? '/static/images/activity-active.png' : '/static/images/activity.png'"></image>
+      <text class="tab-text" :class="{ active: currentPath === '/pages/nurse/activity' }">活动</text>
+    </view>
+    <view class="tab-item" @click="navigateTo('/pages/nurse/goods')">
+      <image class="tab-icon" :src="currentPath === '/pages/nurse/goods' ? '/static/images/goods-active.png' : '/static/images/goods.png'"></image>
+      <text class="tab-text" :class="{ active: currentPath === '/pages/nurse/goods' }">物品</text>
+    </view>
+    <view class="tab-item" @click="navigateTo('/pages/nurse/my')">
+      <image class="tab-icon" :src="currentPath === '/pages/nurse/my' ? '/static/images/mine-active.png' : '/static/images/mine.png'"></image>
+      <text class="tab-text" :class="{ active: currentPath === '/pages/nurse/my' }">我的</text>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+export default {
+  props: {
+    currentPath: {
+      type: String,
+      default: ''
+    }
+  },
+  methods: {
+    navigateTo(url: string) {
+      uni.navigateTo({
+        url: url,
+        fail: (err) => {
+          console.error('页面跳转失败:', err)
+          uni.showToast({
+            title: '页面跳转失败',
+            icon: 'none'
+          })
+        }
+      })
+    }
+  }
+}
+</script>
+
+<style>
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120rpx;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1rpx solid #edf2f7;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  z-index: 9999;
+  padding: 0 20rpx;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  transition: all 0.3s ease;
+  padding: 16rpx 24rpx;
+  border-radius: 12rpx;
+}
+
+.tab-item:active {
+  background-color: #f7fafc;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+  transition: all 0.3s ease;
+}
+
+.tab-text {
+  font-size: 26rpx;
+  color: #718096;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.tab-text.active {
+  color: #319795;
+  font-weight: 600;
+}
+
+.tab-item.active {
+  background-color: #f0fdfa;
+}
+
+.tab-item.active .tab-icon {
+  transform: scale(1.1);
+}
+</style> 

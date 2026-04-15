@@ -1,0 +1,581 @@
+<template>
+  <view class="page">
+    <!-- 页面头部 -->
+    <view class="header">
+      <view class="back-btn" @click="handleBack">
+        <text class="back-icon">←</text>
+      </view>
+      <text class="title">活动申请列表</text>
+      <view class="elder-info">{{ elderName }}</view>
+    </view>
+
+    <!-- 内容区域 -->
+    <view class="content">
+      <view v-if="activityRequests.length === 0" class="empty-container">
+        <text class="empty-text">没有活动申请</text>
+      </view>
+      
+      <view v-else class="requests-list">
+        <view 
+          v-for="(request, index) in activityRequests" 
+          :key="request.requestId" 
+          class="request-card"
+        >
+          <view class="request-header">
+            <text class="activity-name">{{ request.activityName }}</text>
+            <view class="status-badge" :class="getStatusClass(request.status)">
+              {{ getStatusText(request.status) }}
+            </view>
+          </view>
+          
+          <view class="request-details">
+            <view class="detail-item">
+              <text class="detail-label">申请时间：</text>
+              <text class="detail-value">{{ formatDate(request.applyTime) }}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">活动时间：</text>
+              <text class="detail-value">{{ formatDate(request.activityTime) }}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">活动地点：</text>
+              <text class="detail-value">{{ request.location }}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">活动说明：</text>
+              <text class="detail-value">{{ request.description }}</text>
+            </view>
+          </view>
+          
+          <view v-if="request.status === 0" class="action-buttons">
+            <button class="btn reject" @click="handleReject(request.requestId)">拒绝</button>
+            <button class="btn approve" @click="handleApprove(request.requestId)">通过</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+interface ActivityRequest {
+  requestId: string
+  elderId: string
+  activityId: string
+  activityName: string
+  activityTime: string
+  location: string
+  description: string
+  applyTime: string
+  status: number // 0:待审批, 1:已通过, 2:已拒绝
+}
+
+// 模拟数据库
+const mockActivities = [
+  {
+    requestId: "req001",
+    elderId: "elder1",
+    activityId: "act001",
+    activityName: "老年太极班",
+    activityTime: "2023-06-15 09:00:00",
+    location: "养老院中心广场",
+    description: "适合各年龄段老人的太极班，活动轻松，强身健体",
+    applyTime: "2023-06-10 14:30:00",
+    status: 0
+  },
+  {
+    requestId: "req002",
+    elderId: "elder1",
+    activityId: "act002",
+    activityName: "棋牌竞赛",
+    activityTime: "2023-06-20 14:00:00",
+    location: "养老院活动室",
+    description: "各种棋牌游戏，包括象棋、围棋、斗地主等",
+    applyTime: "2023-06-12 10:15:00",
+    status: 1
+  },
+  {
+    requestId: "req003",
+    elderId: "elder1",
+    activityId: "act003",
+    activityName: "健康讲座",
+    activityTime: "2023-06-25 15:30:00",
+    location: "养老院多功能厅",
+    description: "关于老年人健康饮食和疾病预防的专业讲座",
+    applyTime: "2023-06-14 09:45:00",
+    status: 2
+  },
+  {
+    requestId: "req004",
+    elderId: "elder2",
+    activityId: "act004",
+    activityName: "户外郊游",
+    activityTime: "2023-07-05 08:30:00",
+    location: "城市公园",
+    description: "轻松愉快的户外活动，呼吸新鲜空气",
+    applyTime: "2023-06-28 11:20:00",
+    status: 0
+  },
+  {
+    requestId: "req005",
+    elderId: "elder2",
+    activityId: "act005",
+    activityName: "手工制作班",
+    activityTime: "2023-07-10 14:00:00",
+    location: "养老院工艺室",
+    description: "学习制作简单的手工艺品，锻炼动手能力",
+    applyTime: "2023-07-01 16:40:00",
+    status: 0
+  },
+  {
+    requestId: "req006",
+    elderId: "elder3",
+    activityId: "act006",
+    activityName: "电影欣赏会",
+    activityTime: "2023-07-15 19:00:00",
+    location: "养老院影音室",
+    description: "观看经典老电影，重温美好回忆",
+    applyTime: "2023-07-05 13:30:00",
+    status: 1
+  },
+  {
+    requestId: "req007",
+    elderId: "elder3",
+    activityId: "act007",
+    activityName: "歌唱比赛",
+    activityTime: "2023-07-20 15:00:00",
+    location: "养老院礼堂",
+    description: "老年人歌唱比赛，展示风采",
+    applyTime: "2023-07-10 10:00:00",
+    status: 0
+  },
+  {
+    requestId: "req008",
+    elderId: "elder4",
+    activityId: "act008",
+    activityName: "书法练习",
+    activityTime: "2023-07-25 10:00:00",
+    location: "养老院书画室",
+    description: "学习和练习书法，陶冶情操",
+    applyTime: "2023-07-15 15:10:00",
+    status: 0
+  },
+  {
+    requestId: "req009",
+    elderId: "elder5",
+    activityId: "act009",
+    activityName: "瑜伽班",
+    activityTime: "2023-08-01 08:00:00",
+    location: "养老院健身房",
+    description: "适合老年人的轻柔瑜伽课程",
+    applyTime: "2023-07-20 14:25:00",
+    status: 0
+  },
+  {
+    requestId: "req010",
+    elderId: "elder5",
+    activityId: "act010",
+    activityName: "绘画课程",
+    activityTime: "2023-08-05 14:30:00",
+    location: "养老院书画室",
+    description: "简单的绘画技巧教学，放松心情",
+    applyTime: "2023-07-25 11:55:00",
+    status: 2
+  }
+] as ActivityRequest[]
+
+// 通用活动 - 对所有老人都可能展示的
+const commonActivities = [
+  {
+    requestId: "reqc001",
+    elderId: "common",
+    activityId: "actc001",
+    activityName: "春节联欢会",
+    activityTime: "2024-02-10 18:00:00",
+    location: "养老院大礼堂",
+    description: "欢庆春节的联欢活动，有歌舞表演和抽奖",
+    applyTime: "2024-01-25 09:30:00",
+    status: 0
+  },
+  {
+    requestId: "reqc002",
+    elderId: "common",
+    activityId: "actc002",
+    activityName: "端午节包粽子",
+    activityTime: "2024-06-10 10:00:00",
+    location: "养老院食堂",
+    description: "端午节活动，学习包粽子，品尝美食",
+    applyTime: "2024-05-25 14:20:00",
+    status: 0
+  },
+  {
+    requestId: "reqc003",
+    elderId: "common",
+    activityId: "actc003",
+    activityName: "中秋赏月会",
+    activityTime: "2024-09-17 19:00:00",
+    location: "养老院花园",
+    description: "中秋节赏月活动，有茶点和文艺表演",
+    applyTime: "2024-09-01 16:45:00",
+    status: 0
+  }
+] as ActivityRequest[]
+
+export default {
+  data() {
+    return {
+      elderId: '',
+      elderName: '',
+      activityRequests: [] as ActivityRequest[]
+    }
+  },
+  onLoad(options) {
+    if (options.elderId) {
+      this.elderId = options.elderId
+    }
+    if (options.elderName) {
+      this.elderName = options.elderName
+    }
+    
+    // 使用模拟数据
+    this.generateMockData()
+  },
+  methods: {
+    generateMockData() {
+      // 根据老人ID生成一个稳定的随机数
+      const getRandomSeed = (id: string) => {
+        let total = 0
+        for (let i = 0; i < id.length; i++) {
+          total += id.charCodeAt(i)
+        }
+        return total
+      }
+      
+      const seed = getRandomSeed(this.elderId)
+      const rnd = (max: number) => Math.floor((seed * 9301 + 49297) % 233280) / 233280 * max
+      
+      // 清空当前请求列表
+      this.activityRequests = []
+      
+      // 找出该老人专属的活动请求
+      const elderSpecificActivities = mockActivities.filter(act => 
+        act.elderId === this.elderId || 
+        // 如果没有完全匹配，使用部分匹配
+        (this.elderId.length > 5 && act.elderId === this.elderId.substring(0, 5))
+      )
+      
+      // 如果找到了专属活动，添加到列表中
+      if (elderSpecificActivities.length > 0) {
+        this.activityRequests.push(...elderSpecificActivities)
+      }
+      
+      // 总是添加一些通用活动
+      const numCommonToAdd = Math.min(2, commonActivities.length)
+      for (let i = 0; i < numCommonToAdd; i++) {
+        const activity = {...commonActivities[i]}
+        activity.elderId = this.elderId
+        activity.requestId = "req" + this.elderId + i
+        this.activityRequests.push(activity)
+      }
+      
+      // 如果活动太少，随机生成一些新活动
+      if (this.activityRequests.length < 3) {
+        const numToGenerate = 3 - this.activityRequests.length
+        const activityNames = ["趣味运动会", "健康检查活动", "音乐鉴赏会", "传统戏曲欣赏", "园艺活动"]
+        const locations = ["养老院操场", "养老院医务室", "养老院音乐厅", "养老院文化室", "养老院花园"]
+        const descriptions = [
+          "轻松愉快的运动会，有多种趣味项目",
+          "全面的健康检查，关注老年人身体健康",
+          "古典音乐欣赏，提高艺术修养",
+          "传统戏曲表演和讲解，传承文化",
+          "园艺种植活动，亲近自然"
+        ]
+        
+        for (let i = 0; i < numToGenerate; i++) {
+          const nameIndex = Math.floor(rnd(activityNames.length))
+          const locationIndex = Math.floor(rnd(locations.length))
+          const descIndex = Math.floor(rnd(descriptions.length))
+          
+          const now = new Date()
+          now.setDate(now.getDate() + 15 + Math.floor(rnd(30)))
+          const activityTime = now.toISOString()
+          
+          const applyDate = new Date()
+          applyDate.setDate(applyDate.getDate() - Math.floor(rnd(5)))
+          const applyTime = applyDate.toISOString()
+          
+          this.activityRequests.push({
+            requestId: "reqgen" + this.elderId + i,
+            elderId: this.elderId,
+            activityId: "actgen" + this.elderId + i,
+            activityName: activityNames[nameIndex],
+            activityTime: activityTime,
+            location: locations[locationIndex],
+            description: descriptions[descIndex],
+            applyTime: applyTime,
+            status: Math.floor(rnd(3))
+          })
+        }
+      }
+      
+      // 如果太多活动，随机选择一部分
+      if (this.activityRequests.length > 5) {
+        this.activityRequests = this.activityRequests.sort(() => 0.5 - Math.random()).slice(0, 5)
+      }
+      
+      // 确保至少有一个待审批的活动
+      let hasPending = this.activityRequests.some(req => req.status === 0)
+      if (!hasPending && this.activityRequests.length > 0) {
+        this.activityRequests[0].status = 0
+      }
+    },
+    
+    async handleApprove(requestId: string) {
+      await this.updateRequestStatus(requestId, 1)
+    },
+    
+    async handleReject(requestId: string) {
+      await this.updateRequestStatus(requestId, 2)
+    },
+    
+    async updateRequestStatus(requestId: string, status: number) {
+      // 本地模拟数据更新
+      this.activityRequests = this.activityRequests.map(req => {
+        if (req.requestId === requestId) {
+          return {
+            ...req,
+            status: status
+          }
+        }
+        return req
+      })
+      
+      // 显示操作成功提示
+      uni.showToast({
+        title: status === 1 ? '通过成功' : '拒绝成功',
+        icon: 'success'
+      })
+    },
+    
+    handleBack() {
+      uni.navigateBack()
+    },
+    
+    formatDate(dateString: string) {
+      if (!dateString) return ''
+      
+      const date = new Date(dateString)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}`
+    },
+    
+    getStatusText(status: number) {
+      switch(status) {
+        case 0: return '待审批'
+        case 1: return '已通过'
+        case 2: return '已拒绝'
+        default: return '未知状态'
+      }
+    },
+    
+    getStatusClass(status: number) {
+      switch(status) {
+        case 0: return 'status-pending'
+        case 1: return 'status-approved'
+        case 2: return 'status-rejected'
+        default: return ''
+      }
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f5f7f7;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  height: 88rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  padding: 10rpx;
+  cursor: pointer;
+  position: absolute;
+  left: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.back-icon {
+  font-size: 32rpx;
+  color: #fff;
+  margin-right: 4rpx;
+}
+
+.title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+.elder-info {
+  min-width: 150rpx;
+  margin-left: auto;
+  position: absolute;
+  right: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  color: #fff;
+  font-size: 28rpx;
+  text-align: right;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 6rpx 20rpx;
+  border-radius: 8rpx;
+}
+
+.content {
+  padding: 30rpx;
+}
+
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
+  margin-top: 30rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #999;
+  margin-top: 20rpx;
+}
+
+.requests-list {
+  margin-top: 20rpx;
+}
+
+.request-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+  border: 1rpx solid #e8f0ef;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #e8f0ef;
+}
+
+.activity-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.status-badge {
+  padding: 6rpx 16rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  color: #fff;
+}
+
+.status-pending {
+  background-color: #f39c12;
+}
+
+.status-approved {
+  background-color: #2ecc71;
+}
+
+.status-rejected {
+  background-color: #e74c3c;
+}
+
+.request-details {
+  margin-bottom: 20rpx;
+}
+
+.detail-item {
+  margin-bottom: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.detail-label {
+  font-size: 28rpx;
+  color: #666;
+  min-width: 160rpx;
+}
+
+.detail-value {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: row;
+  margin: auto;
+  justify-content: flex-end;
+  gap: 20rpx;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #e8f0ef;
+}
+
+.btn {
+  padding: 15rpx 30rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: #fff;
+  border: none;
+}
+
+.reject {
+  background-color: #e74c3c;
+}
+
+.approve {
+  background-color: #2ecc71;
+}
+</style>

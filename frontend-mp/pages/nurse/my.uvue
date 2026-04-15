@@ -1,0 +1,650 @@
+<template>
+  <view class="page">
+    <!-- 顶部标题栏 -->
+    <view class="header">
+      <text class="title">个人中心</text>
+    </view>
+
+    <!-- 主要内容区域 -->
+    <view class="content">
+      <view class="profile-card">
+        <view class="avatar-section">
+          <image 
+            class="avatar" 
+            :src="userInfo.avatar || '/static/images/default-avatar.png'" 
+            mode="aspectFill"
+            @click="showEditModal"
+          ></image>
+          <text class="name">{{ userInfo.name || '未设置姓名' }}</text>
+        </view>
+        
+        <view class="info-list">
+          <view class="info-item">
+            <text class="label">联系电话</text>
+            <text class="value">{{ userInfo.phone || '未设置' }}</text>
+          </view>
+          <view class="info-item">
+            <text class="label">专业特长</text>
+            <text class="value">{{ userInfo.specialty || '未设置' }}</text>
+          </view>
+        </view>
+        <button class="edit-btn" @click="showEditModal">编辑资料</button>
+      </view>
+    </view>
+
+    <!-- 编辑资料弹窗 -->
+    <view v-if="showEdit" class="modal-mask">
+      <view class="modal-content">
+        <view class="modal-header">
+          <text class="modal-title">编辑资料</text>
+          <text class="modal-close" @click="closeEditModal">×</text>
+        </view>
+        <view class="modal-body">
+          <view class="form-item">
+            <text class="form-label">头像</text>
+            <view class="avatar-upload" @click="chooseAvatar">
+              <image 
+                v-if="editForm.avatar" 
+                :src="editForm.avatar" 
+                class="preview-avatar"
+                mode="aspectFill"
+              ></image>
+              <view v-else class="upload-placeholder">
+                <text class="upload-text">点击上传头像</text>
+              </view>
+            </view>
+          </view>
+          <view class="form-item">
+            <text class="form-label">联系电话</text>
+            <input 
+              class="form-input" 
+              v-model="editForm.phone" 
+              placeholder="请输入联系电话"
+              type="text"
+            />
+          </view>
+          <view class="form-item">
+            <text class="form-label">专业特长</text>
+            <input 
+              class="form-input" 
+              v-model="editForm.specialty" 
+              placeholder="请输入专业特长"
+              type="text"
+            />
+          </view>
+        </view>
+        <view class="modal-footer">
+          <button class="modal-btn cancel" @click="closeEditModal">取消</button>
+          <button class="modal-btn confirm" @click="submitEdit" :disabled="isSubmitting">
+            {{ isSubmitting ? '提交中...' : '确认' }}
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 添加底部导航栏 -->
+    <nurse-tabbar current-path="/pages/nurse/my"></nurse-tabbar>
+  </view>
+</template>
+
+<script lang="uts">
+// 引入导航栏组件
+import NurseTabbar from '../../components/nurse-tabbar.uvue'
+
+interface UserInfo {
+  name: string
+  avatar: string | null
+  phone: string
+  specialty: string
+}
+
+interface OrderStats {
+  pending: number
+  processing: number
+  completed: number
+  cancelled: number
+}
+
+interface EditForm {
+  avatar: string | null
+  phone: string
+  specialty: string
+}
+
+export default {
+  components: {
+    NurseTabbar
+  },
+  data() {
+    return {
+      userInfo: {} as UserInfo,
+      orderStats: {} as OrderStats,
+      showEdit: false,
+      editForm: {
+        avatar: null as string | null,
+        phone: '',
+        specialty: ''
+      } as EditForm,
+      isSubmitting: false
+    }
+  },
+  onLoad() {
+    const storedInfo = uni.getStorageSync('userInfo')
+    if (storedInfo) {
+      this.userInfo = {
+        name: storedInfo.name || '',
+        avatar: storedInfo.avatar,
+        phone: storedInfo.phone || '',
+        specialty: storedInfo.specialty || ''
+      }
+      this.editForm = {
+        avatar: storedInfo.avatar,
+        phone: storedInfo.phone || '',
+        specialty: storedInfo.specialty || ''
+      }
+    }
+    this.fetchOrderStats()
+  },
+  methods: {
+    async fetchOrderStats() {
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+        
+        const result = await uni.request({
+          url: 'http://localhost:8080/order/stats',
+          method: 'GET',
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
+          }
+        })
+
+        if (result.data.code === 1 && result.data.data) {
+          this.orderStats = result.data.data as OrderStats
+        }
+      } catch (error) {
+        console.error('获取订单统计失败:', error)
+      }
+    },
+    navigateTo(url: string) {
+      uni.navigateTo({
+        url: url
+      })
+    },
+    handleMenuClick(type: string) {
+      switch(type) {
+        case 'profile':
+          // 跳转到个人资料页面
+          break
+        case 'schedule':
+          // 跳转到排班管理页面
+          break
+        case 'settings':
+          // 跳转到系统设置页面
+          break
+      }
+    },
+    handleLogout() {
+      uni.showModal({
+        title: '提示',
+        content: '确定要退出登录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.clearStorageSync()
+            uni.redirectTo({
+              url: '/pages/nurse/login'
+            })
+          }
+        }
+      })
+    },
+    showEditModal() {
+      this.showEdit = true
+    },
+    closeEditModal() {
+      this.showEdit = false
+      // 重置表单数据
+      this.editForm = {
+        avatar: this.userInfo.avatar,
+        phone: this.userInfo.phone,
+        specialty: this.userInfo.specialty
+      }
+    },
+    chooseAvatar() {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+          this.editForm.avatar = res.tempFilePaths[0]
+        }
+      })
+    },
+    async submitEdit() {
+      if (!this.editForm.phone || !this.editForm.specialty) {
+        uni.showToast({
+          title: '请填写完整信息',
+          icon: 'none'
+        })
+        return
+      }
+
+      this.isSubmitting = true
+
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+
+        // 如果有新头像且不是默认头像，使用uploadFile上传
+        if (this.editForm.avatar && 
+            this.editForm.avatar !== this.userInfo.avatar && 
+            this.editForm.avatar.startsWith('http') === false) {
+          const uploadResult = await uni.uploadFile({
+            url: 'http://localhost:8080/caretaker/update',
+            filePath: this.editForm.avatar,
+            name: 'avatar',
+            formData: {
+              'phone': this.editForm.phone,
+              'specialty': this.editForm.specialty
+            },
+            header: {
+              'accessToken': accessToken,
+              'refreshToken': refreshToken
+            }
+          })
+
+          const response = JSON.parse(uploadResult.data)
+          if (response.code === 1) {
+            this.updateUserInfo(response.data)
+          } else {
+            throw new Error(response.msg || '更新失败')
+          }
+        } else {
+          // 没有新头像或头像未改变，使用request发送数据
+          const result = await uni.request({
+            url: 'http://localhost:8080/caretaker/update',
+            method: 'POST',
+            data: {
+              'phone': this.editForm.phone,
+              'specialty': this.editForm.specialty
+            },
+            header: {
+              'accessToken': accessToken,
+              'refreshToken': refreshToken,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
+          })
+
+          if (result.data.code === 1) {
+            this.updateUserInfo(result.data.data)
+          } else {
+            throw new Error(result.data.msg || '更新失败')
+          }
+        }
+      } catch (error) {
+        console.error('更新失败:', error)
+        uni.showToast({
+          title: error.message || '更新失败',
+          icon: 'none'
+        })
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+    updateUserInfo(newData: any) {
+      // 更新本地存储
+      const updatedInfo = {
+        ...this.userInfo,
+        avatar: newData.avatar || this.userInfo.avatar,
+        phone: newData.phone || this.userInfo.phone,
+        specialty: newData.specialty || this.userInfo.specialty
+      }
+      uni.setStorageSync('userInfo', updatedInfo)
+      
+      // 更新页面数据
+      this.userInfo = updatedInfo
+      this.editForm = {
+        avatar: updatedInfo.avatar,
+        phone: updatedInfo.phone,
+        specialty: updatedInfo.specialty
+      }
+      
+      // 关闭弹窗
+      this.showEdit = false
+      
+      uni.showToast({
+        title: '更新成功',
+        icon: 'success'
+      })
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding-bottom: 120rpx; /* 为底部导航栏预留空间 */
+}
+
+.header {
+  background: linear-gradient(135deg, #4FD1C5 0%, #319795 100%);
+  padding: 40rpx 30rpx;
+  position: relative;
+}
+
+.title {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+  display: block;
+}
+
+.content {
+  padding: 30rpx;
+  margin-top: -40rpx;
+}
+
+.profile-card {
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 80rpx;
+  margin-bottom: 20rpx;
+  border: 4rpx solid #fff;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.name {
+  font-size: 36rpx;
+  color: #2d3748;
+  font-weight: bold;
+}
+
+.info-list {
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  border-bottom: 1rpx solid #edf2f7;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 28rpx;
+  color: #718096;
+}
+
+.value {
+  font-size: 28rpx;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.section-header {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.order-stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.menu-list {
+  background-color: #ffffff;
+  border-radius: 12px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+}
+
+.menu-text {
+  flex: 1;
+  font-size: 16px;
+  color: #333;
+}
+
+.menu-arrow {
+  font-size: 16px;
+  color: #999;
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: #ffffff;
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid #f0f0f0;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+}
+
+.tab-text {
+  font-size: 12px;
+  color: #999;
+}
+
+.tab-item.active .tab-text {
+  color: #007AFF;
+}
+
+.edit-btn {
+  margin-top: 30rpx;
+  background: linear-gradient(135deg, #4FD1C5 0%, #319795 100%);
+  color: #fff;
+  font-size: 28rpx;
+  padding: 16rpx 40rpx;
+  border-radius: 30rpx;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 80%;
+  background-color: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  padding: 10rpx;
+}
+
+.modal-body {
+  padding: 30rpx;
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.avatar-upload {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 80rpx;
+  background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-avatar {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  border: 1rpx solid #eee;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  padding: 30rpx;
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.modal-btn {
+  padding: 20rpx 40rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+}
+
+.modal-btn.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.modal-btn.confirm {
+  background-color: #007AFF;
+  color: #fff;
+}
+
+.modal-btn.confirm:disabled {
+  background-color: #ccc;
+}
+</style> 

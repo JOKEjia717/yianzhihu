@@ -1,0 +1,444 @@
+<template>
+  <view class="page">
+    <!-- 页面头部 -->
+    <view class="header">
+      <text class="header-title">纠纷管理</text>
+    </view>
+    
+    <!-- 搜索栏 -->
+    <view class="search-box">
+      <image class="search-icon" src="/static/images/Serch.png" mode=""></image>
+      <input type="text" v-model="searchKey" placeholder="请输入您要查找的纠纷记录" @input="searchDispute" confirm-type="search" />
+    </view>
+    
+    <!-- 纠纷列表 -->
+    <view class="dispute-list">
+      <view v-for="(dispute, index) in filteredDisputeList" :key="dispute.id" class="dispute-item">
+        <view class="dispute-info">
+          <text class="dispute-title">{{dispute.title}}</text>
+          <text class="dispute-time">{{dispute.time}}</text>
+          <text class="dispute-desc">{{dispute.description}}</text>
+        </view>
+        <view :class="['status-tag', dispute.status]">
+          <text>{{getStatusText(dispute.status)}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 添加纠纷按钮 -->
+    <view 
+      class="add-button" 
+      :style="{ left: btnPosition.left + 'px', top: btnPosition.top + 'px', right: 'auto', bottom: 'auto' }"
+      @click="addDispute" 
+      @longpress="startMoveBtn"
+      @touchmove="moveBtn"
+      @touchend="endMoveBtn"
+    >
+      <text class="add-icon">+</text>
+      <text v-if="isMoving" class="moving-tip">松开手指固定</text>
+    </view>
+    
+    <!-- 底部导航栏 -->
+    <view class="tabbar">
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/index')">
+        <image class="tabbar-icon" src="/static/images/home.png"></image>
+        <text class="tabbar-text">首页</text>
+      </view>
+      <view class="tabbar-item active">
+        <image class="tabbar-icon" src="/static/images/dispute.png"></image>
+        <text class="tabbar-text active">纠纷</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/staff')">
+        <image class="tabbar-icon" src="/static/images/staff.png"></image>
+        <text class="tabbar-text">员工</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/activity')">
+        <image class="tabbar-icon" src="/static/images/activity.png"></image>
+        <text class="tabbar-text">活动</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/management')">
+        <image class="tabbar-icon" src="/static/images/management.png"></image>
+        <text class="tabbar-text">下属管理</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/profile')">
+        <image class="tabbar-icon" src="/static/images/user.png"></image>
+        <text class="tabbar-text">我的</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="ts">
+interface Dispute {
+  id: string
+  title: string
+  time: string
+  description: string
+  status: string // 'resolved', 'resolving', 'unresolved', 'new'
+}
+
+interface Position {
+  left: number
+  top: number
+}
+
+export default {
+  data() {
+    return {
+      searchKey: '',
+      isMoving: false,
+      btnPosition: {
+        left: -1,
+        top: -1
+      } as Position,
+      disputeList: [
+        {
+          id: '1',
+          title: '食堂餐费金额问题',
+          time: '2023-06-15 09:30',
+          description: '多位患者反映食堂餐费金额下降，部分饭菜不新鲜',
+          status: 'resolved'
+        },
+        {
+          id: '2',
+          title: '管理人员服务态度问题',
+          time: '2023-06-18 14:45',
+          description: '据大家反馈三号护理人员服务态度不佳',
+          status: 'resolving'
+        },
+        {
+          id: '3',
+          title: '公共区域噪音问题',
+          time: '2023-06-20 16:20',
+          description: '二楼多位患者反映一号活动室音响过大',
+          status: 'unresolved'
+        },
+        {
+          id: '4',
+          title: '设备维修延误',
+          time: '2023-06-22 10:15',
+          description: '四楼浴室热水器故障三天未维修',
+          status: 'unresolved'
+        },
+        {
+          id: '5',
+          title: '档案管理投诉',
+          time: '2023-06-23 11:30',
+          description: '病历档案错漏多，前台信息登记完全混乱',
+          status: 'new'
+        }
+      ] as Dispute[]
+    }
+  },
+  onLoad() {
+    // 从本地存储中获取按钮位置
+    this.loadBtnPosition()
+  },
+  computed: {
+    filteredDisputeList(): Dispute[] {
+      if (!this.searchKey.trim()) {
+        return this.disputeList
+      }
+      
+      return this.disputeList.filter(dispute => {
+        return dispute.title.includes(this.searchKey) || 
+               dispute.description.includes(this.searchKey)
+      })
+    }
+  },
+  methods: {
+    loadBtnPosition() {
+      try {
+        const position = uni.getStorageSync('disputeAddBtnPosition')
+        if (position) {
+          const pos = JSON.parse(position) as Position
+          this.btnPosition = pos
+        } else {
+          // 设置默认位置（页面右下角）
+          const systemInfo = uni.getSystemInfoSync()
+          this.btnPosition = {
+            left: systemInfo.windowWidth - 140,
+            top: systemInfo.windowHeight - 240
+          }
+        }
+      } catch (error) {
+        console.error('获取按钮位置失败:', error)
+        const systemInfo = uni.getSystemInfoSync()
+        this.btnPosition = {
+          left: systemInfo.windowWidth - 140,
+          top: systemInfo.windowHeight - 240
+        }
+      }
+    },
+    startMoveBtn(e: any) {
+      this.isMoving = true
+      uni.showToast({
+        title: '按住拖动',
+        icon: 'none',
+        duration: 1000
+      })
+    },
+    moveBtn(e: any) {
+      if (!this.isMoving) return
+      
+      // 阻止事件冒泡和默认行为
+      e.stopPropagation()
+      e.preventDefault()
+      
+      // 更新按钮位置
+      const touch = e.touches[0]
+      this.btnPosition.left = touch.clientX - 50 // 按钮宽度的一半
+      this.btnPosition.top = touch.clientY - 50 // 按钮高度的一半
+    },
+    endMoveBtn() {
+      if (!this.isMoving) return
+      
+      this.isMoving = false
+      
+      // 保存按钮位置到本地存储
+      try {
+        uni.setStorageSync('disputeAddBtnPosition', JSON.stringify(this.btnPosition))
+        uni.showToast({
+          title: '位置已保存',
+          icon: 'success',
+          duration: 1000
+        })
+      } catch (error) {
+        console.error('保存按钮位置失败:', error)
+      }
+    },
+    searchDispute() {
+      // 搜索纠纷的方法
+      console.log('搜索关键词:', this.searchKey)
+    },
+    getStatusText(status: string): string {
+      switch(status) {
+        case 'resolved':
+          return '已解决'
+        case 'resolving':
+          return '处理中'
+        case 'unresolved':
+          return '未解决'
+        case 'new':
+          return '新增纠纷'
+        default:
+          return ''
+      }
+    },
+    addDispute() {
+      // 如果按钮在移动状态下，不触发添加功能
+      if (this.isMoving) return
+      
+      // 添加纠纷的方法
+      console.log('添加新纠纷')
+      uni.navigateTo({
+        url: '/pages/dean/add-dispute'
+      })
+    },
+    redirectTo(url: string) {
+      uni.redirectTo({
+        url: url
+      })
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  position: relative;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  background-color: #26c48b;
+  height: 180rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30rpx;
+}
+
+.header-title {
+  color: #ffffff;
+  font-size: 40rpx;
+  font-weight: bold;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.search-box {
+  margin: -40rpx 30rpx 20rpx;
+  background-color: #ffffff;
+  border-radius: 50rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  position: relative;
+}
+
+.search-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 10rpx;
+}
+
+.search-box input {
+  flex: 1;
+  height: 60rpx;
+  font-size: 28rpx;
+}
+
+.dispute-list {
+  margin: 20rpx 30rpx;
+}
+
+.dispute-item {
+  margin-bottom: 20rpx;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.dispute-info {
+  flex: 1;
+  padding-right: 100rpx;
+}
+
+.dispute-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+
+  margin-bottom: 8rpx;
+}
+
+.dispute-time {
+  font-size: 24rpx;
+
+  color: #999999;
+  margin-bottom: 8rpx;
+}
+
+.dispute-desc {
+  font-size: 26rpx;
+  color: #666666;
+}
+
+.status-tag {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+.status-tag.resolved {
+  background-color: #666666;
+}
+
+.status-tag.resolving {
+  background-color: #26c48b;
+}
+
+.status-tag.unresolved {
+  background-color: #ff6b6b;
+}
+
+.status-tag.new {
+  background-color: #ffaa00;
+}
+
+.status-tag text {
+  color: #ffffff;
+  font-size: 24rpx;
+}
+
+.add-button {
+  position: fixed;
+  width: 100rpx;
+  height: 100rpx;
+  background-color: #26c48b;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.2);
+  z-index: 99;
+}
+
+.add-icon {
+  color: #ffffff;
+  font-size: 50rpx;
+  font-weight: bold;
+  line-height: 90rpx;
+}
+
+.moving-tip {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 20rpx;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 4rpx 10rpx;
+  border-radius: 10rpx;
+  top: -40rpx;
+  transform: translateX(-50%);
+  left: 50%;
+}
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100rpx;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-top: 1rpx solid #eeeeee;
+  z-index: 10;
+  padding: 0 10rpx;
+}
+
+.tabbar-item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5rpx;
+}
+
+.tabbar-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-bottom: 4rpx;
+}
+
+.tabbar-text {
+  font-size: 20rpx;
+  color: #999999;
+}
+
+.tabbar-item.active .tabbar-icon {
+  color: #26c48b;
+}
+
+.tabbar-text.active {
+  color: #26c48b;
+}
+</style>

@@ -1,0 +1,1016 @@
+﻿<template>
+  <view class="page">
+    <!-- 顶部标题栏 -->
+    <view class="header">
+      <view class="back-btn" @click="handleBack">
+        <text class="back-icon">←</text>
+        <text class="back-text"></text>
+      </view>
+      <text class="title" @click="goToActivityApproval">护理日常</text>
+      <view class="dropdown">
+        <picker 
+          :range="elderNames" 
+          @change="handleElderChange" 
+          :value="currentElderIndex"
+        >
+          <view class="picker-content">
+            <text class="picker-text">{{ elderNames[currentElderIndex] || '选择老人' }}</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 主要内容区域 -->
+    <view class="content">
+      <!-- 顶部轮播图 -->
+      <swiper class="banner-swiper" 
+        :autoplay="true" 
+        :interval="3000" 
+        :duration="500"
+        circular>
+        <swiper-item>
+          <image src="/static/images/banner1.jpg" mode="aspectFill" class="banner-image"></image>
+        </swiper-item>
+        <swiper-item>
+          <image src="/static/images/banner2.jpg" mode="aspectFill" class="banner-image"></image>
+        </swiper-item>
+        <swiper-item>
+          <image src="/static/images/banner3.jpg" mode="aspectFill" class="banner-image"></image>
+        </swiper-item>
+      </swiper>
+
+      <!-- 每日三餐 -->
+      <view class="section">
+        <view class="section-header">
+          <picker mode="date" :value="mealDate" @change="handleMealDateChange">
+            <view class="date-picker">
+              <text>{{ mealDate || '选择日期' }}</text>
+            </view>
+          </picker>
+          <text class="section-title">每日三餐</text>
+        </view>
+        <view class="section-content">
+          <swiper v-if="mealData.breakfastPhotos || mealData.lunchPhotos || mealData.dinnerPhotos" class="meal-swiper" indicator-dots>
+            <swiper-item v-if="mealData.breakfastPhotos">
+              <image 
+                :src="mealData.breakfastPhotos" 
+                mode="aspectFill" 
+                class="meal-image"
+                @click="previewImage(mealData.breakfastPhotos)"
+              ></image>
+              <text class="meal-label">早餐</text>
+            </swiper-item>
+            <swiper-item v-if="mealData.lunchPhotos">
+              <image 
+                :src="mealData.lunchPhotos" 
+                mode="aspectFill" 
+                class="meal-image"
+                @click="previewImage(mealData.lunchPhotos)"
+              ></image>
+              <text class="meal-label">午餐</text>
+            </swiper-item>
+            <swiper-item v-if="mealData.dinnerPhotos">
+              <image 
+                :src="mealData.dinnerPhotos" 
+                mode="aspectFill" 
+                class="meal-image"
+                @click="previewImage(mealData.dinnerPhotos)"
+              ></image>
+              <text class="meal-label">晚餐</text>
+            </swiper-item>
+          </swiper>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 衣物穿戴 -->
+      <view class="section">
+        <view class="section-header">
+          <picker mode="date" :value="clothingDate" @change="handleClothingDateChange">
+            <view class="date-picker">
+              <text>{{ clothingDate || '选择日期' }}</text>
+            </view>
+          </picker>
+          <text class="section-title">衣物穿戴</text>
+        </view>
+        <view class="section-content">
+          <image 
+            v-if="clothingData.clothingPhotos" 
+            :src="clothingData.clothingPhotos" 
+            mode="aspectFill" 
+            class="clothing-image"
+            @click="previewImage(clothingData.clothingPhotos)"
+          ></image>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 住宿环境 -->
+      <view class="section">
+        <view class="section-header">
+          <picker mode="date" :value="livingDate" @change="handleLivingDateChange">
+            <view class="date-picker">
+              <text>{{ livingDate || '选择日期' }}</text>
+            </view>
+          </picker>
+          <text class="section-title">住宿环境</text>
+        </view>
+        <view class="section-content">
+          <image 
+            v-if="livingData.lodgingPhotos" 
+            :src="livingData.lodgingPhotos" 
+            mode="aspectFill" 
+            class="living-image"
+            @click="previewImage(livingData.lodgingPhotos)"
+          ></image>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 健康状态 -->
+      <view class="section">
+        <view class="section-header">
+          <picker 
+            :range="healthIds.map(id => `第${id}次`)" 
+            :value="currentHealthIndex"
+            @change="handleHealthChange"
+          >
+            <view class="date-picker">
+              <text>{{ healthIds.length > 0 ? `第${healthIds[currentHealthIndex]}次` : '暂无记录' }}</text>
+            </view>
+          </picker>
+          <text class="section-title">健康状态</text>
+        </view>
+        <view class="section-content">
+          <view v-if="healthData.assessDate" class="health-info">
+            <view class="health-item">
+              <text class="health-label">评估日期</text>
+              <text class="health-value">{{ healthData.assessDate.split('T')[0] }}</text>
+            </view>
+            <view class="health-item">
+              <text class="health-label">健康报告</text>
+              <text class="health-value">{{ healthData.report }}</text>
+            </view>
+            <view class="health-item">
+              <text class="health-label">护理建议</text>
+              <text class="health-value">{{ healthData.caretakerComment }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部导航栏 -->
+    
+  </view>
+</template>
+
+<script lang="uts">
+interface Elder {
+  elderId: string
+  caretakerId: string
+  name: string
+  gender: number
+  age: number
+  childrenName: string
+  childrenPhone: string
+  applicationTime: string
+  createdTime: string
+  photo: string
+  childrenId: number
+  isEnable: number
+}
+
+interface DailyData {
+  dailyId: string
+  elderId: string
+  caretakerId: string
+  date: string
+  breakfastPhotos: string
+  lunchPhotos: string
+  dinnerPhotos: string
+  lodgingPhotos: string
+  clothingPhotos: string
+  aiComment: string | null
+  childrenId: string
+  deanId: string
+}
+
+interface ApiResponse {
+  code: number
+  msg: string | null
+  data: Elder[] | DailyData
+}
+
+export default {
+  data() {
+    return {
+      elders: [] as Elder[],
+      elderNames: [] as string[],
+      currentElderIndex: 0,
+      selectedElderId: '',
+      selectedChildrenId: '',
+      deanId: '',
+      nurseInfo: {
+        name: '',
+        avatar: '',
+        phone: '',
+        specialty: ''
+      },
+      mealDate: '',
+      clothingDate: '',
+      livingDate: '',
+      mealData: {} as DailyData,
+      clothingData: {} as DailyData,
+      livingData: {} as DailyData,
+      currentDailyId: '',
+      healthIds: [] as string[],
+      currentHealthIndex: 0,
+      healthData: {
+        healthId: null,
+        assessDate: '',
+        report: '',
+        caretakerComment: '',
+        number: null
+      }
+    }
+  },
+  onLoad() {
+    const userInfo = uni.getStorageSync('userInfo')
+    if (userInfo) {
+      this.deanId = userInfo.deanId
+      this.nurseInfo = {
+        name: userInfo.name,
+        avatar: userInfo.avatar,
+        phone: userInfo.phone,
+        specialty: userInfo.specialty
+      }
+    }
+    this.initData()
+  },
+  methods: {
+    async initData() {
+      try {
+        await this.fetchElders()
+        this.setDefaultDates()
+        await this.fetchHealthIds()
+      } catch (error) {
+        console.error('初始化数据失败:', error)
+      }
+    },
+    setDefaultDates() {
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = String(today.getMonth() + 1).padStart(2, '0')
+      const day = String(today.getDate()).padStart(2, '0')
+      const todayStr = `${year}-${month}-${day}`
+      
+      this.mealDate = todayStr
+      this.clothingDate = todayStr
+      this.livingDate = todayStr
+    },
+    async fetchElders() {
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+        
+        if (!accessToken || !refreshToken) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none'
+          })
+          uni.redirectTo({
+            url: '/pages/nurse/login'
+          })
+          return
+        }
+
+        uni.showLoading({
+          title: '加载中...'
+        })
+
+        console.log('开始获取老人列表')
+
+        const result = await uni.request({
+          url: 'http://localhost:8080/elder/getByChildrenId',
+          method: 'GET',
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
+          }
+        })
+
+        console.log('老人列表响应:', result)
+
+        uni.hideLoading()
+
+        const response = result.data as ApiResponse
+        if (response.code === 1 && response.data) {
+          this.elders = response.data as Elder[]
+          this.elderNames = this.elders.map(elder => elder.name)
+          
+          if (this.elders.length > 0) {
+            this.selectedElderId = this.elders[0].elderId
+            this.selectedChildrenId = this.elders[0].childrenId.toString()
+            
+            console.log('已选择老人:', this.selectedElderId)
+            
+            // 获取其他数据
+            await this.fetchDailyData('meal')
+            await this.fetchDailyData('clothing')
+            await this.fetchDailyData('living')
+            await this.fetchHealthIds()
+          } else {
+            uni.showToast({
+              title: '暂无老人数据',
+              icon: 'none'
+            })
+          }
+        } else {
+          uni.showToast({
+            title: response.msg || '获取数据失败',
+            icon: 'none'
+          })
+        }
+      } catch (error) {
+        uni.hideLoading()
+        console.error('请求失败:', error)
+        uni.showToast({
+          title: '网络错误',
+          icon: 'none'
+        })
+      }
+    },
+    async fetchDailyData(type: string) {
+      if (!this.selectedElderId) return
+
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+        
+        let date = ''
+        switch(type) {
+          case 'meal':
+            date = this.mealDate
+            break
+          case 'clothing':
+            date = this.clothingDate
+            break
+          case 'living':
+            date = this.livingDate
+            break
+        }
+
+        const result = await uni.request({
+          url: 'http://localhost:8080/daily/day',
+          method: 'POST',
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            date: date,
+            elderId: this.selectedElderId
+          }
+        })
+
+        const response = result.data as ApiResponse
+        if (response.code === 1 && response.data) {
+          const dailyData = response.data as DailyData
+          // 保存 dailyId
+          this.currentDailyId = dailyData.dailyId
+          
+          switch(type) {
+            case 'meal':
+              this.mealData = dailyData
+              break
+            case 'clothing':
+              this.clothingData = dailyData
+              break
+            case 'living':
+              this.livingData = dailyData
+              break
+          }
+        } else {
+          switch(type) {
+            case 'meal':
+              this.mealData = {} as DailyData
+              break
+            case 'clothing':
+              this.clothingData = {} as DailyData
+              break
+            case 'living':
+              this.livingData = {} as DailyData
+              break
+          }
+          this.currentDailyId = ''
+        }
+      } catch (error) {
+        console.error('获取日常数据失败:', error)
+        switch(type) {
+          case 'meal':
+            this.mealData = {} as DailyData
+            break
+          case 'clothing':
+            this.clothingData = {} as DailyData
+            break
+          case 'living':
+            this.livingData = {} as DailyData
+            break
+        }
+        this.currentDailyId = ''
+      }
+    },
+    async fetchHealthIds() {
+      if (!this.selectedElderId) return
+
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+
+        const result = await uni.request({
+          url: 'http://localhost:8080/health/getHealthIds',
+          method: 'GET',
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
+          },
+          data: {
+            elderId: this.selectedElderId
+          }
+        })
+
+        const response = result.data as ApiResponse
+        if (response.code === 1 && response.data) {
+          const data = response.data as { elderId: string | null, healthId: string[] }
+          if (data.healthId && data.healthId.length > 0) {
+            // 倒序排列并设置默认选中最大值
+            this.healthIds = data.healthId.reverse()
+            this.currentHealthIndex = 0
+            // 获取第一条健康记录数据
+            await this.fetchHealthData()
+          } else {
+            this.healthIds = []
+            this.currentHealthIndex = 0
+            this.healthData = {
+              healthId: null,
+              assessDate: '',
+              report: '',
+              caretakerComment: '',
+              number: null
+            }
+          }
+        }
+      } catch (error) {
+        console.error('获取健康记录ID失败:', error)
+        this.healthIds = []
+        this.currentHealthIndex = 0
+        this.healthData = {
+          healthId: null,
+          assessDate: '',
+          report: '',
+          caretakerComment: '',
+          number: null
+        }
+      }
+    },
+    async fetchHealthData() {
+      if (!this.selectedElderId || this.healthIds.length === 0) return
+
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+
+        const result = await uni.request({
+          url: 'http://localhost:8080/health/getHealthByNumber',
+          method: 'GET',
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken
+          },
+          data: {
+            elderId: this.selectedElderId,
+            number: this.healthIds[this.currentHealthIndex]
+          }
+        })
+
+        const response = result.data as ApiResponse
+        if (response.code === 1 && response.data) {
+          this.healthData = response.data as {
+            healthId: string | null,
+            assessDate: string,
+            report: string,
+            caretakerComment: string,
+            number: string | null
+          }
+        }
+      } catch (error) {
+        console.error('获取健康记录数据失败:', error)
+        this.healthData = {
+          healthId: null,
+          assessDate: '',
+          report: '',
+          caretakerComment: '',
+          number: null
+        }
+      }
+    },
+    handleElderChange(e: any) {
+      this.currentElderIndex = parseInt(e.detail.value)
+      if (this.elders[this.currentElderIndex]) {
+        this.selectedElderId = this.elders[this.currentElderIndex].elderId
+        this.selectedChildrenId = this.elders[this.currentElderIndex].childrenId.toString()
+        this.fetchDailyData('meal')
+        this.fetchDailyData('clothing')
+        this.fetchDailyData('living')
+        this.fetchHealthIds()
+      }
+    },
+    handleMealDateChange(e: any) {
+      this.mealDate = e.detail.value
+      this.fetchDailyData('meal')
+    },
+    handleClothingDateChange(e: any) {
+      this.clothingDate = e.detail.value
+      this.fetchDailyData('clothing')
+    },
+    handleLivingDateChange(e: any) {
+      this.livingDate = e.detail.value
+      this.fetchDailyData('living')
+    },
+    handleBack() {
+      uni.removeStorageSync('accessToken')
+      uni.removeStorageSync('refreshToken')
+      uni.removeStorageSync('userInfo')
+      
+      uni.redirectTo({
+        url: '/pages/nurse/login',
+        success: () => {
+          console.log('成功跳转到登录页')
+        },
+        fail: (err) => {
+          console.error('跳转失败:', err)
+          uni.showToast({
+            title: '跳转失败',
+            icon: 'none'
+          })
+        }
+      })
+    },
+    handleTabClick(tab: string) {
+      if (tab === 'nursing') {
+        // 点击护理日常按钮时，刷新数据
+        this.fetchElders()
+      } else {
+        // 其他标签页的跳转逻辑
+        uni.switchTab({
+          url: `/pages/nurse/${tab}`
+        })
+      }
+    },
+    previewImage(url: string) {
+      if (!url) return
+      uni.previewImage({
+        urls: [url],
+        current: url,
+        indicator: 'number',
+        loop: false,
+        success: () => {
+          console.log('图片预览成功')
+        },
+        fail: (err) => {
+          console.error('图片预览失败:', err)
+          uni.showToast({
+            title: '图片预览失败',
+            icon: 'none'
+          })
+        }
+      })
+    },
+    handleHealthChange(e: any) {
+      this.currentHealthIndex = parseInt(e.detail.value)
+      this.fetchHealthData()
+    },
+    goToActivityApproval() {
+      if (this.selectedElderId) {
+        uni.navigateTo({
+          url: `/pages/children/activity-approval?elderId=${this.selectedElderId}&elderName=${this.elderNames[this.currentElderIndex]}`,
+          success: () => {
+            console.log('成功跳转到活动申请页面')
+          },
+          fail: (err) => {
+            console.error('跳转失败:', err)
+            uni.showToast({
+              title: '跳转失败',
+              icon: 'none'
+            })
+          }
+        })
+      } else {
+        uni.showToast({
+          title: '请先选择老人',
+          icon: 'none'
+        })
+      }
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f5f7f7;
+  padding-bottom: 100rpx;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  height: 88rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  padding: 10rpx;
+  cursor: pointer;
+  position: absolute;
+  left: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.back-icon {
+  font-size: 32rpx;
+  color: #fff;
+  margin-right: 4rpx;
+}
+
+.back-text {
+  font-size: 28rpx;
+  color: #fff;
+}
+
+.title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.title:active {
+  opacity: 0.7;
+}
+
+.dropdown {
+  min-width: 200rpx;
+  margin-left: auto;
+  position: absolute;
+  right: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.picker-content {
+  display: flex;
+  flex-direction: row;
+
+  align-items: center;
+  padding: 10rpx 20rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 8rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #fff;
+  margin: auto;
+}
+
+.down-icon {
+  width: 24rpx;
+  height: 24rpx;
+  filter: brightness(0) invert(1);
+}
+
+.content {
+  padding: 30rpx;
+}
+
+.section {
+  background-color: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  border: 1rpx solid #e8f0ef;
+}
+
+.section:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  position: relative;
+  height: 80rpx;
+  margin-bottom: 30rpx;
+}
+
+.date-picker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  background-color: #f5f7f7;
+  padding: 6rpx 20rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #5A9A95;
+  border: 1rpx solid #e8f0ef;
+}
+
+.section-title {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #5A9A95;
+  white-space: nowrap;
+}
+
+.section-content {
+  min-height: 160rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f7f7;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  border: 1rpx solid #e8f0ef;
+}
+
+.empty-tip {
+  color: #7AB8B3;
+  font-size: 26rpx;
+}
+
+.Bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  background-color: #fff;
+  display: flex;
+  border-top: 1rpx solid #edf2f7;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  background-color: #fff;
+  display: flex;
+  border-top: 1rpx solid #e8f0ef;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.tab-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-bottom: 4rpx;
+  transition: all 0.3s ease;
+}
+
+.tab-text {
+  font-size: 24rpx;
+  color: #7AB8B3;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active .tab-text {
+  color: #5A9A95;
+}
+
+.tab-item.active .tab-icon {
+  filter: hue-rotate(180deg) saturate(1.5);
+}
+
+.time-picker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  background-color: #f0f9f8;
+  padding: 8rpx 24rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #319795;
+  border: 1rpx solid #e6fffa;
+}
+
+.meal-swiper {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.meal-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+}
+
+.meal-label {
+  position: absolute;
+  bottom: 20rpx;
+  left: 20rpx;
+  background-color: rgba(90, 154, 149, 0.8);
+  color: #fff;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.clothing-image, .living-image {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
+.health-info {
+  width: 100%;
+  padding: 20rpx;
+}
+
+.health-item {
+  margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #e8f0ef;
+}
+
+.health-label {
+  font-size: 28rpx;
+  color: #5A9A95;
+  margin-bottom: 8rpx;
+  font-weight: bold;
+}
+
+.health-value {
+  font-size: 30rpx;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 400rpx;
+  margin-bottom: 30rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+}
+
+.banner-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+}
+
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 80%;
+  background-color: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  padding: 10rpx;
+}
+
+.modal-body {
+  padding: 30rpx;
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  height: 200rpx;
+  border: 1rpx solid #eee;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  padding: 30rpx;
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.modal-btn {
+  padding: 20rpx 40rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+}
+
+.modal-btn.cancel {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.modal-btn.confirm {
+  background-color: #007AFF;
+  color: #fff;
+}
+
+.modal-btn.confirm:disabled {
+  background-color: #ccc;
+}
+</style> 
