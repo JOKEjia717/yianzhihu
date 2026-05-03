@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhihu.Mapper.GoodsMapper">
+
+
+    <select id="searchItems" resultType="com.zhihu.po.Item">
+        SELECT * FROM item
+
+        <where>
+            AND status != 2
+            <!-- 商品名 -->
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <!-- 价格区间 -->
+            <choose>
+                <when test="minPrice != null and maxPrice != null">
+                    AND price BETWEEN #{minPrice} AND #{maxPrice}
+                </when>
+                <otherwise>
+                    <if test="minPrice != null">
+                        AND price &gt;= #{minPrice}
+                    </if>
+                    <if test="maxPrice != null">
+                        AND price &lt;= #{maxPrice}
+                    </if>
+                </otherwise>
+            </choose>
+        </where>
+        order by sold ${isAsc}
+        <!-- 分页逻辑优化 -->
+        <bind name="limitSize" value="(size != null and size > 0) ? size : 10" />
+        <bind name="offset" value="(page != null and page >= 0) ? page * limitSize : 0" />
+        LIMIT #{limitSize} OFFSET #{offset}
+    </select>
+
+</mapper>

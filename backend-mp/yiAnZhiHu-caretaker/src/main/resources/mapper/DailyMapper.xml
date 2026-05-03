@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zhihu.mapper.DailyMapper">
+    <select id="getHealthByDate" resultType="com.zhihu.po.Daily">
+    select * from daily
+        <where>
+            <!-- 日期范围查询 -->
+            <if test="beginDate != null and endDate != null">
+                AND date BETWEEN #{beginDate} AND #{endDate}
+            </if>
+            <if test="beginDate != null ">
+                AND date &gt;=  #{beginDate}
+            </if>
+            <if test="  endDate != null">
+                AND date &lt;= #{endDate}
+            </if>
+             AND children_id=#{children_id}
+        </where>
+        ORDER BY date DESC
+        LIMIT
+        <choose>
+            <when test="size != null and size > 0">#{size}</when>
+            <otherwise>10</otherwise> <!-- 默认每页10条 -->
+        </choose>
+        OFFSET
+        <choose>
+            <!-- 处理页码越界 -->
+            <when test="page != null and page >= 0">
+                #{page} *
+                <choose>
+                    <when test="size != null and size > 0">#{size}</when>
+                    <otherwise>10</otherwise>
+                </choose>
+            </when>
+            <otherwise>0</otherwise> <!-- 默认从第0页开始 -->
+        </choose>
+    </select>
+
+    <update id="updateDailySelective">
+        UPDATE daily
+        <set>
+            <!-- 早餐照片：非空且非空白时更新 -->
+            <if test="dto.breakfastPhotos != null and dto.breakfastPhotos != ''">
+                breakfast_photos = #{dto.breakfastPhotos},
+            </if>
+            <!-- 午餐照片：非空且非空白时更新 -->
+            <if test="dto.lunchPhotos != null and dto.lunchPhotos != ''">
+                lunch_photos = #{dto.lunchPhotos},
+            </if>
+            <!-- 晚餐照片：非空且非空白时更新 -->
+            <if test="dto.dinnerPhotos != null and dto.dinnerPhotos != ''">
+                dinner_photos = #{dto.dinnerPhotos},
+            </if>
+            <!-- 衣物照片：非空且非空白时更新 -->
+            <if test="dto.clothingPhotos != null and dto.clothingPhotos != ''">
+                clothing_photos = #{dto.clothingPhotos},
+            </if>
+            <!-- 住宿照片：非空且非空白时更新 -->
+            <if test="dto.lodgingPhotos != null and dto.lodgingPhotos != ''">
+                lodging_photos = #{dto.lodgingPhotos},
+            </if>
+            ai_comment = "sss"
+        </set>
+        WHERE daily_id = #{dailyId}
+    </update>
+    <select id="getdaily" resultType="com.zhihu.po.Daily">
+        SELECT * FROM (
+                          SELECT *, ROW_NUMBER() OVER (PARTITION BY elder_id ORDER BY date DESC) AS rn
+                          FROM daily
+                          WHERE caretaker_id = #{caretakerId}
+                      ) t WHERE t.rn = 1
+    </select>
+</mapper>

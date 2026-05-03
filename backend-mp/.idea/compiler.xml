@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="yiAnZhiHu-common" />
+        <module name="yiAnZhiHu-pojo" />
+        <module name="yiAnZhiHu-gateway" />
+        <module name="yiAnZhiHu-activity" />
+        <module name="yiAnZhiHu-chat" />
+        <module name="yiAnZhiHu-children" />
+        <module name="yiAnZhiHu-goods" />
+        <module name="yiAnZhiHU-api" />
+        <module name="yiAnZhiHu-dean" />
+        <module name="yiAnZhiHu-caretaker" />
+        <module name="yiAnZhiHu-admin" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="quShi-api" target="11" />
+      <module name="quShi-common" target="11" />
+      <module name="quShi-gateway" target="11" />
+      <module name="quShi-pojo" target="11" />
+      <module name="quShi-user" target="11" />
+      <module name="yiAnZhiHu-admin-user" target="11" />
+      <module name="yiAnZhiHu-home" target="11" />
+      <module name="yiAnZhiHu-user" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="quShi-api" options="-parameters" />
+      <module name="quShi-common" options="-parameters" />
+      <module name="quShi-gateway" options="-parameters" />
+      <module name="quShi-pojo" options="-parameters" />
+      <module name="quShi-user" options="-parameters" />
+      <module name="yiAnZhiHU-api" options="-parameters" />
+      <module name="yiAnZhiHu-activity" options="-parameters" />
+      <module name="yiAnZhiHu-admin" options="-parameters" />
+      <module name="yiAnZhiHu-admin-user" options="-parameters" />
+      <module name="yiAnZhiHu-caretaker" options="-parameters" />
+      <module name="yiAnZhiHu-chat" options="-parameters" />
+      <module name="yiAnZhiHu-children" options="-parameters" />
+      <module name="yiAnZhiHu-common" options="-parameters" />
+      <module name="yiAnZhiHu-dean" options="-parameters" />
+      <module name="yiAnZhiHu-gateway" options="-parameters" />
+      <module name="yiAnZhiHu-goods" options="-parameters" />
+      <module name="yiAnZhiHu-home" options="-parameters" />
+      <module name="yiAnZhiHu-pojo" options="-parameters" />
+      <module name="yiAnZhiHu-user" options="-parameters" />
+    </option>
+  </component>
+</project>
