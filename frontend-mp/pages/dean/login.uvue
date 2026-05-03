@@ -1,0 +1,222 @@
+<template>
+  <view class="container">
+    <!-- 纸飞机图标 -->
+    <image class="paper-plane" src="/static/images/paper-plane.png" mode="aspectFit"></image>
+    
+    <!-- 欢迎标题 -->
+    <view class="welcome-text">
+      <text class="welcome-en">Welcome home !</text>
+      <text class="welcome-cn">院长登录</text>
+    </view>
+
+    <!-- 登录表单 -->
+    <view class="form-container">
+      <view class="form-content">
+        <input 
+          class="input" 
+          v-model="account" 
+          placeholder="请输入账号"
+          type="text"
+        />
+        <input 
+          class="input" 
+          v-model="password" 
+          placeholder="请输入密码"
+          type="password"
+        />
+        
+        <!-- 确认按钮 -->
+        <button class="submit-btn" @click="handleLogin" :disabled="isLoading">
+          {{ isLoading ? '登录...' : '确认' }}
+        </button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+interface LoginResponse {
+  accessToken: string
+  refreshToken: string
+  deanId: string
+  name: string
+  avatar: string | null
+  phone: string
+  description: string | null
+  createdTime: string
+  isEnable: number
+}
+
+export default {
+  data() {
+    return {
+      account: '',
+      password: '',
+      isLoading: false
+    }
+  },
+  onLoad() {
+    // 清除之前的登录信�?
+    uni.removeStorageSync('accessToken')
+    uni.removeStorageSync('refreshToken')
+    uni.removeStorageSync('userInfo')
+  },
+  methods: {
+    async handleLogin() {
+      if (!this.account || !this.password) {
+        uni.showToast({
+          title: '请输入账号和密码',
+          icon: 'none'
+        })
+        return
+      }
+
+      this.isLoading = true
+
+      try {
+        const result = await uni.request({
+          url: 'http://localhost:8080/admin/dean/login',
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json'
+          },
+          data: {
+            account: this.account,
+            password: this.password
+          }
+        })
+
+        // 获取响应数据
+        const response = result.data as any
+        console.log('登录响应:', response)
+
+        if (response && response.code === 1 && response.data) {
+          // 保存 token
+          uni.setStorageSync('accessToken', response.data.accessToken)
+          uni.setStorageSync('refreshToken', response.data.refreshToken)
+          
+          // 保存用户信息
+          const userInfo = {
+            deanId: response.data.deanId,
+            name: response.data.name,
+            avatar: response.data.avatar,
+            phone: response.data.phone
+          }
+          uni.setStorageSync('userInfo', userInfo)
+
+          uni.showToast({
+            title: '登录成功',
+            icon: 'success',
+            duration: 1500
+          })
+
+          // 延迟跳转到首�?
+          setTimeout(() => {
+            uni.reLaunch({
+              url: '/pages/dean/index',
+              success: () => {
+                console.log('跳转成功')
+              },
+              fail: (err) => {
+                console.error('跳转失败:', err)
+                uni.showToast({
+                  title: '跳转失败',
+                  icon: 'none'
+                })
+              }
+            })
+          }, 1500)
+        } else {
+          uni.showToast({
+            title: '登录失败',
+            icon: 'none'
+          })
+        }
+      } catch (error: any) {
+        console.error('请求错误:', error)
+        uni.showToast({
+          title: '登录失败',
+          icon: 'none'
+        })
+      } finally {
+        this.isLoading = false
+      }
+    }
+  }
+}
+</script>
+
+<style>
+.container {
+  min-height: 100vh;
+  background: url('/static/images/dean-login-bg.png') no-repeat;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  padding: 60rpx 40rpx;
+}
+
+.paper-plane {
+  width: 80rpx;
+  height: 80rpx;
+  position: absolute;
+  top: 40rpx;
+  left: 40rpx;
+}
+
+.welcome-text {
+  margin-top: 100rpx;
+  text-align: center;
+}
+
+.welcome-en {
+  font-size: 36rpx;
+  color: #333333;
+  margin-bottom: 20rpx;
+  display: block;
+  text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+}
+
+.welcome-cn {
+  font-size: 64rpx;
+  color: #333333;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+  white-space: pre-line;
+  display: block;
+}
+
+.form-container {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-top: 60rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.1);
+}
+
+.input {
+  height: 88rpx;
+  border: 2rpx solid #EEEEEE;
+  border-radius: 44rpx;
+  padding: 0 40rpx;
+  margin-bottom: 30rpx;
+  font-size: 28rpx;
+}
+
+.submit-btn {
+  background: #007AFF;
+  color: #FFFFFF;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  margin-top: 40rpx;
+  border: none;
+}
+
+.submit-btn:disabled {
+  background: #999999;
+  cursor: not-allowed;
+}
+</style> 

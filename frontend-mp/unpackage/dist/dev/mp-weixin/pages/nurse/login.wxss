@@ -1,0 +1,75 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #87CEEB 0%, #E6F3FF 100%);
+  position: relative;
+  padding: 60rpx 40rpx;
+}
+.paper-plane {
+  width: 80rpx;
+  height: 80rpx;
+  position: absolute;
+  top: 40rpx;
+  left: 40rpx;
+}
+.welcome-text {
+  margin-top: 100rpx;
+  text-align: center;
+}
+.welcome-en {
+  font-size: 36rpx;
+  color: #FFFFFF;
+  margin-bottom: 20rpx;
+  display: block;
+}
+.welcome-cn {
+  font-size: 64rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: pre-line;
+  display: block;
+}
+.form-container {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-top: 60rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.1);
+}
+.tab-group {
+  display: flex;
+  border-bottom: 2rpx solid #EEEEEE;
+  margin-bottom: 40rpx;
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 32rpx;
+  color: #999999;
+}
+.tab-item.active {
+  color: #007AFF;
+  border-bottom: 4rpx solid #007AFF;
+}
+.input {
+  height: 88rpx;
+  border: 2rpx solid #EEEEEE;
+  border-radius: 44rpx;
+  padding: 0 40rpx;
+  margin-bottom: 30rpx;
+  font-size: 28rpx;
+}
+.submit-btn {
+  background: #007AFF;
+  color: #FFFFFF;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  margin-top: 40rpx;
+  border: none;
+}

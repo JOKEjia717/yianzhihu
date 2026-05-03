@@ -1,0 +1,324 @@
+<template>
+  <view class="container">
+    <!-- 导航栏 -->
+    <view class="nav-bar gradient-bg">
+      <view class="nav-left">
+        <text class="back-icon" @click="navigateBack">‹</text>
+        <text class="title">支付订单</text>
+      </view>
+    </view>
+
+    <!-- 支付内容 -->
+    <view class="payment-content">
+      <!-- 订单金额 -->
+      <view class="amount-section">
+        <text class="amount-label">支付金额</text>
+        <view class="amount-value">
+          <text class="currency">¥</text>
+          <text class="number">{{orderAmount}}</text>
+        </view>
+      </view>
+
+      <!-- 支付方式 -->
+      <view class="payment-methods">
+        <text class="section-title">选择支付方式</text>
+        <view class="method-list">
+          <view 
+            class="method-item" 
+            v-for="method in paymentMethods" 
+            :key="method.id"
+            :class="{'selected': selectedMethod === method.id}"
+            @click="selectMethod(method.id)"
+          >
+            <image class="method-icon" :src="method.icon" mode="aspectFit"></image>
+            <view class="method-info">
+              <text class="method-name">{{method.name}}</text>
+              <text class="method-desc">{{method.description}}</text>
+            </view>
+            <text class="select-icon">{{selectedMethod === method.id ? '✓' : ''}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部支付按钮 -->
+    <view class="bottom-bar">
+      <button class="pay-btn" @click="handlePayment">立即支付</button>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+interface PaymentMethod {
+  id: number
+  name: string
+  icon: string
+  description: string
+}
+
+export default {
+  data() {
+    return {
+      orderAmount: 0,
+      selectedMethod: 1,
+      orderId: '',
+      paymentMethods: [
+        {
+          id: 1,
+          name: '余额支付',
+          icon: '/static/images/wechat-pay.png',
+          description: '推荐使用余额支付'
+        }
+      ] as PaymentMethod[]
+    }
+  },
+
+  onLoad(options: any) {
+    // 从本地存储中获取订单信息
+    const orderInfo = uni.getStorageSync('orderInfo')
+    if (orderInfo && orderInfo.totalAmount) {
+      this.orderAmount = orderInfo.totalAmount
+    } else if (options.amount) {
+      // 兼容旧的方式，如果本地存储中没有，则从参数中获取
+      this.orderAmount = Number(options.amount)
+    }
+    if (options.id) {
+      this.orderId = options.id
+    } else if (orderInfo && orderInfo.orderId) {
+      this.orderId = orderInfo.orderId
+    }
+  },
+
+  methods: {
+    navigateBack() {
+      uni.navigateBack({
+        delta: 1,
+        fail: () => {
+          uni.switchTab({ url: '/pages/children/cart' })
+        }
+      })
+    },
+
+    selectMethod(methodId: number) {
+      this.selectedMethod = methodId
+    },
+
+    async handlePayment() {
+      try {
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+        // 从本地存储获取订单ID（从cart页面保存的）
+        const orderId = uni.getStorageSync('orderId')
+        
+        if (!accessToken || !refreshToken) {
+          uni.showToast({ title: '请先登录', icon: 'none' })
+          setTimeout(() => uni.navigateTo({ url: '/pages/login/login' }), 1500)
+          return
+        }
+        
+        console.log('即将发起支付请求，订单ID:', orderId)
+
+        // 调用支付接口
+        const res = await uni.request({
+          url: `http://localhost:8080/goods/pay/ipay?id=${orderId}`,
+          method: 'POST',
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        console.log('支付接口响应:', res)
+
+        if (res.statusCode === 200) {
+          const response = res.data as any
+          if (response.code === 1) {
+            // 支付成功，清空购物车
+            try {
+              const deleteRes = await uni.request({
+                url: 'http://localhost:8080/goods/cart/delete',
+                method: 'DELETE',
+                header: {
+                  'accessToken': accessToken,
+                  'refreshToken': refreshToken,
+                  'Content-Type': 'application/json'
+                }
+              })
+              console.log('删除购物车响应:', deleteRes)
+            } catch (deleteError) {
+              console.log('删除购物车失败:', deleteError)
+            }
+            
+            uni.showToast({ title: '支付成功', icon: 'success' })
+            setTimeout(() => {
+              uni.switchTab({ url: '/pages/children/mall' })
+            }, 1500)
+          } else {
+            uni.showToast({ title: response.msg || '支付失败', icon: 'none' })
+          }
+        } else {
+          uni.showToast({ title: '网络请求失败', icon: 'none' })
+        }
+      } catch (error) {
+        console.log('支付失败:', error)
+        uni.showToast({ title: '支付失败', icon: 'none' })
+      }
+    }
+  }
+}
+</script>
+
+<style>
+.container {
+  min-height: 100vh;
+  background: #F8F8F8;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+}
+
+.nav-bar {
+  padding: 32rpx 28rpx;
+  display: flex;
+  align-items: center;
+  color: white;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+}
+
+.back-icon {
+  font-size: 56rpx;
+  margin-right: 24rpx;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.payment-content {
+  padding: 32rpx;
+}
+
+.amount-section {
+  background: white;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.amount-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.amount-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.currency {
+  font-size: 36rpx;
+  color: #333;
+  margin-right: 8rpx;
+}
+
+.number {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.payment-methods {
+  background: white;
+  border-radius: 24rpx;
+  padding: 32rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+
+.method-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.method-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: #F8F8F8;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+}
+
+.method-item.selected {
+  background: #E8F5E9;
+}
+
+.method-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 20rpx;
+}
+
+.method-info {
+  flex: 1;
+}
+
+.method-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+
+.method-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.select-icon {
+  font-size: 40rpx;
+  color: #4CAF50;
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx;
+  background: white;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.pay-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: #4CAF50;
+  color: white;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 44rpx;
+  text-align: center;
+}
+
+.pay-btn:active {
+  opacity: 0.9;
+}
+</style>

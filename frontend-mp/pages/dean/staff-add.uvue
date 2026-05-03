@@ -1,0 +1,486 @@
+﻿<template>
+  <view class="page">
+    <!-- 页面头部标题 -->
+    <view class="header">
+      <view class="back-btn" @click="goBack">
+        <text class="back-icon">←</text>
+      </view>
+      <text class="header-title">新增员工</text>
+    </view>
+    
+    <!-- 表单内容 -->
+    <view class="form-container">
+      <!-- 员工姓名 -->
+      <view class="form-item">
+        <text class="form-label">
+          <text class="required">*</text>员工姓名
+        </text>
+        <input 
+          class="form-input" 
+          v-model="staffForm.name" 
+          placeholder="请输入员工姓名" 
+          maxlength="20"
+        />
+      </view>
+      
+      <!-- 联系方式 -->
+      <view class="form-item">
+        <text class="form-label">
+          <text class="required">*</text>联系方式
+        </text>
+        <input 
+          class="form-input" 
+          v-model="staffForm.phone" 
+          placeholder="请输入手机号码" 
+          maxlength="11"
+          type="number"
+        />
+      </view>
+      
+      <!-- 员工账号 -->
+      <view class="form-item">
+        <text class="form-label">
+          <text class="required">*</text>员工账号
+        </text>
+        <input 
+          class="form-input" 
+          v-model="staffForm.account" 
+          placeholder="请输入员工登录账号" 
+          maxlength="20"
+        />
+      </view>
+      
+      <!-- 员工密码 -->
+      <view class="form-item">
+        <text class="form-label">
+          <text class="required">*</text>员工密码
+        </text>
+        <input 
+          class="form-input" 
+          v-model="staffForm.password" 
+          placeholder="请输入员工登录密码" 
+          maxlength="20"
+          type="password"
+        />
+      </view>
+      
+      <!-- 工作岗位 -->
+      <view class="form-item">
+        <text class="form-label">
+          <text class="required">*</text>工作岗位
+        </text>
+        <picker 
+          mode="selector" 
+          :range="positionOptions" 
+          :value="staffForm.positionIndex" 
+          @change="onPositionChange"
+        >
+          <view class="picker-value">
+            <text>{{ positionOptions[staffForm.positionIndex] || '请选择工作岗位' }}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+      
+      <!-- 员工照片 -->
+      <view class="form-item">
+        <text class="form-label">员工照片</text>
+        <view class="upload-box" @click="chooseImage">
+          <image 
+            v-if="staffForm.avatar" 
+            class="avatar-preview" 
+            :src="staffForm.avatar" 
+            mode="aspectFill"
+          ></image>
+          <view v-else class="upload-placeholder">
+            <text class="upload-icon">+</text>
+            <text class="upload-text">点击上传照片</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 入职日期 -->
+      <view class="form-item">
+        <text class="form-label">入职日期</text>
+        <picker 
+          mode="date" 
+          :value="staffForm.entryDate" 
+          @change="onDateChange"
+        >
+          <view class="picker-value">
+            <text>{{ staffForm.entryDate || '请选择入职日期' }}</text>
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+      
+      <!-- 备注信息 -->
+      <view class="form-item">
+        <text class="form-label">备注信息</text>
+        <textarea 
+          class="form-textarea" 
+          v-model="staffForm.remark" 
+          placeholder="请输入备注信息" 
+          maxlength="200"
+        />
+        <text class="char-count">{{ staffForm.remark.length }}/200</text>
+      </view>
+      
+      <!-- 提交按钮 -->
+      <button class="submit-btn" @click="submitStaff" :disabled="isSubmitting">
+        {{ isSubmitting ? '提交中...' : '提交' }}
+      </button>
+    </view>
+  </view>
+</template>
+
+<script lang="ts">
+interface StaffForm {
+  name: string;
+  phone: string;
+  positionIndex: number;
+  avatar: string;
+  entryDate: string;
+  remark: string;
+  deanId: string;
+  account: string;
+  password: string;
+}
+
+export default {
+  data() {
+    return {
+      isSubmitting: false,
+      staffForm: {
+        name: '',
+        phone: '',
+        positionIndex: 0,
+        avatar: '',
+        entryDate: '',
+        remark: '',
+        deanId: '',
+        account: '',
+        password: '',
+      } as StaffForm,
+      positionOptions: [
+        '技工',
+        '管理人员',
+        '教师',
+        '行政人员',
+        '护理人员',
+        '领导',
+        '其他',
+      ],
+    };
+  },
+  onLoad() {
+    // 获取当前日期作为默认入职日期
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = this.padZero(now.getMonth() + 1);
+    const day = this.padZero(now.getDate());
+    
+    this.staffForm.entryDate = `${year}-${month}-${day}`;
+    
+    // 从本地存储获取deanId
+    const userInfo = uni.getStorageSync('userInfo');
+    if (userInfo && userInfo.deanId) {
+      this.staffForm.deanId = userInfo.deanId;
+    }
+  },
+  methods: {
+    padZero(num: number): string {
+      return num < 10 ? `0${num}` : `${num}`;
+    },
+    goBack() {
+      uni.navigateBack();
+    },
+    onPositionChange(e: any) {
+      this.staffForm.positionIndex = Number(e.detail.value);
+    },
+    onDateChange(e: any) {
+      this.staffForm.entryDate = e.detail.value;
+    },
+    async chooseImage() {
+      try {
+        const res = await uni.chooseImage({
+          count: 1,
+          sizeType: ['compressed'],
+          sourceType: ['album', 'camera'],
+        });
+        
+        if (res.tempFilePaths && res.tempFilePaths.length > 0) {
+          this.staffForm.avatar = res.tempFilePaths[0];
+        }
+      } catch (error) {
+        console.error('选择图片失败:', error);
+      }
+    },
+    async submitStaff() {
+      // 表单验证
+      if (!this.staffForm.name.trim()) {
+        uni.showToast({
+          title: '请输入员工姓名',
+          icon: 'none',
+        });
+        return;
+      }
+      
+      if (!this.staffForm.phone.trim() || !/^1\d{10}$/.test(this.staffForm.phone)) {
+        uni.showToast({
+          title: '请输入正确的手机号码',
+          icon: 'none',
+        });
+        return;
+      }
+      
+      if (!this.staffForm.account.trim()) {
+        uni.showToast({
+          title: '请输入员工账号',
+          icon: 'none',
+        });
+        return;
+      }
+      
+      if (!this.staffForm.password.trim()) {
+        uni.showToast({
+          title: '请输入员工密码',
+          icon: 'none',
+        });
+        return;
+      }
+      
+      this.isSubmitting = true;
+      
+      try {
+        // 获取Token
+        const accessToken = uni.getStorageSync('accessToken');
+        const refreshToken = uni.getStorageSync('refreshToken');
+        
+        if (!accessToken || !refreshToken) {
+          uni.showToast({
+            title: '请先登录',
+            icon: 'none',
+          });
+          return;
+        }
+        
+        // 使用form-data格式提交，包含文件上传
+        const uploadTask = await uni.uploadFile({
+          url: 'http://localhost:8080/caretaker/register',
+          filePath: this.staffForm.avatar || '', // 如果没有选择图片，传空字符串
+          name: 'avatar',
+          formData: {
+            account: this.staffForm.account,
+            password: this.staffForm.password,
+            name: this.staffForm.name,
+            phone: this.staffForm.phone,
+            specialty: this.positionOptions[this.staffForm.positionIndex],
+          },
+          header: {
+            'accessToken': accessToken,
+            'refreshToken': refreshToken,
+          },
+        });
+        
+        const responseData = JSON.parse(uploadTask.data);
+        console.log('添加员工响应:', responseData);
+        
+        if (responseData && responseData.code === 1) {
+          uni.showToast({
+            title: '添加员工成功',
+            icon: 'success',
+            duration: 2000,
+          });
+          
+          // 延迟返回上一页
+          setTimeout(() => {
+            uni.navigateBack();
+          }, 2000);
+        } else {
+          uni.showToast({
+            title: responseData.msg || '添加失败',
+            icon: 'none',
+          });
+        }
+      } catch (error) {
+        console.error('请求错误:', error);
+        uni.showToast({
+          title: '网络错误',
+          icon: 'none',
+        });
+      } finally {
+        this.isSubmitting = false;
+      }
+    },
+  },
+};
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background-color: #26c48b;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30rpx;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  left: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  color: #ffffff;
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
+.header-title {
+  color: #ffffff;
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.form-container {
+  margin: 20rpx 30rpx;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #333333;
+  margin-bottom: 15rpx;
+  display: block;
+  font-weight: bold;
+}
+
+.required {
+  color: #ff4d4f;
+  margin-right: 4rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  border: 1rpx solid #eeeeee;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  background-color: #f9f9f9;
+}
+
+.form-textarea {
+  width: 100%;
+  height: 160rpx;
+  border: 1rpx solid #eeeeee;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  background-color: #f9f9f9;
+}
+
+.char-count {
+  font-size: 24rpx;
+  color: #999999;
+  text-align: right;
+  margin-top: 10rpx;
+}
+
+.picker-value {
+  width: 100%;
+  height: 80rpx;
+  border: 1rpx solid #eeeeee;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  background-color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-arrow {
+  color: #999999;
+  font-size: 24rpx;
+}
+
+.upload-box {
+  width: 200rpx;
+  height: 200rpx;
+  border: 1rpx dashed #cccccc;
+  border-radius: 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10rpx;
+  background-color: #f9f9f9;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-icon {
+  font-size: 60rpx;
+  color: #cccccc;
+  margin-bottom: 10rpx;
+}
+
+.upload-text {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.avatar-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 8rpx;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 90rpx;
+  background-color: #26c48b;
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 45rpx;
+  margin-top: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-btn:disabled {
+  background-color: #cccccc;
+}
+</style>
+    

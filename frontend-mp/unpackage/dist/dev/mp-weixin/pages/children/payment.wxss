@@ -1,0 +1,130 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.container {
+  min-height: 100vh;
+  background: #F8F8F8;
+}
+.gradient-bg {
+  background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+}
+.nav-bar {
+  padding: 32rpx 28rpx;
+  display: flex;
+  align-items: center;
+  color: white;
+}
+.nav-left {
+  display: flex;
+  align-items: center;
+}
+.back-icon {
+  font-size: 56rpx;
+  margin-right: 24rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+}
+.payment-content {
+  padding: 32rpx;
+}
+.amount-section {
+  background: white;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+.amount-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+}
+.amount-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+.currency {
+  font-size: 36rpx;
+  color: #333;
+  margin-right: 8rpx;
+}
+.number {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #333;
+}
+.payment-methods {
+  background: white;
+  border-radius: 24rpx;
+  padding: 32rpx;
+}
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+}
+.method-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.method-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: #F8F8F8;
+  border-radius: 16rpx;
+  transition: all 0.3s ease;
+}
+.method-item.selected {
+  background: #E8F5E9;
+}
+.method-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 20rpx;
+}
+.method-info {
+  flex: 1;
+}
+.method-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+.method-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+.select-icon {
+  font-size: 40rpx;
+  color: #4CAF50;
+}
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx;
+  background: white;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+.pay-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: #4CAF50;
+  color: white;
+  font-size: 32rpx;
+  font-weight: bold;
+  border-radius: 44rpx;
+  text-align: center;
+}
+.pay-btn:active {
+  opacity: 0.9;
+}

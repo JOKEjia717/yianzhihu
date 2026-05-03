@@ -1,0 +1,180 @@
+@import "../../uvue.wxss";
+:host{display:flex;flex-direction:column}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	background-color: #F5F7FA;
+}
+.nav-bar {
+	height: 88rpx;
+	background-color: #FFFFFF;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+	position: relative;
+}
+.back-btn {
+	position: absolute;
+	left: 20rpx;
+	width: 70rpx;
+	height: 70rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 10;
+}
+.arrow-box {
+	width: 50rpx;
+	height: 50rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.arrow-left {
+	width: 20rpx;
+	height: 20rpx;
+	border-top: 3rpx solid #333;
+	border-left: 3rpx solid #333;
+	transform: rotate(-45deg);
+}
+.title {
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #333333;
+}
+.chat-container {
+	flex: 1;
+	padding: 20rpx;
+}
+.message-list {
+	padding-bottom: 20rpx;
+}
+.message-item {
+	margin-bottom: 20rpx;
+	display: flex;
+	flex-direction: column;
+}
+.message-item.user {
+	align-items: flex-end;
+}
+.message-item.ai {
+	align-items: flex-start;
+}
+.message-content {
+	max-width: 70%;
+	padding: 20rpx;
+	border-radius: 20rpx;
+	word-break: break-all;
+}
+.user .message-content {
+	background-color: #4FD1C5;
+}
+.ai .message-content {
+	background-color: #FFFFFF;
+}
+.message-text {
+	font-size: 28rpx;
+	line-height: 1.5;
+	color: #333333;
+}
+.user .message-text {
+	color: #FFFFFF;
+}
+.input-wrapper {
+	width: 750rpx;
+	background-color: #FFFFFF;
+	border-top: 1rpx solid #F0F0F0;
+	box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+.input-area {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 20rpx 30rpx;
+	box-sizing: border-box;
+	width: 100%;
+	gap: 16rpx;
+}
+.upload-btn {
+	width: 60rpx;
+	height: 60rpx;
+	background-color: #F5F7FA;
+	border-radius: 30rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+.camera-icon {
+	width: 40rpx;
+	height: 40rpx;
+}
+.message-input {
+	flex: 1 1 60%;
+	min-width: 0;
+	height: 80rpx;
+	background-color: #F5F7FA;
+	border-radius: 40rpx;
+	padding: 0 30rpx;
+	font-size: 28rpx;
+	margin: 0 8rpx;
+}
+.send-btn {
+	width: 120rpx;
+	height: 80rpx;
+	background: linear-gradient(135deg, #4FD1C5 0%, #4FB8D1 100%);
+	color: #FFFFFF;
+	border-radius: 40rpx;
+	font-size: 28rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	box-shadow: 0 2rpx 6rpx rgba(79, 209, 197, 0.3);
+	margin: 0;
+	padding: 0;
+	transition: all 0.3s ease;
+}
+.message-image {
+	max-width: 100%;
+	margin-top: 10rpx;
+	border-radius: 10rpx;
+}
+.thumb-wrapper-outside {
+	display: flex;
+	align-items: flex-start;
+	margin-left: 30rpx;
+	margin-bottom: 8rpx;
+	position: relative;
+	width: 140rpx;
+	height: 140rpx;
+}
+.thumb-image {
+	width: 140rpx;
+	height: 140rpx;
+	border-radius: 8rpx;
+	object-fit: cover;
+	border: 1rpx solid #eee;
+}
+.thumb-remove {
+	position: absolute;
+	top: -10rpx;
+	right: -10rpx;
+	width: 28rpx;
+	height: 28rpx;
+	background: #fff;
+	border-radius: 50%;
+	color: #ff4d4f;
+	font-size: 24rpx;
+	text-align: center;
+	line-height: 28rpx;
+	box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.08);
+	cursor: pointer;
+	border: 1rpx solid #eee;
+	z-index: 2;
+}

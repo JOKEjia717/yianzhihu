@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "活动",
+  "usingComponents": {
+    "activity-skeleton": "./components/ActivitySkeleton",
+    "nurse-tabbar": "../../components/nurse-tabbar"
+  }
+}

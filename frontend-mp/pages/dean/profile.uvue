@@ -1,0 +1,753 @@
+<template>
+  <view class="page">
+    <!-- 顶部标题 -->
+    <view class="header">
+      <view class="header-left">
+        <text class="header-title">我的</text>
+      </view>
+      <view class="header-right">
+        <image class="search-icon" src="/static/images/Serch.png" mode="aspectFit"></image>
+      </view>
+    </view>
+    
+    <!-- 主要内容区域 -->
+    <view class="container">
+      <!-- 用户信息卡片 -->
+      <view class="user-card">
+        <view class="user-avatar">
+          <image class="avatar-image" src="/static/images/avatared.jpg" mode="aspectFill"></image>
+        </view>
+        <view class="user-info">
+          <text class="user-name">胡永龙</text>
+          <text class="user-role">养老院管理院长板块</text>
+        </view>
+        <view class="user-arrow">
+          <image class="arrow-icon" src="/static/images/arrow-right.png" mode="aspectFit"></image>
+        </view>
+      </view>
+      
+      <!-- 问题反馈板块 -->
+      <view class="panel feedback-panel">
+        <view class="panel-header">
+          <text class="panel-title">问题反馈</text>
+          <view class="panel-action" @click="showDataInfo">
+            <text class="action-text">数据说明</text>
+            <image class="tiny-arrow" src="/static/images/arrow-right.png" mode="aspectFit"></image>
+          </view>
+        </view>
+        
+        <view class="icon-grid">
+          <view class="icon-item" @click="showFeedbackPopup('院长板块')">
+              <image class="feature-icon" src="/static/images/pen.png" mode="aspectFit"></image>
+            <text class="icon-text">院长板块</text>
+          </view>
+          
+          <view class="icon-item" @click="showFeedbackPopup('管理后台')">
+              <image class="feature-icon" src="/static/images/duck.png" mode="aspectFit"></image>
+            <text class="icon-text">管理后台</text>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 需放问题反馈板块 -->
+      <view class="panel">
+        <view class="panel-header">
+          <text class="panel-title">需放问题反馈</text>
+        </view>
+        
+        <view class="list-menu">
+          <view class="list-item" @click="navigateTo('/pages/dean/daily-tasks')">
+            <view class="item-left">
+                <image class="list-icon" src="/static/images/refresh.png" mode="aspectFit"></image>
+              <text class="item-text">每日待办</text>
+            </view>
+            <image class="arrow-icon" src="/static/images/arrow-right.png" mode="aspectFit"></image>
+          </view>
+          
+          <view class="list-item" @click="navigateTo('/pages/dean/user-profile')">
+            <view class="item-left">
+                <image class="list-icon" src="/static/images/chates.png" mode="aspectFit"></image>
+              <text class="item-text">个人资料</text>
+            </view>
+            <image class="arrow-icon" src="/static/images/arrow-right.png" mode="aspectFit"></image>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部导航栏 -->
+    <view class="tabbar">
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/index')">
+        <image class="tabbar-icon" src="/static/images/home.png"></image>
+        <text class="tabbar-text">详情</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/dispute')">
+        <image class="tabbar-icon" src="/static/images/dispute.png"></image>
+        <text class="tabbar-text">纠纷</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/staff')">
+        <image class="tabbar-icon" src="/static/images/staff.png"></image>
+        <text class="tabbar-text">员工</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/activity')">
+        <image class="tabbar-icon" src="/static/images/activity.png"></image>
+        <text class="tabbar-text">活动</text>
+      </view>
+      <view class="tabbar-item" @click="redirectTo('/pages/dean/management')">
+        <image class="tabbar-icon" src="/static/images/management.png"></image>
+        <text class="tabbar-text">院下管理</text>
+      </view>
+      <view class="tabbar-item active">
+        <image class="tabbar-icon" src="/static/images/user.png"></image>
+        <text class="tabbar-text active">我的</text>
+      </view>
+    </view>
+    
+    <!-- 问题反馈弹窗 -->
+    <view v-if="showPopup" class="popup-mask" @click="closePopup">
+      <view class="popup-content" @click.stop>
+        <view class="popup-header">
+          <text class="popup-title">{{feedbackType}}问题反馈</text>
+          <view class="close-btn" @click="closePopup">
+            <text class="close-icon">×</text>
+          </view>
+        </view>
+        
+        <view class="popup-body">
+          <view class="form-item">
+            <text class="form-label">问题标题</text>
+            <input class="form-input" v-model="feedbackTitle" placeholder="请输入问题标题" />
+          </view>
+          
+          <view class="form-item">
+            <text class="form-label">问题详情</text>
+            <textarea class="form-textarea" v-model="feedbackContent" placeholder="请详细描述您遇到的问题" />
+          </view>
+          
+          <view class="form-item">
+            <text class="form-label">问题等级</text>
+            <view class="level-selector">
+              <view 
+                v-for="(level, index) in levelOptions" 
+                :key="index" 
+                :class="['level-item', feedbackLevel === level.value ? 'level-selected' : '']"
+                @click="selectLevel(level.value)"
+              >
+                <text>{{level.label}}</text>
+              </view>
+            </view>
+          </view>
+          
+          <view class="form-item">
+            <button class="submit-btn" @click="submitFeedback">提交反馈</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+interface UserInfo {
+  name: string
+  avatar: string
+  role: string
+}
+
+interface LevelOption {
+  label: string
+  value: number
+}
+
+export default {
+  data() {
+    return {
+      currentTime: '',
+      userName: '胡永龙',
+      userRole: '',
+      timerID: 0,
+      
+      // 问题反馈弹窗相关数据
+      showPopup: false,
+      feedbackType: '',
+      feedbackTitle: '',
+      feedbackContent: '',
+      feedbackLevel: 1,
+      levelOptions: [
+        { label: '低', value: 1 },
+        { label: '中', value: 2 },
+        { label: '高', value: 3 },
+        { label: '紧急', value: 4 }
+      ] as LevelOption[]
+    }
+  },
+  onLoad() {
+    this.updateTime()
+    this.fetchUserInfo()
+    
+    // 设置定时器，每秒更新一次时间
+    this.timerID = setInterval(() => {
+      this.updateTime()
+    }, 1000) as unknown as number
+  },
+  onUnload() {
+    // 页面卸载时清除定时器
+    clearInterval(this.timerID)
+  },
+  methods: {
+    updateTime() {
+      const now = new Date()
+      const hours = now.getHours().toString().padStart(2, '0')
+      const minutes = now.getMinutes().toString().padStart(2, '0')
+      this.currentTime = `${hours}:${minutes}`
+    },
+    
+    async fetchUserInfo() {
+      try {
+        // 从本地存储获取token
+        const accessToken = uni.getStorageSync('accessToken')
+        const refreshToken = uni.getStorageSync('refreshToken')
+        
+        if (!accessToken || !refreshToken) {
+          uni.showToast({
+            title: '未登录或登录已过期',
+            icon: 'none'
+          })
+          // 跳转到登录页
+          uni.redirectTo({
+            url: '/pages/dean/login'
+          })
+          return
+        }
+        
+        // 这里应该实现获取用户信息的逻辑
+        // 目前使用假数据演示
+        this.userName = '胡永龙'
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        uni.showToast({
+          title: '获取用户信息失败',
+          icon: 'none'
+        })
+      }
+    },
+    
+    showDataInfo() {
+      uni.showModal({
+        title: '数据说明',
+        content: '此处显示数据相关说明和帮助信息',
+        showCancel: false
+      })
+    },
+    
+    // 显示问题反馈弹窗
+    showFeedbackPopup(type: string) {
+      this.feedbackType = type
+      this.showPopup = true
+      // 重置表单
+      this.feedbackTitle = ''
+      this.feedbackContent = ''
+      this.feedbackLevel = 1
+    },
+    
+    // 关闭问题反馈弹窗
+    closePopup() {
+      this.showPopup = false
+    },
+    
+    // 选择问题等级
+    selectLevel(level: number) {
+      this.feedbackLevel = level
+    },
+    
+    // 提交问题反馈
+    submitFeedback() {
+      // 表单验证
+      if (!this.feedbackTitle.trim()) {
+        uni.showToast({
+          title: '请输入问题标题',
+          icon: 'none'
+        })
+        return
+      }
+      
+      if (!this.feedbackContent.trim()) {
+        uni.showToast({
+          title: '请输入问题详情',
+          icon: 'none'
+        })
+        return
+      }
+      
+      // 显示确认弹框
+      uni.showModal({
+        title: '确认提交',
+        content: '您确定要提交此问题反馈吗？',
+        success: (res) => {
+          if (res.confirm) {
+            // 这里可以添加实际的提交逻辑
+            // 模拟提交成功
+            setTimeout(() => {
+              uni.showToast({
+                title: '提交成功',
+                icon: 'success'
+              })
+              this.closePopup()
+            }, 500)
+          }
+        }
+      })
+    },
+    
+    navigateTo(url: string) {
+      uni.navigateTo({
+        url: url
+      })
+    },
+    
+    redirectTo(url: string) {
+      uni.redirectTo({
+        url: url
+      })
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  position: relative;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  height: 120rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30rpx;
+  background-color: #26c48b;
+  position: relative;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 42rpx;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  width: 44rpx;
+  height: 44rpx;
+  opacity: 0.9;
+}
+
+.container {
+  padding: 20rpx 30rpx 120rpx;
+  margin-top: -20rpx;
+  position: relative;
+  z-index: 5;
+}
+
+.user-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 30rpx;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+
+.user-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  overflow: hidden;
+  margin-right: 20rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.1);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 8rpx;
+}
+
+.user-role {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.user-arrow {
+  width: 40rpx;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.panel {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.feedback-panel {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94));
+}
+
+.panel-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.panel-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.panel-action {
+  padding: 6rpx 16rpx;
+  border-radius: 24rpx;
+  background-color: #f8f8f8;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.action-text {
+  font-size: 24rpx;
+  color: #666666;
+}
+
+.tiny-arrow {
+  width: 24rpx;
+  height: 24rpx;
+  margin-left: 6rpx;
+  opacity: 0.6;
+}
+
+.icon-grid {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  padding: 10rpx 0;
+}
+
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  transition: transform 0.2s;
+}
+
+.icon-item:active {
+  transform: scale(0.95);
+}
+
+.icon-container {
+  width: 90rpx;
+  height: 90rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 45rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 6rpx 12rpx rgba(0, 0, 0, 0.1);
+}
+
+.icon-container.small {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+.icon-container.blue {
+  background: linear-gradient(45deg, #007AFF, #5ac8fa);
+}
+
+.icon-container.green {
+  background: linear-gradient(45deg, #26c48b, #4cd964);
+}
+
+.feature-icon {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+}
+
+.icon-text {
+  font-size: 26rpx;
+  color: #666666;
+  font-weight: 500;
+}
+
+.list-menu {
+  background-color: transparent;
+  border-radius: 16rpx;
+}
+
+.list-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  border-bottom: 1rpx solid rgba(240, 240, 240, 0.8);
+  transition: background-color 0.2s;
+}
+
+.list-item:active {
+  background-color: rgba(245, 245, 245, 0.8);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.item-left {
+  display: flex;
+  margin: auto;
+  height: inherit;
+  align-items: center;
+}
+
+.list-icon {
+  width: 80rpx;
+  height: 80rpx;
+}
+
+.item-text {
+  font-size: 28rpx;
+  color: #333333;
+  margin-left: 16rpx;
+  font-weight: 500;
+}
+
+.arrow-icon {
+  width: 32rpx;
+  height: 32rpx;
+  opacity: 0.6;
+}
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100rpx;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-top: 1rpx solid #eeeeee;
+  z-index: 10;
+  padding: 0 10rpx;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.03);
+}
+
+.tabbar-item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5rpx;
+}
+
+.tabbar-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-bottom: 4rpx;
+}
+
+.tabbar-text {
+  font-size: 20rpx;
+  color: #999999;
+}
+
+.tabbar-text.active {
+  color: #26c48b;
+  font-weight: bold;
+}
+
+/* 弹窗样式 */
+.popup-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  width: 600rpx;
+  max-height: 80vh;
+  background-color: #ffffff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 6rpx 30rpx rgba(0, 0, 0, 0.15);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.popup-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.close-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.close-icon {
+  font-size: 40rpx;
+  color: #999999;
+}
+
+.popup-body {
+  padding: 24rpx;
+  max-height: calc(80vh - 120rpx);
+  overflow-y: auto;
+}
+
+.form-item {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: #333333;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  border: 1px solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 0 16rpx;
+  font-size: 28rpx;
+  color: #333333;
+  background-color: #f8f8f8;
+}
+
+.form-textarea {
+  width: 100%;
+  height: 200rpx;
+  border: 1px solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  font-size: 28rpx;
+  color: #333333;
+  background-color: #f8f8f8;
+}
+
+.level-selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.level-item {
+  flex: 1;
+  height: 70rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 8rpx;
+  border: 1px solid #e0e0e0;
+  border-radius: 8rpx;
+  background-color: #f8f8f8;
+  font-size: 26rpx;
+  color: #666666;
+}
+
+.level-item:first-child {
+  margin-left: 0;
+}
+
+.level-item:last-child {
+  margin-right: 0;
+}
+
+.level-selected {
+  background-color: #26c48b;
+  color: #ffffff;
+  border-color: #26c48b;
+}
+
+.submit-btn {
+  height: 90rpx;
+  background-color: #26c48b;
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 45rpx;
+  margin-top: 24rpx;
+}
+</style> 

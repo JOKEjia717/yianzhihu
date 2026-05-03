@@ -1,0 +1,612 @@
+<template>
+	<view class="container">
+		<!-- 顶部导航栏 -->
+		<view class="nav-bar">
+			<view class="back-btn" @click="handleBack">
+				<text class="back-icon">←</text>
+			</view>
+			<text class="title">养老院详情</text>
+		</view>
+
+		<!-- 内容区域 -->
+		<view class="content">
+			<!-- 基本信息 -->
+			<view class="info-card">
+				<image class="nursing-image" :src="nursingDetail.photo" mode="aspectFill"></image>
+				<view class="info-content">
+					<text class="name">{{ nursingDetail.name }}</text>
+					<text class="address">{{ nursingDetail.address }}</text>
+				</view>
+			</view>
+
+			<!-- 详细信息 -->
+			<view class="detail-card">
+				<view class="detail-item">
+					<text class="label">院长</text>
+					<text class="value">{{ nursingDetail.director }}</text>
+				</view>
+				<view class="detail-item">
+					<text class="label">创建时间</text>
+					<text class="value">{{ formatDate(nursingDetail.createdTime) }}</text>
+				</view>
+				<view class="detail-item">
+					<text class="label">荣誉资质</text>
+					<text class="value">{{ nursingDetail.honors }}</text>
+				</view>
+			</view>
+		</view>
+
+		<!-- 申请入院按钮及弹窗 -->
+		<view class="footer-btn">
+			<button :disabled="isApplying" @click="openApplyModal">
+				{{ isApplying ? '申请中' : '申请入院' }}
+			</button>
+		</view>
+		<view v-if="showApplyModal" class="modal-mask">
+			<view class="modal-content">
+				<view class="modal-title">老人信息填写</view>
+				<view v-if="formError" class="form-error">{{ formError }}</view>
+				<view class="info-item">
+					<text class="label">姓名</text>
+					<input class="value" v-model="elderForm.name" placeholder="请输入老人姓名" />
+				</view>
+				<view class="info-item">
+					<text class="label">性别</text>
+					<view class="gender-select">
+						<view 
+							class="gender-option" 
+							:class="{ active: elderForm.gender === 1 }"
+							@click="elderForm.gender = 1"
+						>
+							<text>男</text>
+						</view>
+						<view 
+							class="gender-option" 
+							:class="{ active: elderForm.gender === 0 }"
+							@click="elderForm.gender = 0"
+						>
+							<text>女</text>
+						</view>
+					</view>
+				</view>
+				<view class="info-item">
+					<text class="label">年龄</text>
+					<input class="value" v-model="elderForm.age" type="number" placeholder="请输入年龄" />
+				</view>
+				<view class="upload-section">
+					<view class="upload-label">照片上传</view>
+					<view class="image-grid">
+						<view v-for="(img, idx) in elderForm.photos" :key="idx" class="image-item">
+							<image :src="img" mode="aspectFill" class="preview-image" />
+							<view class="delete-btn" @click="deletePhoto(idx)">×</view>
+						</view>
+						<view v-if="elderForm.photos.length < 1" class="upload-btn" @click="choosePhoto">
+							<text class="plus">+</text>
+						</view>
+					</view>
+				</view>
+				<view class="modal-actions">
+					<button @click="submitApply" type="primary">提交</button>
+					<button @click="closeApplyModal">取消</button>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+import { request } from '../../utils/request'
+
+interface NursingDetail {
+	nursingHomeId: string
+	name: string
+	address: string
+	photo: string
+	director: string
+	honors: string
+	createdTime: string
+	deanId?: string
+}
+
+interface ApiResponse<T> {
+	code: number
+	msg: string | null
+	data: T
+}
+
+export default {
+	data() {
+		return {
+			nursingDetail: {} as NursingDetail,
+			isApplying: false,
+			showApplyModal: false,
+			elderForm: {
+				name: '',
+				gender: 0,
+				age: '',
+				photos: []
+			},
+			genderOptions: ['男', '女'],
+			childrenInfo: {
+				childrenId: '',
+				name: '',
+				phone: ''
+			},
+			formError: ''
+		}
+	},
+	onLoad(options: Record<string, string>) {
+		const nursingHomeId = options.nursingHomeId
+		if (nursingHomeId) {
+			this.loadNursingDetail(nursingHomeId)
+		}
+		// 获取子女信息
+		const userInfo = uni.getStorageSync('userInfo')
+		if (userInfo) {
+			this.childrenInfo = {
+				childrenId: userInfo.childrenId,
+				name: userInfo.name,
+				phone: userInfo.phone
+			}
+		}
+	},
+	methods: {
+		handleBack() {
+			uni.navigateBack()
+		},
+		async loadNursingDetail(nursingHomeId: string) {
+			console.log('开始加载养老院详情，ID:', nursingHomeId)
+			try {
+				const res = await request.get(`/home/selectById?nursingHomeId=${nursingHomeId}`) as { statusCode: number, data: ApiResponse<NursingDetail> }
+				console.log('请求响应:', res)
+				
+				if (res.statusCode === 200 && res.data.code === 1) {
+					this.nursingDetail = res.data.data
+					console.log('数据加载成功:', this.nursingDetail)
+					this.checkIsApplication()
+				} else {
+					console.error('请求失败:', res.data.msg)
+					uni.showToast({
+						title: res.data.msg || '加载失败',
+						icon: 'none'
+					})
+				}
+			} catch (error) {
+				console.error('请求异常:', error)
+				uni.showToast({
+					title: '加载失败',
+					icon: 'none'
+				})
+			}
+		},
+		formatDate(dateStr: string): string {
+			const date = new Date(dateStr)
+			return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+		},
+		openApplyModal() {
+			this.showApplyModal = true
+		},
+		closeApplyModal() {
+			this.showApplyModal = false
+		},
+		async choosePhoto() {
+			const res = await uni.chooseImage({ count: 1 })
+			if (res.tempFilePaths && res.tempFilePaths.length > 0) {
+				this.elderForm.photos.push(res.tempFilePaths[0])
+			}
+		},
+		deletePhoto(index: number) {
+			this.elderForm.photos.splice(index, 1)
+		},
+		async submitApply() {
+			if (!this.elderForm.name || !this.elderForm.age || this.elderForm.photos.length === 0) {
+				this.formError = '请填写完整信息'
+				setTimeout(() => {
+					this.formError = ''
+				}, 2000)
+				return
+			}
+			this.formError = ''
+			this.isApplying = true
+			try {
+				// 构建 formData
+				const formData = new FormData()
+				formData.append('caretakerId', this.nursingDetail.deanId || '')
+				formData.append('name', this.elderForm.name)
+				formData.append('gender', Number(this.elderForm.gender)) // integer
+				formData.append('age', Number(this.elderForm.age)) // integer
+				formData.append('childrenName', this.childrenInfo.name)
+				formData.append('childrenPhone', this.childrenInfo.phone)
+				formData.append('childrenId', this.childrenInfo.childrenId)
+				// 只取第一张照片
+				const filePath = this.elderForm.photos[0]
+				formData.append('photo', {
+					uri: filePath,
+					type: 'image/jpeg', // 或根据实际类型调整
+					name: 'photo.jpg'
+				})
+
+				// 获取 accesstoken 和 refreshtoken
+				const accessToken = uni.getStorageSync('accessToken')
+				const refreshToken = uni.getStorageSync('refreshToken')
+
+				// 发送请求
+				const res = await uni.uploadFile({
+					url: `http://localhost:8080/elder/create?deanId=${this.nursingDetail.deanId}`,
+					filePath: filePath,
+					name: 'photo',
+					formData: {
+						caretakerId: this.nursingDetail.deanId || '',
+						name: this.elderForm.name,
+						gender: Number(this.elderForm.gender),
+						age: Number(this.elderForm.age),
+						childrenName: this.childrenInfo.name,
+						childrenPhone: this.childrenInfo.phone,
+						childrenId: this.childrenInfo.childrenId
+					},
+					header: {
+						'accessToken': accessToken,
+						'refreshToken': refreshToken
+					}
+				})
+
+				// 处理响应
+				const data = JSON.parse(res.data)
+				if (res.statusCode === 200 && data.code === 1) {
+					uni.showToast({ title: '申请成功', icon: 'success' })
+					this.showApplyModal = false
+					this.isApplying = true
+				} else {
+					throw new Error(data.msg || '申请失败')
+				}
+			} catch (e) {
+				uni.showToast({ title: e.message || '申请失败', icon: 'none' })
+				this.isApplying = false
+			}
+		},
+		async checkIsApplication() {
+			const accessToken = uni.getStorageSync('accessToken')
+			const refreshToken = uni.getStorageSync('refreshToken')
+			try {
+				const res = await uni.request({
+					url: 'http://localhost:8080/elder/isApplication',
+					method: 'GET',
+					data: {
+						childrenId: this.childrenInfo.childrenId,
+						deanId: this.nursingDetail.deanId
+					},
+					header: {
+						'accessToken': accessToken,
+						'refreshToken': refreshToken
+					}
+				})
+				if (res.statusCode === 200 && res.data.code === 1) {
+					this.isApplying = res.data.data === 1
+				}
+			} catch (e) {
+				// 可选：处理异常
+				this.isApplying = false
+			}
+		}
+	}
+}
+</script>
+
+<style>
+.container {
+	min-height: 100vh;
+	background: #F5F7FA;
+	position: relative;
+}
+
+.nav-bar {
+	height: 88rpx;
+	background: #FFFFFF;
+	display: flex;
+	align-items: center;
+	padding: 0 24rpx;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 100;
+	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.back-btn {
+	width: 60rpx;
+	height: 60rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: absolute;
+	left: 24rpx;
+}
+
+.back-icon {
+	font-size: 40rpx;
+	color: #2D3748;
+}
+
+.title {
+	width: 100%;
+	text-align: center;
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #2D3748;
+}
+
+.content {
+	padding: 108rpx 24rpx 180rpx;
+}
+
+.info-card {
+	background: #FFFFFF;
+	border-radius: 24rpx;
+	padding: 24rpx;
+	margin-bottom: 24rpx;
+	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.nursing-image {
+	width: 100%;
+	height: 400rpx;
+	border-radius: 16rpx;
+	margin-bottom: 24rpx;
+}
+
+.info-content {
+	padding: 0 12rpx;
+}
+
+.name {
+	font-size: 36rpx;
+	font-weight: 600;
+	color: #2D3748;
+	margin-bottom: 12rpx;
+	display: block;
+}
+
+.address {
+	font-size: 28rpx;
+	color: #718096;
+	display: block;
+}
+
+.detail-card {
+	background: #FFFFFF;
+	border-radius: 24rpx;
+	padding: 24rpx;
+	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.detail-item {
+	margin-bottom: 24rpx;
+}
+
+.detail-item:last-child {
+	margin-bottom: 0;
+}
+
+.label {
+	font-size: 28rpx;
+	color: #718096;
+	margin-bottom: 8rpx;
+	display: block;
+}
+
+.value {
+	flex: 1;
+	color: #333;
+	font-size: 28rpx;
+	background: transparent;
+	border: none;
+	outline: none;
+	text-align: left;
+	height: 48rpx;
+	line-height: 48rpx;
+	padding: 0;
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	box-shadow: none;
+}
+.value:focus {
+	border: none;
+	outline: none;
+	box-shadow: none;
+}
+
+.footer-btn {
+	position: fixed;
+	left: 0; right: 0; bottom: 0;
+	background: #fff;
+	padding: 24rpx 32rpx;
+	box-shadow: 0 -2rpx 8rpx rgba(0,0,0,0.04);
+	z-index: 500;
+}
+.footer-btn button {
+	width: 100%;
+	height: 88rpx;
+	border-radius: 44rpx;
+	font-size: 32rpx;
+	background: #4FD1C5;
+	color: #fff;
+	border: none;
+}
+.modal-mask {
+	position: fixed; 
+	left: 0; 
+	top: 0; 
+	right: 0; 
+	bottom: 0;
+	background: rgba(0,0,0,0.3);
+	z-index: 1000;
+	display: flex; 
+	align-items: center; 
+	justify-content: center;
+}
+.modal-content {
+	background: #fff;
+	border-radius: 20rpx;
+	padding: 40rpx 32rpx;
+	width: 80vw;
+	max-height: 80vh;
+	overflow-y: auto;
+	position: relative;
+	z-index: 1001;
+}
+.modal-title {
+	font-size: 32rpx;
+	font-weight: bold;
+	margin-bottom: 32rpx;
+	text-align: center;
+}
+.modal-actions {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 32rpx;
+}
+.modal-actions button {
+	flex: 1;
+	margin: 0 8rpx;
+}
+.upload-section {
+	margin: 24rpx 0 0 0;
+}
+.upload-label {
+	font-size: 28rpx;
+	color: #666;
+	margin-bottom: 12rpx;
+}
+.image-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 20rpx;
+}
+.image-item, .upload-btn {
+	width: 160rpx;
+	height: 160rpx;
+	border-radius: 10rpx;
+	position: relative;
+	background: #f8fafc;
+	border: 1rpx solid #eee;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.preview-image {
+	width: 100%;
+	height: 100%;
+	border-radius: 10rpx;
+}
+.delete-btn {
+	position: absolute;
+	top: -16rpx;
+	right: -16rpx;
+	width: 40rpx;
+	height: 40rpx;
+	background-color: rgba(0,0,0,0.5);
+	color: #fff;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 32rpx;
+	z-index: 2;
+}
+.upload-btn {
+	border: 2rpx dashed #ddd;
+	cursor: pointer;
+}
+.plus {
+	font-size: 60rpx;
+	color: #bbb;
+}
+.info-item {
+	margin: 24rpx 0;
+	position: relative;
+}
+.info-item .label {
+	font-size: 28rpx;
+	color: #666;
+	margin-bottom: 12rpx;
+	display: block;
+}
+.info-item .value {
+	width: 100%;
+	height: 80rpx;
+	background: #f8fafc;
+	border: 1rpx solid #eee;
+	border-radius: 10rpx;
+	padding: 0 20rpx;
+	font-size: 28rpx;
+	color: #333;
+}
+.info-item .picker {
+	position: relative;
+	z-index: 10001;
+	padding: 0;
+	color: #888;
+}
+.picker {
+	position: relative;
+	z-index: 10001;
+	padding: 0;
+	color: #888;
+}
+.uni-picker-container {
+	z-index: 99999 !important;
+}
+
+.uni-picker {
+	z-index: 99999 !important;
+}
+
+.uni-picker-view {
+	z-index: 99999 !important;
+}
+
+.uni-picker-view-indicator {
+	z-index: 99999 !important;
+}
+
+.uni-picker-view-content {
+	z-index: 99999 !important;
+}
+
+.gender-select {
+	display: flex;
+	gap: 20rpx;
+}
+
+.gender-option {
+	flex: 1;
+	height: 80rpx;
+	background: #f8fafc;
+	border: 1rpx solid #eee;
+	border-radius: 10rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28rpx;
+	color: #666;
+}
+
+.gender-option.active {
+	background: #4FD1C5;
+	color: #fff;
+	border-color: #4FD1C5;
+}
+
+.form-error {
+	color: #e53e3e;
+	background: #fff0f0;
+	border: 1rpx solid #e53e3e;
+	border-radius: 8rpx;
+	padding: 12rpx 20rpx;
+	margin-bottom: 20rpx;
+	font-size: 26rpx;
+	text-align: center;
+}
+</style> 

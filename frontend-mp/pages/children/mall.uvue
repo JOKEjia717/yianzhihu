@@ -1,0 +1,852 @@
+<template>
+	<view class="container">
+		<!-- 顶部导航栏 -->
+		<view class="nav-bar">
+			<text class="back-icon">←</text>
+			<text class="title">商城</text>
+		</view>
+
+		<!-- 搜索区域 -->
+		<view class="search-area">
+			<view class="search-row">
+				<!-- 价格筛选 -->
+				<view class="price-filter" @click="showPriceFilter = true">
+					<text>价格</text>
+					<text class="filter-icon">▼</text>
+				</view>
+				<!-- 搜索输入框 -->
+				<view class="search-input-wrapper">
+
+					<input
+						class="search-input"
+						type="text"
+						v-model="searchKey"
+						placeholder="搜索商品"
+						placeholder-class="placeholder-style"
+						@confirm="handleSearch"
+					/>
+				</view>
+				<!-- 搜索按钮 -->
+				<view class="search-btn" @click="handleSearch">
+					<text>搜索</text>
+				</view>
+			</view>
+		</view>
+
+		<!-- 价格筛选弹窗 -->
+		<view class="price-filter-mask" v-if="showPriceFilter" @click="showPriceFilter = false">
+			<view class="price-filter-content" @click.stop>
+				<view class="price-filter-header">
+					<text class="price-filter-title">价格区间</text>
+					<text class="price-filter-close" @click="showPriceFilter = false">×</text>
+				</view>
+				<view class="price-range-input">
+					<input
+						type="number"
+						v-model="tempPriceRange.min"
+						placeholder="最低价"
+					/>
+					<text class="price-range-separator">-</text>
+					<input
+						type="number"
+						v-model="tempPriceRange.max"
+						placeholder="最高价"
+					/>
+				</view>
+				<view class="price-quick-select">
+					<view
+						class="price-range-item"
+						v-for="(range, index) in priceRanges"
+						:key="index"
+						:class="{'active': isSelectedRange(range)}"
+						@click="selectPriceRange(range)"
+					>
+						<text>{{range.text}}</text>
+					</view>
+				</view>
+				<view class="price-filter-actions">
+					<button class="reset-btn" @click="resetPriceFilter">重置</button>
+					<button class="confirm-btn" @click="confirmPriceFilter">确定</button>
+				</view>
+			</view>
+		</view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y @scrolltolower="loadMore">
+			<!-- 广告横幅 -->
+			<view class="banner">
+				<image src="/static/images/banner.jpg" mode="aspectFill"></image>
+				<view class="banner-content">
+					<text class="banner-title">礼物不是虚题</text>
+					<text class="banner-subtitle">爱一份 献一份</text>
+					<text class="banner-tag">市场加入推荐</text>
+				</view>
+			</view>
+
+			<!-- 功能图标网格 -->
+			<view class="function-grid">
+				<view class="function-item" v-for="(item, index) in functionItems" :key="index" @click="handleFunction(item.type)">
+					<image :src="item.icon" mode="aspectFit"></image>
+					<text>{{item.name}}</text>
+				</view>
+			</view>
+
+			<!-- 商品区域标题 -->
+			<view class="section-title">
+				<text>商品页面</text>
+			</view>
+
+			<!-- 商品列表 -->
+			<view class="product-grid">
+				<view class="product-item" v-for="item in products" :key="item.id" @click="goToDetail(item.id)">
+					<image class="product-image" :src="item.image || '/static/images/default-product.jpg'" mode="aspectFill"></image>
+					<view class="product-info">
+						<text class="product-name">{{item.name}}</text>
+						<view class="product-price">
+							<text class="price-symbol">¥</text>
+							<text class="price-value">{{item.price}}</text>
+							<text class="sold-count">已售{{item.sold}}</text>
+						</view>
+						<view class="product-status" :class="getStatusClass(item.status)">
+							<text>{{getStatusText(item.status)}}</text>
+						</view>
+						<view class="add-to-cart" 
+						      v-if="item.status === 0"
+						      @click.stop="handleAddCart(item)">+</view>
+					</view>
+				</view>
+			</view>
+
+			<!-- 加载更多 -->
+			<view class="loading" v-if="isLoading">
+				<text>加载中...</text>
+			</view>
+			<view class="no-more" v-else-if="products.length >= total && products.length > 0">
+				<text>没有更多商品了</text>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Category {
+		id: string
+		name: string
+	}
+
+	interface Product {
+		id: number
+		name: string
+		price: number
+		stock: number
+		image: string | null
+		sold: number
+		status: number
+		createTime: string
+	}
+
+	interface FunctionItem {
+		icon: string
+		name: string
+		type: string
+	}
+
+	interface SearchParams {
+		pageNo: number
+		pageSize: number
+		itemName?: string
+		isAsc?: boolean
+		maxPrice?: number
+		minPrice?: number
+	}
+
+	interface ApiResponse<T> {
+		code: number
+		msg: string | null
+		data: {
+			total: number
+			pages: number
+			list: T[]
+		}
+	}
+
+	interface PriceRange {
+		min: number | null
+		max: number | null
+		text: string
+	}
+
+	export default {
+		data() {
+			return {
+				searchKey: '',
+				isLoading: false,
+				searchParams: {
+					pageNo: 1,
+					pageSize: 10,
+					itemName: '',
+					isAsc: true
+				} as SearchParams,
+				total: 0,
+				products: [] as Product[],
+				functionItems: [
+					{ icon: '/static/images/icon-popular.png', name: '热门促销', type: 'popular' },
+					{ icon: '/static/images/icon-reserve.png', name: '预售', type: 'reserve' },
+					{ icon: '/static/images/icon-new.png', name: '生鲜', type: 'fresh' },
+					{ icon: '/static/images/icon-drink.png', name: '乳品', type: 'video' },
+					{ icon: '/static/images/icon-care.png', name: '护工到家', type: 'care' },
+					{ icon: '/static/images/icon-money.png', name: '服务', type: 'service' },
+					{ icon: '/static/images/icon-frsh.png', name: '便利店', type: 'store' },
+					{ icon: '/static/images/icon-self.png', name: '老人专区', type: 'elderly' },
+					{ icon: '/static/images/icon-recommend.png', name: '推荐', type: 'recommend' },
+					{ icon: '/static/images/icon-more.png', name: '更多', type: 'more' }
+				] as FunctionItem[],
+				showPriceFilter: false,
+				tempPriceRange: {
+					min: null,
+					max: null
+				} as PriceRange,
+				priceRanges: [
+					{ min: null, max: 100, text: '100元以下' },
+					{ min: 100, max: 500, text: '100-500元' },
+					{ min: 500, max: 1000, text: '500-1000元' },
+					{ min: 1000, max: 2000, text: '1000-2000元' },
+					{ min: 2000, max: null, text: '2000元以上' }
+				] as PriceRange[]
+			}
+		},
+		onLoad() {
+			this.fetchProducts()
+		},
+		methods: {
+			 async handleAddCart(item: Product) {
+			    // 检查登录状态
+			    const accessToken = uni.getStorageSync('accessToken')
+			    const refreshToken = uni.getStorageSync('refreshToken')
+			    if (!accessToken || !refreshToken) {
+			      uni.showToast({
+			        title: '请先登录',
+			        icon: 'none'
+			      })
+			      setTimeout(() => {
+			        uni.navigateTo({ url: '/pages/login/login' })
+			      }, 1500)
+			      return
+			    }
+			
+			    // 构建请求参数
+			    const params = {
+			      itemId: item.id.toString(),
+			      name: item.name,
+			      price: item.price.toFixed(2),
+			      num: 1 ,// 默认添加1件，可按需调整
+				  image:item.image
+			    }
+			
+			    try {
+			      const res = await uni.request({
+			        url: 'http://localhost:8080/goods/cart/save',
+			        method: 'POST',
+			        header: {
+			          'Content-Type': 'application/json',
+			          'accessToken': accessToken,
+			          'refreshToken': refreshToken
+			        },
+			        data: JSON.stringify(params)
+			      })
+			
+			      const response = res.data as ApiResponse<null>
+			      if (response.code === 1) {
+			        uni.showToast({
+			          title: '已加入购物车',
+			          icon: 'success'
+			        })
+			      } else {
+			        uni.showToast({
+			          title: response.msg || '操作失败',
+			          icon: 'none'
+			        })
+			      }
+			    } catch (error) {
+			      uni.showToast({
+			        title: '网络异常，请稍后重试',
+			        icon: 'none'
+			      })
+			    }
+			  },
+			async fetchProducts() {
+				if (this.isLoading) return
+				this.isLoading = true
+
+				try {
+					// 构建查询参数
+					const queryParams = Object.entries(this.searchParams)
+						.filter(([_, value]) => value !== undefined)
+						.map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+						.join('&')
+
+					// 获取token
+					const accessToken = uni.getStorageSync('accessToken')
+					const refreshToken = uni.getStorageSync('refreshToken')
+
+					const res = await uni.request({
+						url: `http://localhost:8080/goods/search?${queryParams}`,
+						method: 'GET',
+						header: {
+							'accessToken': accessToken,
+							'refreshToken': refreshToken
+						}
+					})
+
+					const response = res.data as ApiResponse<Product>
+					if (response.code === 1 && response.data) {
+						if (this.searchParams.pageNo === 1) {
+							this.products = response.data.list
+						} else {
+							this.products = [...this.products, ...response.data.list]
+						}
+						this.total = response.data.total
+					} else {
+						uni.showToast({
+							title: '获取商品列表失败',
+							icon: 'none'
+						})
+					}
+				} catch (error) {
+					uni.showToast({
+						title: '网络请求失败',
+						icon: 'none'
+					})
+				} finally {
+					this.isLoading = false
+				}
+			},
+			handleSearch() {
+				this.searchParams.pageNo = 1
+				this.searchParams.itemName = this.searchKey
+				this.fetchProducts()
+			},
+			handleFunction(type: string) {
+				console.log('功能点击：', type)
+			},
+			loadMore() {
+				if (this.isLoading) return
+				if (this.products.length >= this.total) {
+					uni.showToast({
+						title: '没有更多商品了',
+						icon: 'none'
+					})
+					return
+				}
+				this.searchParams.pageNo += 1
+				this.fetchProducts()
+			},
+			goToDetail(id: number) {
+				uni.navigateTo({
+					url: `/pages/children/product-detail?id=${id}`
+				})
+			},
+			isSelectedRange(range: PriceRange): boolean {
+				return this.tempPriceRange.min === range.min && this.tempPriceRange.max === range.max
+			},
+			selectPriceRange(range: PriceRange) {
+				this.tempPriceRange = { ...range }
+			},
+			resetPriceFilter() {
+				this.tempPriceRange.min = null
+				this.tempPriceRange.max = null
+				this.searchParams.minPrice = undefined
+				this.searchParams.maxPrice = undefined
+				this.showPriceFilter = false
+				this.searchParams.pageNo = 1
+				this.fetchProducts()
+			},
+			confirmPriceFilter() {
+				if (this.tempPriceRange.min !== null && this.tempPriceRange.max !== null &&
+					this.tempPriceRange.min > this.tempPriceRange.max) {
+					uni.showToast({
+						title: '价格区间不合法',
+						icon: 'none'
+					})
+					return
+				}
+
+				this.searchParams.minPrice = this.tempPriceRange.min ?? undefined
+				this.searchParams.maxPrice = this.tempPriceRange.max ?? undefined
+				this.searchParams.pageNo = 1
+				this.showPriceFilter = false
+				this.fetchProducts()
+			},
+			getStatusClass(status: number): string {
+				switch(status) {
+					case 0:
+						return 'status-normal'
+					case 1:
+						return 'status-offline'
+					case 2:
+						return 'status-deleted'
+					default:
+						return ''
+				}
+			},
+			getStatusText(status: number): string {
+				switch(status) {
+					case 0:
+						return '正常'
+					case 1:
+						return '下架'
+					case 2:
+						return '已删除'
+					default:
+						return ''
+				}
+			}
+
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+	}
+
+	/* 顶部导航栏 */
+	.nav-bar {
+		background: #4CAF50;
+		padding: 20rpx 30rpx;
+		display: flex;
+		align-items: center;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.back-icon {
+		color: #FFFFFF;
+		font-size: 40rpx;
+		font-weight: bold;
+		margin-right: 20rpx;
+	}
+
+	.title {
+		color: #FFFFFF;
+		font-size: 32rpx;
+		font-weight: bold;
+	}
+
+	/* 搜索区域 */
+	.search-area {
+		padding: 20rpx 24rpx;
+		background: #4CAF50;
+		position: fixed;
+		top: 88rpx;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.search-row {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		width: 100%;
+		height: 68rpx;
+	}
+
+	/* 价格筛选 */
+	.price-filter {
+		width: 110rpx;
+		height: 100%;
+		background: #FFFFFF;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 28rpx;
+		color: #4CAF50;
+		border-radius: 34rpx 0 0 34rpx;
+	}
+
+	.filter-icon {
+		font-size: 20rpx;
+		margin-left: 2rpx;
+		color: #4CAF50;
+	}
+
+	/* 搜索输入框容器 */
+	.search-input-wrapper {
+		flex: 1;
+		height: 100%;
+		background: #FFFFFF;
+		display: flex;
+		align-items: center;
+		padding: 0 20rpx;
+	}
+
+	/* 搜索输入框 */
+	.search-input {
+		flex: 1;
+		height: 100%;
+		font-size: 28rpx;
+		color: #4CAF50;
+		padding: 0;
+		margin: 0;
+		background: transparent;
+		border: none;
+		font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+	}
+
+	.placeholder-style {
+		color: #A5D6A7;
+		font-size: 28rpx;
+		font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+	}
+
+	/* 搜索按钮 */
+	.search-btn {
+		width: 110rpx;
+		height: 100%;
+		background: #FFFFFF;
+		border-radius: 0 34rpx 34rpx 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 28rpx;
+		color: #4CAF50;
+	}
+
+	.search-btn:active {
+		opacity: 0.9;
+	}
+
+	/* 价格筛选弹窗 */
+	.price-filter-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		z-index: 1000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.price-filter-content {
+		width: 80%;
+		background: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 30rpx;
+	}
+
+	.price-filter-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 30rpx;
+	}
+
+	.price-filter-title {
+		font-size: 32rpx;
+		font-weight: bold;
+		color: #333333;
+	}
+
+	.price-filter-close {
+		font-size: 40rpx;
+		color: #999999;
+		padding: 10rpx;
+	}
+
+	.price-range-input {
+		display: flex;
+		align-items: center;
+		gap: 20rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.price-range-input input {
+		flex: 1;
+		height: 80rpx;
+		border: 2rpx solid #E0E0E0;
+		border-radius: 10rpx;
+		padding: 0 20rpx;
+		font-size: 28rpx;
+		color: #333333;
+	}
+
+	.price-range-separator {
+		color: #999999;
+		font-size: 28rpx;
+	}
+
+	.price-quick-select {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.price-range-item {
+		padding: 15rpx 30rpx;
+		border-radius: 30rpx;
+		background: #F5F9F6;
+		font-size: 24rpx;
+		color: #4CAF50;
+	}
+
+	.price-range-item.active {
+		background: #4CAF50;
+		color: #FFFFFF;
+	}
+
+	.price-filter-actions {
+		display: flex;
+		gap: 20rpx;
+	}
+
+	.price-filter-actions button {
+		flex: 1;
+		height: 80rpx;
+		border-radius: 40rpx;
+		font-size: 28rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.reset-btn {
+		background: #F5F9F6;
+		color: #4CAF50;
+		border: 2rpx solid #4CAF50;
+	}
+
+	.confirm-btn {
+		background: #4CAF50;
+		color: #FFFFFF;
+	}
+
+	/* 内容区域 */
+	.content {
+		margin-top: 136rpx;
+		padding: 12rpx 20rpx;
+		box-sizing: border-box;
+	}
+
+	/* 广告横幅 */
+	.banner {
+		position: relative;
+		height: 260rpx;
+		border-radius: 16rpx;
+		overflow: hidden;
+		margin-bottom: 24rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+	}
+
+	.banner image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.banner-content {
+		position: absolute;
+		right: 30rpx;
+		bottom: 30rpx;
+		color: #FFFFFF;
+		text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+		text-align: right;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
+	.banner-title {
+		font-size: 36rpx;
+		font-weight: bold;
+		margin-bottom: 8rpx;
+		display: block;
+	}
+
+	.banner-subtitle {
+		font-size: 24rpx;
+		margin-bottom: 8rpx;
+		display: block;
+	}
+
+	.banner-tag {
+		font-size: 20rpx;
+		background: rgba(255, 255, 255, 0.3);
+		padding: 4rpx 12rpx;
+		border-radius: 10rpx;
+		display: inline-block;
+	}
+
+	/* 功能图标网格 */
+	.function-grid {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 24rpx 20rpx;
+		margin-bottom: 30rpx;
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 24rpx 16rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+	}
+
+	.function-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12rpx;
+	}
+
+	.function-item image {
+		width: 84rpx;
+		height: 84rpx;
+		transition: transform 0.3s ease;
+	}
+
+	.function-item:active image {
+		transform: scale(0.92);
+	}
+
+	.function-item text {
+		font-size: 24rpx;
+		color: #4CAF50;
+	}
+
+	/* 商品区域 */
+	.section-title {
+		font-size: 32rpx;
+		font-weight: bold;
+		color: #2E7D32;
+		margin: 30rpx 0 20rpx;
+		padding-left: 10rpx;
+	}
+
+	.product-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20rpx;
+	}
+
+	.product-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		overflow: hidden;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+		transition: transform 0.3s ease;
+	}
+
+	.product-item:active {
+		transform: scale(0.98);
+	}
+
+	.product-image {
+		width: 100%;
+		height: 320rpx;
+		object-fit: cover;
+	}
+
+	.product-info {
+		padding: 16rpx 20rpx;
+	}
+
+	.product-name {
+		font-size: 28rpx;
+		color: #333333;
+		margin-bottom: 12rpx;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.product-price {
+		display: flex;
+		align-items: baseline;
+	}
+
+	.price-symbol {
+		font-size: 24rpx;
+		color: #4CAF50;
+	}
+
+	.price-value {
+		font-size: 32rpx;
+		color: #4CAF50;
+		font-weight: bold;
+		margin-right: 12rpx;
+	}
+
+	.sold-count {
+		font-size: 24rpx;
+		color: #999999;
+	}
+
+	.product-status {
+		position: absolute;
+		top: 10rpx;
+		right: 10rpx;
+		padding: 4rpx 12rpx;
+		border-radius: 8rpx;
+		font-size: 20rpx;
+	}
+
+	.status-normal {
+		background: rgba(76, 175, 80, 0.1);
+		color: #4CAF50;
+	}
+
+	.status-offline {
+		background: rgba(255, 152, 0, 0.1);
+		color: #FF9800;
+	}
+
+	.status-deleted {
+		background: rgba(244, 67, 54, 0.1);
+		color: #F44336;
+	}
+
+	.add-to-cart {
+		position: absolute;
+		right: 20rpx;
+		bottom: 20rpx;
+		width: 48rpx;
+		height: 48rpx;
+		background: #4CAF50;
+		color: #FFFFFF;
+		border-radius: 24rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 32rpx;
+		font-weight: bold;
+		box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.2);
+		transition: transform 0.2s ease;
+	}
+
+	.add-to-cart:active {
+		transform: scale(0.9);
+	}
+
+	/* 加载更多 */
+	.loading {
+		text-align: center;
+		padding: 30rpx;
+		color: #999999;
+		font-size: 24rpx;
+	}
+
+	.no-more {
+		text-align: center;
+		padding: 30rpx;
+		color: #999999;
+		font-size: 24rpx;
+	}
+</style>

@@ -1,0 +1,285 @@
+<template>
+  <view class="container">
+    <!-- 图标 -->
+    <image class="logo" src="/static/images/paper-plane.png" mode="aspectFit"></image>
+    
+    <!-- 欢迎标题 -->
+    <view class="welcome-text">
+      <text class="welcome-en">Welcome home !</text>
+      <text class="welcome-cn">老人注册</text>
+    </view>
+
+    <!-- 注册表单 -->
+    <view class="form-container">
+      <view class="form-header">
+        <view class="tab-group">
+          <text class="tab-item" @click="goToLogin">登陆</text>
+          <text class="tab-item active">注册</text>
+        </view>
+      </view>
+      
+      <view class="form-content">
+        <input 
+          class="input" 
+          v-model="name" 
+          placeholder="请输入姓名"
+          type="text"
+        />
+        <input 
+          class="input" 
+          v-model="account" 
+          placeholder="请输入账号"
+          type="text"
+        />
+        <input 
+          class="input" 
+          v-model="password" 
+          placeholder="请输入密码"
+          type="password"
+        />
+        <input 
+          class="input" 
+          v-model="phone" 
+          placeholder="请输入手机号"
+          type="number"
+        />
+        
+        <!-- 确认按钮 -->
+        <button class="submit-btn" @click="handleRegister" :disabled="isLoading">确认</button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+import { request } from '../../utils/request'
+import { updateTokens } from '../../utils/request'
+
+interface UserInfo {
+  accessToken: string
+  refreshToken: string
+  elderId: string
+  avatar: string
+  name: string
+  phone: string
+  isEnable: number
+}
+
+interface ApiResponse<T> {
+  code: number
+  msg: string | null
+  data: T
+}
+
+export default {
+  data() {
+    return {
+      name: '',
+      account: '',
+      password: '',
+      phone: '',
+      isLoading: false
+    }
+  },
+  methods: {
+    validateForm(): boolean {
+      if (!this.name.trim()) {
+        uni.showToast({
+          title: '请输入姓名',
+          icon: 'none'
+        })
+        return false
+      }
+      
+      if (!this.account.trim()) {
+        uni.showToast({
+          title: '请输入账号',
+          icon: 'none'
+        })
+        return false
+      }
+      
+      if (!this.password) {
+        uni.showToast({
+          title: '请输入密码',
+          icon: 'none'
+        })
+        return false
+      }
+      
+      if (this.password.length < 6) {
+        uni.showToast({
+          title: '密码长度不能少于6位',
+          icon: 'none'
+        })
+        return false
+      }
+      
+      if (!this.phone) {
+        uni.showToast({
+          title: '请输入手机号',
+          icon: 'none'
+        })
+        return false
+      }
+      
+      if (!/^1[3-9]\d{9}$/.test(this.phone)) {
+        uni.showToast({
+          title: '请输入正确的手机号',
+          icon: 'none'
+        })
+        return false
+      }
+      
+      return true
+    },
+    
+    async handleRegister() {
+      if (!this.validateForm()) {
+        return
+      }
+      
+      if (this.isLoading) {
+        return
+      }
+      
+      this.isLoading = true
+      
+      try {
+        const res = await request.post('/children/register', {
+          data: {
+            name: this.name.trim(),
+            account: this.account.trim(),
+            password: this.password,
+            phone: this.phone
+          },
+          skipToken: true
+        }) as { statusCode: number, data: ApiResponse<UserInfo> }
+        
+        if (res.statusCode === 200 && res.data.code === 1) {
+          const { accessToken, refreshToken } = res.data.data
+          
+          updateTokens(accessToken, refreshToken)
+          uni.setStorageSync('userInfo', res.data.data)
+          
+          uni.showToast({
+            title: '注册成功',
+            icon: 'success'
+          })
+          
+          setTimeout(() => {
+            uni.switchTab({
+              url: '/pages/elder/index'
+            })
+          }, 1500)
+        } else {
+          uni.showToast({
+            title: res.data.msg || '注册失败',
+            icon: 'none'
+          })
+        }
+      } catch (error: any) {
+        uni.showToast({
+          title: error.message || '注册失败，请稍后重试',
+          icon: 'none'
+        })
+      } finally {
+        this.isLoading = false
+      }
+    },
+    goToLogin() {
+      uni.navigateBack()
+    }
+  }
+}
+</script>
+
+<style>
+.container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #98D8C8 0%, #E8F5E9 100%);
+  position: relative;
+  padding: 60rpx 40rpx;
+}
+
+.logo {
+  width: 80rpx;
+  height: 80rpx;
+  position: absolute;
+  top: 40rpx;
+  left: 40rpx;
+}
+
+.welcome-text {
+  margin-top: 100rpx;
+  text-align: center;
+}
+
+.welcome-en {
+  font-size: 36rpx;
+  color: #FFFFFF;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.welcome-cn {
+  font-size: 64rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: pre-line;
+  display: block;
+}
+
+.form-container {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-top: 60rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.1);
+}
+
+.tab-group {
+  display: flex;
+  border-bottom: 2rpx solid #EEEEEE;
+  margin-bottom: 40rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 32rpx;
+  color: #999999;
+}
+
+.tab-item.active {
+  color: #34A853;
+  border-bottom: 4rpx solid #34A853;
+}
+
+.input {
+  height: 88rpx;
+  border: 2rpx solid #EEEEEE;
+  border-radius: 44rpx;
+  padding: 0 40rpx;
+  margin-bottom: 30rpx;
+  font-size: 28rpx;
+}
+
+.submit-btn {
+  background: #34A853;
+  color: #FFFFFF;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  margin-top: 40rpx;
+  border: none;
+}
+
+.submit-btn[disabled] {
+  background: #CCCCCC;
+  opacity: 0.7;
+}
+</style>
