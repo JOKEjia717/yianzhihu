@@ -2,22 +2,31 @@
   <view class="page">
     <!-- 顶部标题栏 -->
     <view class="header">
-      <view class="back-btn" @click="handleBack">
-        <text class="back-icon">返回</text>
-        <text class="back-text"></text>
+      <view class="header-left">
+        <view class="dropdown">
+          <picker mode="date" :value="selectedDate" @change="handleDateChange">
+            <view class="picker-content">
+              <text class="picker-text">{{ selectedDate || '选择日期' }}</text>
+            </view>
+          </picker>
+        </view>
       </view>
-      <text class="title">护理日常</text>
-      <view class="dropdown">
-        <picker 
-          :range="elderNames" 
-          @change="handleElderChange" 
-          :value="currentElderIndex"
-        >
-          <view class="picker-content">
-            <text class="picker-text">{{ elderNames[currentElderIndex] || '选择老人' }}</text>
-            <image class="down-icon" src="/static/images/down.png" mode="aspectFit"></image>
-          </view>
-        </picker>
+      <view class="header-center">
+        <text class="title">护理日常</text>
+      </view>
+      <view class="header-right">
+        <view class="dropdown">
+          <picker 
+            :range="elderNames" 
+            @change="handleElderChange" 
+            :value="currentElderIndex"
+          >
+            <view class="picker-content">
+              <text class="picker-text">{{ elderNames[currentElderIndex] || '选择老人' }}</text>
+              <image class="down-icon" src="/static/images/down.png" mode="aspectFit"></image>
+            </view>
+          </picker>
+        </view>
       </view>
     </view>
 
@@ -43,11 +52,6 @@
       <!-- 每日三餐 -->
       <view class="section">
         <view class="section-header">
-          <picker mode="date" :value="mealDate" @change="handleMealDateChange">
-            <view class="date-picker">
-              <text>{{ mealDate || '选择日期' }}</text>
-            </view>
-          </picker>
           <text class="section-title">每日三餐</text>
           <button class="btn-upload" @click="handleMealUpload">上传</button>
         </view>
@@ -103,11 +107,6 @@
       <!-- 衣物穿戴 -->
       <view class="section">
         <view class="section-header">
-          <picker mode="date" :value="clothingDate" @change="handleClothingDateChange">
-            <view class="date-picker">
-              <text>{{ clothingDate || '选择日期' }}</text>
-            </view>
-          </picker>
           <text class="section-title">衣物穿戴</text>
           <button class="btn-upload" @click="handleUpload('clothing')">上传</button>
         </view>
@@ -132,11 +131,6 @@
       <!-- 住宿环境 -->
       <view class="section">
         <view class="section-header">
-          <picker mode="date" :value="livingDate" @change="handleLivingDateChange">
-            <view class="date-picker">
-              <text>{{ livingDate || '选择日期' }}</text>
-            </view>
-          </picker>
           <text class="section-title">住宿环境</text>
           <button class="btn-upload" @click="handleUpload('living')">上传</button>
         </view>
@@ -161,31 +155,33 @@
       <!-- 健康状态 -->
       <view class="section">
         <view class="section-header">
-          <picker 
-            :range="healthTimes" 
-            @change="handleHealthTimeChange" 
-            :value="currentHealthTimeIndex"
-          >
-            <view class="time-picker">
-              <text>{{ healthTimes[currentHealthTimeIndex] || '选择次数' }}</text>
-            </view>
-          </picker>
           <text class="section-title">健康状态</text>
           <button class="btn-upload" @click="showHealthUploadModal">上传</button>
         </view>
         <view class="section-content">
-          <view v-if="healthData.assessDate || healthData.report || healthData.caretakerComment" class="health-info">
-            <view v-if="healthData.assessDate" class="health-item">
-              <text class="health-label">评估日期：</text>
-              <text class="health-value">{{ healthData.assessDate.split('T')[0] }}</text>
-            </view>
+          <view v-if="healthData.report || healthData.healthSuggestion" class="health-info">
             <view v-if="healthData.report" class="health-item">
               <text class="health-label">健康报告：</text>
               <text class="health-value">{{ healthData.report }}</text>
             </view>
-            <view v-if="healthData.caretakerComment" class="health-item">
-              <text class="health-label">护工备注：</text>
-              <text class="health-value">{{ healthData.caretakerComment }}</text>
+            <view v-if="healthData.healthSuggestion" class="health-item">
+              <text class="health-label">护理建议：</text>
+              <text class="health-value">{{ healthData.healthSuggestion }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 护理记录 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">护理记录</text>
+        </view>
+        <view class="section-content">
+          <view v-if="healthData.nursingRecords && healthData.nursingRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in healthData.nursingRecords" :key="index" class="record-item">
+              <text class="record-content">{{ record }}</text>
             </view>
           </view>
           <view v-else class="empty-tip">暂无记录</view>
@@ -210,11 +206,11 @@
               ></textarea>
             </view>
             <view class="form-item">
-              <text class="form-label">护工备注</text>
+              <text class="form-label">护理建议</text>
               <textarea 
                 class="form-input" 
-                v-model="healthForm.caretakerComment" 
-                placeholder="请输入护工备注"
+                v-model="healthForm.healthSuggestion" 
+                placeholder="请输入护理建议"
                 maxlength="500"
               ></textarea>
             </view>
@@ -249,7 +245,7 @@
 
 <script lang="uts">
 import NurseTabbar from '../../components/nurse-tabbar.uvue'
-import { mealOptions, clothingOptions, livingOptions, getDateIndex } from '@/data/mockData.ts'
+import { getDateIndex, getElderData, getClothingByDate } from '@/data/mockData.ts'
 
 interface Elder {
   elderId: string
@@ -287,11 +283,12 @@ interface HealthIdsResponse {
 }
 
 interface HealthData {
-  healthId: number
+  healthId: number | null
   assessDate: string
   report: string
-  caretakerComment: string
-  number: number
+  healthSuggestion: string
+  nursingRecords: string[]
+  number: number | null
 }
 
 interface ApiResponse {
@@ -302,7 +299,8 @@ interface ApiResponse {
 
 interface HealthForm {
   report: string
-  caretakerComment: string
+  healthSuggestion: string
+  nursingRecords: string[]
 }
 
 interface Position {
@@ -328,22 +326,25 @@ export default {
         phone: '',
         specialty: ''
       },
-      mealDate: '',
-      clothingDate: '',
-      livingDate: '',
-      healthDate: '',
-      healthTimes: [] as string[],
-      currentHealthTimeIndex: 0,
+      selectedDate: '',
       mealData: {} as DailyData,
       clothingData: {} as DailyData,
       livingData: {} as DailyData,
-      healthData: {} as HealthData,
+      healthData: {
+        healthId: null,
+        assessDate: '',
+        report: '',
+        healthSuggestion: '',
+        nursingRecords: [] as string[],
+        number: null
+      } as HealthData,
       healthIds: [] as string[],
       currentDailyId: '',
       showHealthModal: false,
       healthForm: {
         report: '',
-        caretakerComment: ''
+        healthSuggestion: '',
+        nursingRecords: [] as string[]
       } as HealthForm,
       isSubmitting: false,
       // AI按钮位置数据
@@ -384,11 +385,7 @@ export default {
       const year = today.getFullYear()
       const month = String(today.getMonth() + 1).padStart(2, '0')
       const day = String(today.getDate()).padStart(2, '0')
-      const todayStr = `${year}-${month}-${day}`
-      
-      this.mealDate = todayStr
-      this.clothingDate = todayStr
-      this.livingDate = todayStr
+      this.selectedDate = `${year}-${month}-${day}`
     },
     async fetchElders() {
       try {
@@ -434,8 +431,8 @@ export default {
           this.selectedChildrenId = this.elders[0].childrenId.toString()
           console.log('已选择老人:', this.selectedElderId)
           
-          // 获取健康ID列表
-          this.fetchHealthIds()
+          // 获取健康数据
+          this.fetchHealthData()
           // 获取其他数据
           this.fetchDailyData('meal')
           this.fetchDailyData('clothing')
@@ -468,6 +465,18 @@ export default {
               address: '幸福养老院 3号楼 202室',
               createdAt: '2024-01-16',
               updatedAt: '2024-01-16'
+            },
+            {
+              elderId: '3',
+              childrenId: 1,
+              name: '王爷爷',
+              age: 78,
+              gender: '男',
+              avatar: '',
+              phone: '13700137003',
+              address: '幸福养老院 3号楼 203室',
+              createdAt: '2024-01-17',
+              updatedAt: '2024-01-17'
             }
           ]
           this.elderNames = this.elders.map(elder => elder.name)
@@ -475,8 +484,8 @@ export default {
           this.selectedElderId = this.elders[0].elderId
           this.selectedChildrenId = this.elders[0].childrenId.toString()
           
-          // 获取健康ID列表
-          this.fetchHealthIds()
+          // 获取健康数据
+          this.fetchHealthData()
           // 获取其他数据
           this.fetchDailyData('meal')
           this.fetchDailyData('clothing')
@@ -502,18 +511,7 @@ export default {
         const accessToken = uni.getStorageSync('accessToken')
         const refreshToken = uni.getStorageSync('refreshToken')
         
-        let date = ''
-        switch(type) {
-          case 'meal':
-            date = this.mealDate
-            break
-          case 'clothing':
-            date = this.clothingDate
-            break
-          case 'living':
-            date = this.livingDate
-            break
-        }
+        const date = this.selectedDate
 
         console.log('准备请求日常数据:', {
           type,
@@ -564,11 +562,22 @@ export default {
         } else {
           console.log(`使用${type}模拟数据`)
           
-          // 根据日期生成不同的模拟数据
+          // 根据日期和老人ID生成不同的模拟数据
           const dateIndex = getDateIndex(date)
-          const selectedMeal = mealOptions[dateIndex % mealOptions.length]
-          const selectedClothing = clothingOptions[dateIndex % clothingOptions.length]
-          const selectedLiving = livingOptions[dateIndex % livingOptions.length]
+          const elderData = getElderData(this.currentElderIndex)
+          const healthReportIndex = dateIndex % elderData.healthReports.length
+          const selectedMeal = elderData.mealOptions[healthReportIndex]
+          const selectedClothing = getClothingByDate(date, elderData.clothingOptions)
+          const selectedLiving = elderData.livingOptions[dateIndex % elderData.livingOptions.length]
+          const selectedHealthReport = elderData.healthReports[healthReportIndex]
+          
+          const nursingMealRecords = selectedHealthReport.nursingRecords.filter((record: string) => 
+            record.includes('早餐：') || record.includes('午餐：') || record.includes('晚餐：')
+          )
+          
+          const breakfastRecord = nursingMealRecords.find((r: string) => r.includes('早餐：'))
+          const lunchRecord = nursingMealRecords.find((r: string) => r.includes('午餐：'))
+          const dinnerRecord = nursingMealRecords.find((r: string) => r.includes('晚餐：'))
           
           const mockData: DailyData = {
             dailyId: 'mock-' + Date.now(),
@@ -580,11 +589,11 @@ export default {
             breakfastPhotos: selectedMeal.breakfastPhoto || `/static/images/breakfast${dateIndex % 3 + 1}.jpg`,
             lunchPhotos: selectedMeal.lunchPhoto || `/static/images/lunch${dateIndex % 3 + 1}.jpg`,
             dinnerPhotos: selectedMeal.dinnerPhoto || `/static/images/dinner${dateIndex % 3 + 1}.jpg`,
-            breakfastDesc: selectedMeal.breakfast,
-            lunchDesc: selectedMeal.lunch,
-            dinnerDesc: selectedMeal.dinner,
+            breakfastDesc: breakfastRecord ? breakfastRecord.replace('早餐：', '') : selectedMeal.breakfast,
+            lunchDesc: lunchRecord ? lunchRecord.replace('午餐：', '') : selectedMeal.lunch,
+            dinnerDesc: dinnerRecord ? dinnerRecord.replace('晚餐：', '') : selectedMeal.dinner,
             clothingPhotos: selectedClothing.clothingPhoto || '/static/images/clothing.jpg',
-            roomPhotos: selectedLiving.roomPhoto || '/static/images/room.jpg'
+            lodgingPhotos: ''
           }
           
           switch(type) {
@@ -632,76 +641,8 @@ export default {
         this.currentDailyId = 'mock-' + Date.now()
       }
     },
-    async fetchHealthIds() {
-      if (!this.selectedElderId) return
-
-      try {
-        const accessToken = uni.getStorageSync('accessToken')
-        const refreshToken = uni.getStorageSync('refreshToken')
-
-        const result = await uni.request({
-          url: 'http://localhost:8080/health/getHealthIds',
-          method: 'GET',
-          header: {
-            'accessToken': accessToken,
-            'refreshToken': refreshToken
-          },
-          data: {
-            elderId: this.selectedElderId
-          }
-        })
-
-        const response = result.data as ApiResponse
-        // 只有当接口成功返回且有有效数据时才使用接口数据
-        const hasValidData = response.code === 1 && 
-                            response.data && 
-                            response.data.healthId && 
-                            response.data.healthId.length > 0
-        
-        if (hasValidData) {
-          const healthIdsData = response.data as HealthIdsResponse
-          // 将healthId数组进行倒序排序
-          this.healthIds = healthIdsData.healthId.sort((a, b) => parseInt(b) - parseInt(a))
-          // 将healthId转换为第几次的格式
-          this.healthTimes = this.healthIds.map(id => `第${id}次`)
-          // 默认选中第一个（最大的数字）
-          this.currentHealthTimeIndex = 0
-          // 获取健康数据
-          this.fetchHealthData()
-        } else {
-          console.log('使用模拟健康数据')
-          // 使用模拟数据
-          this.healthIds = ['3', '2', '1']
-          this.healthTimes = ['第3次', '第2次', '第1次']
-          this.currentHealthTimeIndex = 0
-          // 设置模拟健康数据
-          this.healthData = {
-            healthId: '1',
-            assessDate: '2024-01-15',
-            report: '【身体检查报告】\n\n一、基本指标\n• 身高：172cm\n• 体重：65kg\n• 体质指数(BMI)：22.0（正常范围）\n\n二、血压测量\n• 收缩压：125mmHg\n• 舒张压：80mmHg\n• 血压状态：正常\n\n三、心率监测\n• 静息心率：72次/分钟\n• 心率状态：正常\n\n四、血糖检测\n• 空腹血糖：5.2mmol/L\n• 餐后2小时血糖：7.8mmol/L\n• 血糖状态：正常\n\n五、血脂分析\n• 总胆固醇：4.8mmol/L\n• 甘油三酯：1.5mmol/L\n• 血脂状态：正常\n\n六、健康建议\n1. 饮食：建议低盐低脂饮食，多吃蔬菜水果\n2. 运动：每日保持30分钟以上适度运动\n3. 作息：保持规律作息，避免熬夜\n4. 监测：建议每月测量一次血压和血糖',
-            caretakerComment: '老人今日精神状态良好，饮食正常，无异常情况。\n\n【今日护理记录】\n• 晨起血压测量：120/78mmHg\n• 早餐：小米粥一碗、鸡蛋一个\n• 上午活动：花园散步30分钟\n• 午餐：米饭一碗、清蒸鱼、炒青菜\n• 下午活动：棋牌室活动1小时\n• 晚餐：豆腐汤、馒头一个\n• 晚间血压测量：125/80mmHg\n• 睡眠情况：良好',
-            number: 1
-          }
-        }
-      } catch (error) {
-        console.error('获取健康ID列表失败:', error)
-        console.log('使用模拟健康数据')
-        // 使用模拟数据
-        this.healthIds = ['3', '2', '1']
-        this.healthTimes = ['第3次', '第2次', '第1次']
-        this.currentHealthTimeIndex = 0
-        // 设置模拟健康数据
-        this.healthData = {
-          healthId: '1',
-          assessDate: '2024-01-15',
-          report: '经检查，老人身体状况良好，血压控制在正常范围内，建议继续保持规律作息和适度运动。',
-          caretakerComment: '老人今日精神状态良好，饮食正常，无异常情况。',
-          number: 1
-        }
-      }
-    },
     async fetchHealthData() {
-      if (!this.selectedElderId || !this.healthIds[this.currentHealthTimeIndex]) return
+      if (!this.selectedElderId) return
 
       try {
         const accessToken = uni.getStorageSync('accessToken')
@@ -716,7 +657,7 @@ export default {
           },
           data: {
             elderId: this.selectedElderId,
-            number: this.healthIds[this.currentHealthTimeIndex]
+            number: '1'
           }
         })
 
@@ -724,13 +665,29 @@ export default {
         if (response.code === 1 && response.data) {
           this.healthData = response.data as HealthData
         } else {
-          this.healthData = {} as HealthData
+          console.log('使用模拟健康数据')
+          this.setMockHealthData()
         }
       } catch (error) {
         console.error('获取健康数据失败:', error)
-        this.healthData = {} as HealthData
+        this.setMockHealthData()
       }
     },
+    setMockHealthData() {
+      const dateIndex = this.healthDate ? getDateIndex(this.healthDate) % 3 : 0
+      const elderData = getElderData(this.currentElderIndex)
+      const healthReport = elderData.healthReports[dateIndex % elderData.healthReports.length]
+      
+      this.healthData = {
+        healthId: null,
+        assessDate: this.healthDate || healthReport.assessDate,
+        report: healthReport.report,
+        healthSuggestion: healthReport.healthSuggestion,
+        nursingRecords: healthReport.nursingRecords,
+        number: null
+      }
+    },
+
     handleElderChange(e: any) {
       this.currentElderIndex = parseInt(e.detail.value)
       if (this.elders[this.currentElderIndex]) {
@@ -739,24 +696,15 @@ export default {
         this.fetchDailyData('meal')
         this.fetchDailyData('clothing')
         this.fetchDailyData('living')
-        this.fetchHealthIds()
+        this.fetchHealthData()
       }
     },
-    handleMealDateChange(e: any) {
-      this.mealDate = e.detail.value
+    handleDateChange(e: any) {
+      this.selectedDate = e.detail.value
       this.fetchDailyData('meal')
-    },
-    handleClothingDateChange(e: any) {
-      this.clothingDate = e.detail.value
       this.fetchDailyData('clothing')
-    },
-    handleLivingDateChange(e: any) {
-      this.livingDate = e.detail.value
       this.fetchDailyData('living')
-    },
-    handleHealthTimeChange(e: any) {
-      this.currentHealthTimeIndex = parseInt(e.detail.value)
-      this.fetchHealthData() // 获取新的健康数据
+      this.fetchHealthData()
     },
     handleBack() {
       uni.removeStorageSync('accessToken')
@@ -1052,11 +1000,12 @@ export default {
       this.showHealthModal = false
       this.healthForm = {
         report: '',
-        caretakerComment: ''
+        healthSuggestion: '',
+        nursingRecords: []
       }
     },
     async submitHealthInfo() {
-      if (!this.healthForm.report || !this.healthForm.caretakerComment) {
+      if (!this.healthForm.report || !this.healthForm.healthSuggestion) {
         uni.showToast({
           title: '请填写完整信息',
           icon: 'none'
@@ -1086,7 +1035,7 @@ export default {
           data: {
             elderId: this.selectedElderId,
             report: this.healthForm.report,
-            caretakerComment: this.healthForm.caretakerComment,
+            healthSuggestion: this.healthForm.healthSuggestion,
             number: maxNumber.toString()
           }
         })
@@ -1099,7 +1048,7 @@ export default {
           })
           this.closeHealthModal()
           // 刷新健康数据
-          this.fetchHealthIds()
+          this.fetchHealthData()
         } else {
           uni.showToast({
             title: response.msg || '上传失败',
@@ -1209,60 +1158,58 @@ export default {
 
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 20rpx 30rpx;
   background: linear-gradient(135deg, #4FD1C5 0%, #319795 100%);
   border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
-  position: relative;
   height: 88rpx;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
 }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  padding: 10rpx;
-  cursor: pointer;
+.header-left {
   position: absolute;
   left: 30rpx;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 1;
+  flex-shrink: 0;
 }
 
-.back-icon {
-  font-size: 32rpx;
-  color: #fff;
-  margin-right: 4rpx;
+.header-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  flex-shrink: 0;
 }
 
-.back-text {
-  font-size: 28rpx;
-  color: #fff;
+.header-right {
+  position: absolute;
+  right: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-shrink: 0;
 }
 
 .title {
   font-size: 32rpx;
   font-weight: bold;
   color: #fff;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  text-align: center;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .dropdown {
-  min-width: 200rpx;
-  margin-left: auto;
-  position: absolute;
-  right: 30rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1;
+  flex-shrink: 0;
 }
 
 .picker-content {

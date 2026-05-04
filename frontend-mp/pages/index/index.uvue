@@ -86,7 +86,7 @@
 						url: '/pages/nurse/login'
 					})
 				},
-				goToElderLogin() {
+			goToElderLogin() {
 					uni.navigateTo({
 						url: '/pages/elder/login'
 					})
