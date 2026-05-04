@@ -249,6 +249,7 @@
 
 <script lang="uts">
 import NurseTabbar from '../../components/nurse-tabbar.uvue'
+import { mealOptions, clothingOptions, livingOptions, getDateIndex } from '@/data/mockData.ts'
 
 interface Elder {
   elderId: string
@@ -562,28 +563,28 @@ export default {
           }
         } else {
           console.log(`使用${type}模拟数据`)
-          const mealRecords = [
-            { time: '08:00', content: '早餐：小米粥、鸡蛋、馒头' },
-            { time: '12:00', content: '午餐：红烧肉、清炒青菜、米饭' },
-            { time: '18:00', content: '晚餐：清蒸鱼、豆腐汤、米饭' }
-          ]
-          const clothingRecords = [
-            { time: '07:30', content: '今日穿着：长袖衬衫+长裤，外套一件' },
-            { time: '20:00', content: '夜间穿着：棉质睡衣一套' }
-          ]
-          const livingRecords = [
-            { time: '08:00', content: '房间温度：24°C，湿度：55%' },
-            { time: '14:00', content: '通风换气：已完成，时长30分钟' },
-            { time: '18:00', content: '房间清洁：已完成' }
-          ]
+          
+          // 根据日期生成不同的模拟数据
+          const dateIndex = getDateIndex(date)
+          const selectedMeal = mealOptions[dateIndex % mealOptions.length]
+          const selectedClothing = clothingOptions[dateIndex % clothingOptions.length]
+          const selectedLiving = livingOptions[dateIndex % livingOptions.length]
           
           const mockData: DailyData = {
             dailyId: 'mock-' + Date.now(),
             elderId: this.selectedElderId,
-            mealRecords: type === 'meal' ? mealRecords : [],
-            clothingRecords: type === 'clothing' ? clothingRecords : [],
-            livingRecords: type === 'living' ? livingRecords : [],
-            date: date
+            mealRecords: type === 'meal' ? selectedMeal.mealRecords : [],
+            clothingRecords: type === 'clothing' ? selectedClothing.clothingRecords : [],
+            livingRecords: type === 'living' ? selectedLiving.livingRecords : [],
+            date: date,
+            breakfastPhotos: selectedMeal.breakfastPhoto || `/static/images/breakfast${dateIndex % 3 + 1}.jpg`,
+            lunchPhotos: selectedMeal.lunchPhoto || `/static/images/lunch${dateIndex % 3 + 1}.jpg`,
+            dinnerPhotos: selectedMeal.dinnerPhoto || `/static/images/dinner${dateIndex % 3 + 1}.jpg`,
+            breakfastDesc: selectedMeal.breakfast,
+            lunchDesc: selectedMeal.lunch,
+            dinnerDesc: selectedMeal.dinner,
+            clothingPhotos: selectedClothing.clothingPhoto || '/static/images/clothing.jpg',
+            roomPhotos: selectedLiving.roomPhoto || '/static/images/room.jpg'
           }
           
           switch(type) {
@@ -1325,9 +1326,9 @@ export default {
 .section-title {
   position: absolute;
   left: 50%;
-  top: 0;
+  top:5px;
   transform: translateX(-50%);
-  font-size: 60rpx;
+  font-size: 15px;
   font-weight: bold;
   color: #2d3748;
   white-space: nowrap;
@@ -1362,7 +1363,10 @@ export default {
 }
 
 .record-list {
-  padding: 20rpx;
+  width: 100%;
+  padding: 10rpx 20rpx;
+  display: flex;
+  flex-direction: column;
 }
 
 .record-item {
@@ -1482,7 +1486,13 @@ export default {
   text-overflow: ellipsis;
 }
 
-.clothing-image, .living-image {
+.clothing-image {
+  width: 100%;
+  height: 550rpx;
+  border-radius: 12rpx;
+}
+
+.living-image {
   width: 100%;
   height: 400rpx;
   border-radius: 12rpx;
