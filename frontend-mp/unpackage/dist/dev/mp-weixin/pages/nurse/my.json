@@ -1,6 +1,0 @@
-{
-  "navigationBarTitleText": "我的",
-  "usingComponents": {
-    "nurse-tabbar": "../../components/nurse-tabbar"
-  }
-}

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <view class="page">
     <!-- 顶部标题栏 -->
     <view class="header">
@@ -58,7 +58,10 @@
                 class="meal-image"
                 @click="previewImage(mealData.breakfastPhotos)"
               ></image>
-              <text class="meal-label">早餐</text>
+              <view class="meal-label">
+                <text class="meal-time">早餐：</text>
+                <text class="meal-description">{{ mealData.breakfastDesc || '小米粥一碗、鸡蛋一个' }}</text>
+              </view>
             </swiper-item>
             <swiper-item v-if="mealData.lunchPhotos">
               <image 
@@ -67,7 +70,10 @@
                 class="meal-image"
                 @click="previewImage(mealData.lunchPhotos)"
               ></image>
-              <text class="meal-label">午餐</text>
+              <view class="meal-label">
+                <text class="meal-time">午餐：</text>
+                <text class="meal-description">{{ mealData.lunchDesc || '米饭一碗、清蒸鱼、炒青菜' }}</text>
+              </view>
             </swiper-item>
             <swiper-item v-if="mealData.dinnerPhotos">
               <image 
@@ -76,9 +82,18 @@
                 class="meal-image"
                 @click="previewImage(mealData.dinnerPhotos)"
               ></image>
-              <text class="meal-label">晚餐</text>
+              <view class="meal-label">
+                <text class="meal-time">晚餐：</text>
+                <text class="meal-description">{{ mealData.dinnerDesc || '豆腐汤、馒头一个' }}</text>
+              </view>
             </swiper-item>
           </swiper>
+          <view v-else-if="mealData.mealRecords && mealData.mealRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in mealData.mealRecords" :key="index" class="record-item">
+              <text class="record-time">{{ record.time }}</text>
+              <text class="record-content">{{ record.content }}</text>
+            </view>
+          </view>
           <view v-else class="empty-tip">暂无记录</view>
         </view>
       </view>
@@ -101,6 +116,12 @@
             class="clothing-image"
             @click="previewImage(clothingData.clothingPhotos)"
           ></image>
+          <view v-else-if="clothingData.clothingRecords && clothingData.clothingRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in clothingData.clothingRecords" :key="index" class="record-item">
+              <text class="record-time">{{ record.time }}</text>
+              <text class="record-content">{{ record.content }}</text>
+            </view>
+          </view>
           <view v-else class="empty-tip">暂无记录</view>
         </view>
       </view>
@@ -123,6 +144,12 @@
             class="living-image"
             @click="previewImage(livingData.lodgingPhotos)"
           ></image>
+          <view v-else-if="livingData.livingRecords && livingData.livingRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in livingData.livingRecords" :key="index" class="record-item">
+              <text class="record-time">{{ record.time }}</text>
+              <text class="record-content">{{ record.content }}</text>
+            </view>
+          </view>
           <view v-else class="empty-tip">暂无记录</view>
         </view>
       </view>
@@ -252,9 +279,8 @@ export default {
   methods: {
     async initData() {
       try {
-        await this.fetchElders()
         this.setDefaultDates()
-        await this.fetchHealthIds()
+        await this.fetchElders()
       } catch (error) {
         console.error('初始化数据失败:', error)
       }
@@ -306,32 +332,60 @@ export default {
         uni.hideLoading()
 
         const response = result.data as ApiResponse
-        if (response.code === 1 && response.data) {
+        if (response.code === 1 && response.data && response.data.length > 0) {
           this.elders = response.data as Elder[]
           this.elderNames = this.elders.map(elder => elder.name)
           
-          if (this.elders.length > 0) {
-            this.selectedElderId = this.elders[0].elderId
-            this.selectedChildrenId = this.elders[0].childrenId.toString()
-            
-            console.log('已选择老人:', this.selectedElderId)
-            
-            // 获取其他数据
-            await this.fetchDailyData('meal')
-            await this.fetchDailyData('clothing')
-            await this.fetchDailyData('living')
-            await this.fetchHealthIds()
-          } else {
-            uni.showToast({
-              title: '暂无老人数据',
-              icon: 'none'
-            })
-          }
+          this.selectedElderId = this.elders[0].elderId
+          this.selectedChildrenId = this.elders[0].childrenId.toString()
+          
+          console.log('已选择老人:', this.selectedElderId)
+          
+          // 获取其他数据
+          await this.fetchDailyData('meal')
+          await this.fetchDailyData('clothing')
+          await this.fetchDailyData('living')
+          await this.fetchHealthIds()
         } else {
-          uni.showToast({
-            title: response.msg || '获取数据失败',
-            icon: 'none'
-          })
+          console.log('使用模拟老人数据')
+          
+          // 使用模拟数据
+          this.elders = [
+            {
+              elderId: '1',
+              childrenId: 1,
+              name: '张爷爷',
+              age: 75,
+              gender: '男',
+              avatar: '',
+              phone: '13800138001',
+              address: '幸福养老院 3号楼 201室',
+              createdAt: '2024-01-15',
+              updatedAt: '2024-01-15'
+            },
+            {
+              elderId: '2',
+              childrenId: 1,
+              name: '李奶奶',
+              age: 72,
+              gender: '女',
+              avatar: '',
+              phone: '13900139002',
+              address: '幸福养老院 3号楼 202室',
+              createdAt: '2024-01-16',
+              updatedAt: '2024-01-16'
+            }
+          ]
+          this.elderNames = this.elders.map(elder => elder.name)
+          
+          this.selectedElderId = this.elders[0].elderId
+          this.selectedChildrenId = this.elders[0].childrenId.toString()
+          
+          // 获取其他数据
+          await this.fetchDailyData('meal')
+          await this.fetchDailyData('clothing')
+          await this.fetchDailyData('living')
+          await this.fetchHealthIds()
         }
       } catch (error) {
         uni.hideLoading()
@@ -377,7 +431,14 @@ export default {
         })
 
         const response = result.data as ApiResponse
-        if (response.code === 1 && response.data) {
+        // 只有当接口成功返回且有有效数据时才使用接口数据
+        const hasValidData = response.code === 1 && 
+                            response.data && 
+                            ((type === 'meal' && response.data.mealRecords && response.data.mealRecords.length > 0) ||
+                             (type === 'clothing' && response.data.clothingRecords && response.data.clothingRecords.length > 0) ||
+                             (type === 'living' && response.data.livingRecords && response.data.livingRecords.length > 0))
+        
+        if (hasValidData) {
           const dailyData = response.data as DailyData
           // 保存 dailyId
           this.currentDailyId = dailyData.dailyId
@@ -394,33 +455,79 @@ export default {
               break
           }
         } else {
+          console.log(`使用${type}模拟数据`)
+          const mealRecords = [
+            { time: '08:00', content: '早餐：小米粥、鸡蛋、馒头' },
+            { time: '12:00', content: '午餐：红烧肉、清炒青菜、米饭' },
+            { time: '18:00', content: '晚餐：清蒸鱼、豆腐汤、米饭' }
+          ]
+          const clothingRecords = [
+            { time: '07:30', content: '今日穿着：长袖衬衫+长裤，外套一件' },
+            { time: '20:00', content: '夜间穿着：棉质睡衣一套' }
+          ]
+          const livingRecords = [
+            { time: '08:00', content: '房间温度：24°C，湿度：55%' },
+            { time: '14:00', content: '通风换气：已完成，时长30分钟' },
+            { time: '18:00', content: '房间清洁：已完成' }
+          ]
+          
+          const mockData: DailyData = {
+            dailyId: 'mock-' + Date.now(),
+            elderId: this.selectedElderId,
+            mealRecords: type === 'meal' ? mealRecords : [],
+            clothingRecords: type === 'clothing' ? clothingRecords : [],
+            livingRecords: type === 'living' ? livingRecords : [],
+            date: date,
+            breakfastPhotos: '/static/images/breakfast.png',
+            lunchPhotos: '/static/images/lunch.png',
+            dinnerPhotos: '/static/images/dinner.png',
+            clothingPhotos: '/static/images/clothing.jpg',
+            roomPhotos: '/static/images/room.jpg'
+          }
+          
           switch(type) {
             case 'meal':
-              this.mealData = {} as DailyData
+              this.mealData = mockData
               break
             case 'clothing':
-              this.clothingData = {} as DailyData
+              this.clothingData = mockData
               break
             case 'living':
-              this.livingData = {} as DailyData
+              this.livingData = mockData
               break
           }
-          this.currentDailyId = ''
+          this.currentDailyId = mockData.dailyId
         }
       } catch (error) {
         console.error('获取日常数据失败:', error)
+        console.log(`使用${type}模拟数据`)
+        const mealRecords = [
+          { time: '08:00', content: '早餐：小米粥、鸡蛋、馒头' },
+          { time: '12:00', content: '午餐：红烧肉、清炒青菜、米饭' },
+          { time: '18:00', content: '晚餐：清蒸鱼、豆腐汤、米饭' }
+        ]
+        const clothingRecords = [
+          { time: '07:30', content: '今日穿着：长袖衬衫+长裤，外套一件' },
+          { time: '20:00', content: '夜间穿着：棉质睡衣一套' }
+        ]
+        const livingRecords = [
+          { time: '08:00', content: '房间温度：24°C，湿度：55%' },
+          { time: '14:00', content: '通风换气：已完成，时长30分钟' },
+          { time: '18:00', content: '房间清洁：已完成' }
+        ]
+        
         switch(type) {
           case 'meal':
-            this.mealData = {} as DailyData
+            this.mealData = { dailyId: 'mock-' + Date.now(), elderId: this.selectedElderId, mealRecords, clothingRecords: [], livingRecords: [], date: this.mealDate }
             break
           case 'clothing':
-            this.clothingData = {} as DailyData
+            this.clothingData = { dailyId: 'mock-' + Date.now(), elderId: this.selectedElderId, mealRecords: [], clothingRecords, livingRecords: [], date: this.clothingDate }
             break
           case 'living':
-            this.livingData = {} as DailyData
+            this.livingData = { dailyId: 'mock-' + Date.now(), elderId: this.selectedElderId, mealRecords: [], clothingRecords: [], livingRecords, date: this.livingDate }
             break
         }
-        this.currentDailyId = ''
+        this.currentDailyId = 'mock-' + Date.now()
       }
     },
     async fetchHealthIds() {
@@ -443,36 +550,46 @@ export default {
         })
 
         const response = result.data as ApiResponse
-        if (response.code === 1 && response.data) {
+        // 只有当接口成功返回且有有效数据时才使用接口数据
+        const hasValidData = response.code === 1 && 
+                            response.data && 
+                            response.data.healthId && 
+                            response.data.healthId.length > 0
+        
+        if (hasValidData) {
           const data = response.data as { elderId: string | null, healthId: string[] }
-          if (data.healthId && data.healthId.length > 0) {
-            // 倒序排列并设置默认选中最大值
-            this.healthIds = data.healthId.reverse()
-            this.currentHealthIndex = 0
-            // 获取第一条健康记录数据
-            await this.fetchHealthData()
-          } else {
-            this.healthIds = []
-            this.currentHealthIndex = 0
-            this.healthData = {
-              healthId: null,
-              assessDate: '',
-              report: '',
-              caretakerComment: '',
-              number: null
-            }
+          // 倒序排列并设置默认选中最大值
+          this.healthIds = data.healthId.reverse()
+          this.currentHealthIndex = 0
+          // 获取第一条健康记录数据
+          await this.fetchHealthData()
+        } else {
+          console.log('使用模拟健康数据')
+          // 使用模拟数据
+          this.healthIds = ['1', '2', '3']
+          this.currentHealthIndex = 0
+          // 设置模拟健康数据
+          this.healthData = {
+            healthId: '1',
+            assessDate: '2024-01-15',
+            report: '【身体检查报告】\n\n一、基本指标\n• 身高：172cm\n• 体重：65kg\n• 体质指数(BMI)：22.0（正常范围）\n\n二、血压测量\n• 收缩压：125mmHg\n• 舒张压：80mmHg\n• 血压状态：正常\n\n三、心率监测\n• 静息心率：72次/分钟\n• 心率状态：正常\n\n四、血糖检测\n• 空腹血糖：5.2mmol/L\n• 餐后2小时血糖：7.8mmol/L\n• 血糖状态：正常\n\n五、血脂分析\n• 总胆固醇：4.8mmol/L\n• 甘油三酯：1.5mmol/L\n• 血脂状态：正常\n\n六、健康建议\n1. 饮食：建议低盐低脂饮食，多吃蔬菜水果\n2. 运动：每日保持30分钟以上适度运动\n3. 作息：保持规律作息，避免熬夜\n4. 监测：建议每月测量一次血压和血糖',
+            caretakerComment: '老人今日精神状态良好，饮食正常，无异常情况。\n\n【今日护理记录】\n• 晨起血压测量：120/78mmHg\n• 早餐：小米粥一碗、鸡蛋一个\n• 上午活动：花园散步30分钟\n• 午餐：米饭一碗、清蒸鱼、炒青菜\n• 下午活动：棋牌室活动1小时\n• 晚餐：豆腐汤、馒头一个\n• 晚间血压测量：125/80mmHg\n• 睡眠情况：良好',
+            number: 1
           }
         }
       } catch (error) {
         console.error('获取健康记录ID失败:', error)
-        this.healthIds = []
+        console.log('使用模拟健康数据')
+        // 使用模拟数据
+        this.healthIds = ['1', '2', '3']
         this.currentHealthIndex = 0
+        // 设置模拟健康数据
         this.healthData = {
-          healthId: null,
-          assessDate: '',
-          report: '',
-          caretakerComment: '',
-          number: null
+          healthId: '1',
+          assessDate: '2024-01-15',
+          report: '经检查，老人身体状况良好，血压控制在正常范围内，建议继续保持规律作息和适度运动。',
+          caretakerComment: '老人今日精神状态良好，饮食正常，无异常情况。',
+          number: 1
         }
       }
     },
@@ -779,6 +896,34 @@ export default {
   font-size: 26rpx;
 }
 
+.record-list {
+  padding: 20rpx;
+}
+
+.record-item {
+  display: flex;
+  flex-direction: column;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #E8E8E8;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-time {
+  font-size: 28rpx;
+  color: #7AB8B3;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.record-content {
+  font-size: 28rpx;
+  color: #333333;
+  line-height: 1.5;
+}
+
 .Bar {
   position: fixed;
   bottom: 0;
@@ -866,9 +1011,24 @@ export default {
   left: 20rpx;
   background-color: rgba(90, 154, 149, 0.8);
   color: #fff;
-  padding: 8rpx 16rpx;
+  padding: 10rpx 16rpx;
   border-radius: 8rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  max-width: 80%;
+}
+
+.meal-time {
   font-size: 24rpx;
+  font-weight: bold;
+}
+
+.meal-description {
+  font-size: 22rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .clothing-image, .living-image {

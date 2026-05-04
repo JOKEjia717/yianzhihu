@@ -101,7 +101,7 @@ export default {
           updateTokens(accessToken, refreshToken)
           uni.setStorageSync('userInfo', res.data.data)
           
-          uni.switchTab({
+          uni.redirectTo({
             url: '/pages/elder/index'
           })
         } else {

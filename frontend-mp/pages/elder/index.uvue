@@ -1,32 +1,52 @@
 <template>
 	<view class="container">
-		<!-- 轮播图 -->
-		<swiper class="banner" 
-			circular 
-			autoplay 
-			interval="3000" 
-			duration="500"
-			:indicator-dots="true"
-			indicator-color="rgba(255, 255, 255, 0.6)"
-			indicator-active-color="#FFFFFF"
-			@change="handleBannerChange">
-			<swiper-item>
-				<image src="/static/images/banner1.jpg" mode="aspectFill"></image>
-			</swiper-item>
-			<swiper-item>
-				<image src="/static/images/banner2.jpg" mode="aspectFill"></image>
-			</swiper-item>
-			<swiper-item>
-				<image src="/static/images/banner3.jpg" mode="aspectFill"></image>
-			</swiper-item>
-		</swiper>
-
 		<!-- 内容区域 -->
 		<scroll-view class="content" scroll-y>
+			<!-- 轮播图 -->
+			<swiper class="banner" 
+				circular 
+				autoplay 
+				interval="4000" 
+				duration="600"
+				:indicator-dots="true"
+				indicator-color="rgba(255, 255, 255, 0.5)"
+				indicator-active-color="#FFFFFF"
+				@change="handleBannerChange">
+				<swiper-item>
+					<image src="/static/images/banner1.jpg" mode="aspectFill"></image>
+				</swiper-item>
+				<swiper-item>
+					<image src="/static/images/banner2.jpg" mode="aspectFill"></image>
+				</swiper-item>
+				<swiper-item>
+					<image src="/static/images/banner3.jpg" mode="aspectFill"></image>
+				</swiper-item>
+			</swiper>
+
 			<!-- 欢迎区域 -->
 			<view class="welcome-section">
-				<text class="welcome-title">您好，{{ userName }}</text>
-				<text class="welcome-desc">今天也是美好的一天</text>
+				<view class="welcome-bg-icon">🌿</view>
+				<view class="welcome-content">
+					<view class="welcome-top-row">
+						<view class="weather-area">
+							<view class="weather-badge">
+								<text class="weather-icon">{{ weatherIcon }}</text>
+								<text class="weather-text">{{ weatherText }}</text>
+							</view>
+						</view>
+						<view class="date-area">
+							<view class="welcome-date">
+								<text class="date-text">{{ currentDate }}</text>
+								<text class="week-text">{{ currentWeek }}</text>
+							</view>
+						</view>
+					</view>
+					<view class="welcome-info">
+						<text class="welcome-title">{{ greeting }}{{ userName }}</text>
+						<text class="welcome-desc">{{ greetingDesc }}</text>
+					</view>
+				</view>
+				<view class="welcome-decoration"></view>
 			</view>
 
 			<!-- 快捷功能 -->
@@ -66,7 +86,7 @@
 			<view class="schedule-section">
 				<view class="section-title">
 					<text class="title-text">今日安排</text>
-					<text class="more-text">查看全部</text>
+					<text class="more-text" @click="showScheduleModal = true">查看全部</text>
 				</view>
 				<view class="schedule-list">
 					<view class="schedule-item">
@@ -83,20 +103,6 @@
 							<text class="schedule-desc">太极广场集合</text>
 						</view>
 					</view>
-					<view class="schedule-item">
-						<view class="schedule-time">12:00</view>
-						<view class="schedule-content">
-							<text class="schedule-title">午餐时间</text>
-							<text class="schedule-desc">今日菜单：红烧肉、青菜</text>
-						</view>
-					</view>
-					<view class="schedule-item">
-						<view class="schedule-time">15:00</view>
-						<view class="schedule-content">
-							<text class="schedule-title">娱乐活动</text>
-							<text class="schedule-desc">棋牌室活动</text>
-						</view>
-					</view>
 				</view>
 			</view>
 
@@ -105,7 +111,7 @@
 				<view class="section-title">
 					<text class="title-text">健康提示</text>
 				</view>
-				<view class="health-card">
+				<view class="health-card" @click="showHealthModal = true">
 					<view class="health-icon">
 						<text class="icon-text">医</text>
 					</view>
@@ -116,6 +122,73 @@
 				</view>
 			</view>
 		</scroll-view>
+
+		<!-- 今日安排弹窗 -->
+		<view v-if="showScheduleModal" class="modal-overlay" @click="showScheduleModal = false">
+			<view class="modal-content" @click.stop>
+				<view class="modal-header">
+					<text class="modal-title">今日安排</text>
+				</view>
+				<scroll-view class="modal-body" scroll-y>
+					<view class="schedule-list modal-list">
+						<view class="schedule-item" v-for="(item, index) in schedules" :key="index">
+							<view class="schedule-time">{{ item.time }}</view>
+							<view class="schedule-content">
+								<text class="schedule-title">{{ item.title }}</text>
+								<text class="schedule-desc">{{ item.desc }}</text>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
+				<view class="modal-footer">
+					<view class="modal-close" @click="showScheduleModal = false">
+						<text class="close-icon">×</text>
+					</view>
+				</view>
+			</view>
+		</view>
+
+		<!-- 健康提示弹窗 -->
+		<view v-if="showHealthModal" class="modal-overlay" @click="showHealthModal = false">
+			<view class="modal-content health-modal" @click.stop>
+				<view class="modal-header">
+					<text class="modal-title">健康信息</text>
+				</view>
+				<scroll-view class="modal-body" scroll-y>
+					<view class="health-modal-body">
+						<view class="health-icon-big">
+							<text class="icon-text-big">医</text>
+						</view>
+						<view class="health-status">
+							<text class="health-status-text">{{ healthData.title }}</text>
+						</view>
+						<view class="health-details">
+							<view class="health-detail-item">
+								<text class="detail-label">收缩压</text>
+								<text class="detail-value">{{ healthData.systolic }} mmHg</text>
+							</view>
+							<view class="health-detail-item">
+								<text class="detail-label">舒张压</text>
+								<text class="detail-value">{{ healthData.diastolic }} mmHg</text>
+							</view>
+							<view class="health-detail-item">
+								<text class="detail-label">脉搏</text>
+								<text class="detail-value">{{ healthData.pulse }} 次/分</text>
+							</view>
+						</view>
+						<view class="health-advice">
+							<text class="advice-title">健康建议</text>
+							<text class="advice-content">{{ healthData.advice }}</text>
+						</view>
+					</view>
+				</scroll-view>
+				<view class="modal-footer">
+					<view class="modal-close" @click="showHealthModal = false">
+						<text class="close-icon">×</text>
+					</view>
+				</view>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -124,7 +197,109 @@
 		data() {
 			return {
 				currentBannerIndex: 0,
-				userName: '张爷爷'
+				userName: '张爷爷',
+				currentDate: '',
+				currentWeek: '',
+				greeting: '',
+				greetingDesc: '',
+				weatherIcon: '☀',
+				weatherText: '晴',
+				showScheduleModal: false,
+				schedules: [
+					{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+					{ time: '10:00', title: '晨练活动', desc: '太极广场集合' },
+					{ time: '12:00', title: '午餐时间', desc: '今日菜单：红烧肉、青菜' },
+					{ time: '15:00', title: '娱乐活动', desc: '棋牌室活动' }
+				],
+				weeklySchedules: [
+					{
+						day: 0,
+						items: [
+							{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+							{ time: '10:00', title: '晨练活动', desc: '太极广场集合' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：清蒸鱼、西兰花' },
+							{ time: '15:00', title: '文艺活动', desc: '合唱团排练' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：番茄炒蛋、豆腐汤' }
+						]
+					},
+					{
+						day: 1,
+						items: [
+							{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+							{ time: '09:30', title: '健康讲座', desc: '高血压预防知识' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：红烧肉、青菜' },
+							{ time: '14:00', title: '棋牌活动', desc: '棋牌室开放' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：糖醋排骨、紫菜蛋花汤' }
+						]
+					},
+					{
+						day: 2,
+						items: [
+							{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+							{ time: '10:00', title: '手工制作', desc: '剪纸艺术课' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：宫保鸡丁、土豆丝' },
+							{ time: '15:00', title: '电影放映', desc: '经典老电影欣赏' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：红烧鱼、清炒时蔬' }
+						]
+					},
+					{
+						day: 3,
+						items: [
+							{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+							{ time: '10:00', title: '晨练活动', desc: '广场舞练习' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：狮子头、冬瓜汤' },
+							{ time: '14:30', title: '书法课', desc: '毛笔字练习' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：炒面、海带排骨汤' }
+						]
+					},
+					{
+						day: 4,
+						items: [
+							{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+							{ time: '10:00', title: '健康检查', desc: '定期血压测量' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：回锅肉、蒜蓉西兰花' },
+							{ time: '15:00', title: '茶艺活动', desc: '茶文化品鉴' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：酸菜鱼、炒青菜' }
+						]
+					},
+					{
+						day: 5,
+						items: [
+							{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
+							{ time: '10:00', title: '晨练活动', desc: '太极剑练习' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：咖喱鸡饭、凉拌黄瓜' },
+							{ time: '14:00', title: '棋牌比赛', desc: '麻将友谊赛' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：烤鸭、蔬菜沙拉' }
+						]
+					},
+					{
+						day: 6,
+						items: [
+							{ time: '08:30', title: '早餐时间', desc: '周末早茶' },
+							{ time: '10:30', title: '户外活动', desc: '公园散步' },
+							{ time: '12:00', title: '午餐时间', desc: '今日菜单：饺子宴' },
+							{ time: '15:00', title: '联欢会', desc: '周末文艺表演' },
+							{ time: '18:00', title: '晚餐时间', desc: '今日菜单：火锅' }
+						]
+					}
+				],
+				showHealthModal: false,
+				healthData: {
+					title: '今日血压正常',
+					systolic: '120',
+					diastolic: '80',
+					pulse: '72',
+					advice: '您今日血压状态良好，请继续保持规律作息和健康饮食。建议每天进行适度的运动，如散步、太极等。'
+				},
+				weeklyHealthData: [
+					{ day: 0, title: '今日血压正常', systolic: '122', diastolic: '82', pulse: '74', advice: '您今日血压状态良好，请继续保持规律作息和健康饮食。建议每天进行适度的运动，如散步、太极等。' },
+					{ day: 1, title: '血压略偏高', systolic: '138', diastolic: '88', pulse: '78', advice: '今日血压略偏高，建议您保持情绪稳定，避免剧烈运动，适当休息。如有持续偏高请及时联系医生。' },
+					{ day: 2, title: '今日血压正常', systolic: '118', diastolic: '78', pulse: '70', advice: '血压控制得很好！请继续保持健康的生活习惯，多喝水，适当补充营养。' },
+					{ day: 3, title: '血压偏低', systolic: '108', diastolic: '68', pulse: '66', advice: '今日血压偏低，建议您适当补充盐分和水分，避免突然站立导致头晕。如有不适请及时告知医护人员。' },
+					{ day: 4, title: '今日血压正常', systolic: '125', diastolic: '80', pulse: '73', advice: '血压状态良好，继续保持规律的作息时间，适当进行户外活动，呼吸新鲜空气。' },
+					{ day: 5, title: '血压略偏高', systolic: '135', diastolic: '85', pulse: '76', advice: '血压略有上升，建议您放松心情，避免过度劳累。可以听一些舒缓的音乐来缓解压力。' },
+					{ day: 6, title: '今日血压正常', systolic: '120', diastolic: '80', pulse: '72', advice: '周末愉快！今日血压状态很好，请好好休息，享受美好的周末时光。' }
+				]
 			}
 		},
 		onShow() {
@@ -132,10 +307,79 @@
 			if (userInfo && userInfo.name) {
 				this.userName = userInfo.name
 			}
+			this.updateDate()
+			this.updateGreeting()
+			this.updateWeather()
+			this.updateHealthData()
+			this.updateScheduleData()
 		},
 		methods: {
 			handleBannerChange(e: any) {
 				this.currentBannerIndex = e.detail.current
+			},
+			updateDate() {
+				const now = new Date()
+				const year = now.getFullYear()
+				const month = now.getMonth() + 1
+				const day = now.getDate()
+				const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+				const weekDay = weekDays[now.getDay()]
+				this.currentDate = `${year}年${month}月${day}日`
+				this.currentWeek = weekDay
+			},
+			updateGreeting() {
+				const hour = new Date().getHours()
+				if (hour < 6) {
+					this.greeting = '夜深了，'
+					this.greetingDesc = '早点休息，晚安'
+				} else if (hour < 12) {
+					this.greeting = '早上好，'
+					this.greetingDesc = '新的一天开始了，祝您心情愉快'
+				} else if (hour < 14) {
+					this.greeting = '中午好，'
+					this.greetingDesc = '记得按时吃饭，好好休息'
+				} else if (hour < 18) {
+					this.greeting = '下午好，'
+					this.greetingDesc = '今天也是美好的一天'
+				} else if (hour < 22) {
+					this.greeting = '晚上好，'
+					this.greetingDesc = '今天辛苦了，早点休息'
+				} else {
+					this.greeting = '夜深了，'
+					this.greetingDesc = '早点休息，晚安'
+				}
+			},
+			updateWeather() {
+				const weathers = [
+					{ icon: '☀', text: '晴' },
+					{ icon: '⛅', text: '多云' },
+					{ icon: '☁', text: '阴' },
+					{ icon: '🌧', text: '小雨' },
+					{ icon: '🌨', text: '小雪' },
+					{ icon: '🌤', text: '晴转多云' },
+					{ icon: '🌥', text: '多云转晴' },
+					{ icon: '❄', text: '大雪' },
+					{ icon: '🌩', text: '雷阵雨' },
+					{ icon: '🌫', text: '雾霾' }
+				]
+				const randomIndex = Math.floor(Math.random() * weathers.length)
+				const randomWeather = weathers[randomIndex]
+				this.weatherIcon = randomWeather.icon
+				this.weatherText = randomWeather.text
+			},
+			updateHealthData() {
+				const dayOfWeek = new Date().getDay()
+				const todayHealth = this.weeklyHealthData.find(item => item.day === dayOfWeek)
+				if (todayHealth) {
+					this.healthData = { ...todayHealth }
+				}
+			},
+			updateScheduleData() {
+				const dayOfWeek = new Date().getDay()
+				const todaySchedule = this.weeklySchedules.find(item => item.day === dayOfWeek)
+				if (todaySchedule) {
+					this.schedules = [...todaySchedule.items]
+				}
 			},
 			goToHealth() {
 				uni.showToast({
@@ -168,19 +412,21 @@
 <style>
 	.container {
 		min-height: 100vh;
-		background: #F5F8F5;
+		background: #F8FAF8;
 		position: relative;
 	}
 
 	.content {
-		height: calc(100vh - 400rpx);
+		height: 100vh;
 	}
 
 	/* 轮播图样式 */
 	.banner {
 		width: 100%;
-		height: 400rpx;
+		height: 420rpx;
 		position: relative;
+		border-radius: 0 0 30rpx 30rpx;
+		overflow: hidden;
 	}
 
 	.banner image {
@@ -189,138 +435,250 @@
 	}
 
 	.banner ::v-deep .uni-swiper-dots {
-		bottom: 20rpx;
+		bottom: 30rpx;
 	}
 
 	.banner ::v-deep .uni-swiper-dot {
-		width: 12rpx;
-		height: 12rpx;
+		width: 10rpx;
+		height: 10rpx;
 		margin: 0 8rpx;
+		background: rgba(255, 255, 255, 0.5);
 	}
 
 	.banner ::v-deep .uni-swiper-dot-active {
-		width: 24rpx;
-		border-radius: 6rpx;
+		width: 28rpx;
+		border-radius: 5rpx;
+		background: #FFFFFF;
 	}
 
 	/* 欢迎区域 */
 	.welcome-section {
-		background: linear-gradient(135deg, #34A853 0%, #2ECC71 100%);
-		margin: -60rpx 20rpx 20rpx;
-		border-radius: 20rpx;
-		padding: 40rpx 30rpx;
+		background: linear-gradient(145deg, rgba(46, 125, 50, 0.85) 0%, rgba(67, 160, 71, 0.85) 50%, rgba(102, 187, 106, 0.85) 100%);
+		margin: 50rpx 24rpx 24rpx;
+		border-radius: 28rpx;
+		padding: 48rpx 36rpx;
 		position: relative;
 		z-index: 10;
-		box-shadow: 0 8rpx 25rpx rgba(52, 168, 83, 0.3);
+		box-shadow: 0 16rpx 48rpx rgba(46, 125, 50, 0.4);
+		overflow: hidden;
+	}
+
+	.welcome-bg-icon {
+		position: absolute;
+		top: -20rpx;
+		right: -20rpx;
+		font-size: 120rpx;
+		opacity: 0.15;
+		transform: rotate(20deg);
+	}
+
+	.welcome-decoration {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 60rpx;
+		background: linear-gradient(transparent, rgba(0, 0, 0, 0.1));
+		border-radius: 0 0 28rpx 28rpx;
+	}
+
+	.welcome-content {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.welcome-top-row {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 28rpx;
+		width: 100%;
+		gap:5%;
+	}
+
+	.weather-area {
+		display: inline-flex;
+		justify-content: center;
+	}
+
+	.date-area {
+		display: inline-flex;
+		justify-content: center;
+		text-align: center;
+	}
+
+	.welcome-info {
+		margin-top: 8rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.welcome-date {
+	}
+
+	.date-text {
+		font-size: 32rpx;
+		color: rgba(255, 255, 255, 0.9);
+		font-weight: 500;
+	}
+
+	.week-text {
+		font-size: 28rpx;
+		color: rgba(255, 255, 255, 0.75);
+		margin-top: 4rpx;
+	}
+
+	.weather-badge {
+		display: flex;
+		align-items: center;
+		background: rgba(255, 255, 255, 0.18);
+		border-radius: 24rpx;
+		padding: 10rpx 20rpx;
+		backdrop-filter: blur(15px);
+		border: 1rpx solid rgba(255, 255, 255, 0.25);
+	}
+
+	.weather-icon {
+		font-size: 32rpx;
+		margin-right: 10rpx;
+		color: #FFFFFF;
+	}
+
+	.weather-text {
+		font-size: 32rpx;
+		color: #FFFFFF;
+		font-weight: 500;
 	}
 
 	.welcome-title {
-		font-size: 36rpx;
+		font-size: 46rpx;
 		color: #FFFFFF;
-		font-weight: bold;
+		font-weight: 700;
 		display: block;
-		margin-bottom: 10rpx;
+		margin-bottom: 14rpx;
+		letter-spacing: 3rpx;
+		text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
 	}
 
 	.welcome-desc {
-		font-size: 26rpx;
-		color: rgba(255, 255, 255, 0.9);
+		font-size: 30rpx;
+		color: rgba(255, 255, 255, 0.95);
+		line-height: 1.6;
 	}
 
 	/* 快捷功能区域 */
 	.quick-section {
-		padding: 30rpx;
+		padding: 36rpx 32rpx;
 		background: #FFFFFF;
-		margin: 20rpx;
-		border-radius: 20rpx;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+		margin: 24rpx;
+		border-radius: 24rpx;
+		box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06);
 	}
 
 	.section-title {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 30rpx;
+		margin-bottom: 32rpx;
 	}
 
 	.title-text {
-		font-size: 32rpx;
-		font-weight: bold;
-		color: #333333;
+		font-size: 34rpx;
+		font-weight: 700;
+		color: #1A237E;
 	}
 
 	.more-text {
 		font-size: 26rpx;
-		color: #34A853;
+		color: #43A047;
+		font-weight: 500;
 	}
 
 	.quick-grid {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: 20rpx;
+		gap: 24rpx;
 	}
 
 	.quick-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		padding: 20rpx 0;
+		padding: 24rpx 0;
+		border-radius: 16rpx;
+		transition: all 0.2s ease;
+	}
+
+	.quick-item:active {
+		transform: scale(0.95);
+		background: rgba(67, 160, 71, 0.05);
 	}
 
 	.quick-icon {
-		width: 100rpx;
-		height: 100rpx;
-		border-radius: 20rpx;
+		width: 110rpx;
+		height: 110rpx;
+		border-radius: 24rpx;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		margin-bottom: 15rpx;
+		margin-bottom: 16rpx;
+		box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
 	}
 
 	.quick-icon.health {
-		background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%);
+		background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%);
 	}
 
 	.quick-icon.activity {
-		background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+		background: linear-gradient(135deg, #FB8C00 0%, #FFA726 100%);
 	}
 
 	.quick-icon.care {
-		background: linear-gradient(135deg, #F48FB1 0%, #F06292 100%);
+		background: linear-gradient(135deg, #E91E63 0%, #F48FB1 100%);
 	}
 
 	.quick-icon.contact {
-		background: linear-gradient(135deg, #AED581 0%, #8BC34A 100%);
+		background: linear-gradient(135deg, #689F38 0%, #8BC34A 100%);
 	}
 
 	.icon-text {
-		font-size: 40rpx;
+		font-size: 44rpx;
 		color: #FFFFFF;
-		font-weight: bold;
+		font-weight: 700;
 	}
 
 	.quick-name {
-		font-size: 24rpx;
-		color: #666666;
+		font-size: 26rpx;
+		color: #424242;
+		font-weight: 500;
 	}
 
 	/* 今日安排 */
 	.schedule-section {
-		padding: 30rpx;
+		padding: 36rpx 32rpx;
 		background: #FFFFFF;
-		margin: 20rpx;
-		border-radius: 20rpx;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+		margin: 24rpx;
+		border-radius: 24rpx;
+		box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06);
 	}
 
 	.schedule-list {
-		margin-top: 20rpx;
+		margin-top: 8rpx;
 	}
 
 	.schedule-item {
 		display: flex;
-		padding: 20rpx 0;
-		border-bottom: 1rpx solid #F0F0F0;
+		flex-direction: column;
+		padding: 24rpx 0;
+		border-bottom: 1rpx solid #F5F5F5;
+		align-items: center;
+		text-align: center;
 	}
 
 	.schedule-item:last-child {
@@ -328,72 +686,240 @@
 	}
 
 	.schedule-time {
-		width: 120rpx;
-		font-size: 28rpx;
-		color: #34A853;
-		font-weight: bold;
-	}
-
-	.schedule-content {
-		flex: 1;
-		padding-left: 20rpx;
-	}
-
-	.schedule-title {
-		font-size: 28rpx;
-		color: #333333;
-		display: block;
+		font-size: 30rpx;
+		color: #2E7D32;
+		font-weight: 700;
 		margin-bottom: 8rpx;
 	}
 
+	.schedule-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.schedule-title {
+		font-size: 30rpx;
+		color: #212121;
+		display: block;
+		margin-bottom: 8rpx;
+		font-weight: 500;
+	}
+
 	.schedule-desc {
-		font-size: 24rpx;
-		color: #999999;
+		font-size: 26rpx;
+		color: #757575;
 	}
 
 	/* 健康提示 */
 	.health-section {
-		padding: 30rpx;
+		padding: 36rpx 32rpx;
 		background: #FFFFFF;
-		margin: 20rpx;
-		border-radius: 20rpx;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+		margin: 24rpx;
+		border-radius: 24rpx;
+		box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06);
+		padding-bottom: 120rpx;
 	}
 
 	.health-card {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-		border-radius: 16rpx;
-		padding: 25rpx;
-		margin-top: 20rpx;
+		background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%);
+		border-radius: 20rpx;
+		padding: 32rpx;
+		margin-top: 16rpx;
 	}
 
 	.health-icon {
-		width: 80rpx;
-		height: 80rpx;
-		background: #34A853;
+		width: 90rpx;
+		height: 90rpx;
+		background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
 		border-radius: 50%;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		margin-right: 20rpx;
+		margin-bottom: 16rpx;
+		box-shadow: 0 8rpx 24rpx rgba(46, 125, 50, 0.3);
 	}
 
 	.health-info {
-		flex: 1;
+		text-align: center;
 	}
 
 	.health-title {
-		font-size: 28rpx;
-		color: #333333;
-		font-weight: bold;
+		font-size: 30rpx;
+		color: #1B5E20;
+		font-weight: 700;
 		display: block;
-		margin-bottom: 8rpx;
+		margin-bottom: 10rpx;
+		text-align:center;
 	}
 
 	.health-desc {
-		font-size: 24rpx;
-		color: #666666;
+		font-size: 26rpx;
+		color: #558B2F;
+	}
+
+	/* 弹窗样式 */
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		z-index: 1000;
+	}
+
+	.modal-content {
+		width: 85%;
+		max-width: 600rpx;
+		background: #FFFFFF;
+		border-radius: 28rpx;
+		overflow: hidden;
+		box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.2);
+	}
+
+	.modal-header {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 36rpx;
+		border-bottom: 1rpx solid #F0F0F0;
+	}
+
+	.modal-title {
+		font-size: 36rpx;
+		font-weight: 700;
+		color: #333333;
+	}
+
+	.modal-body {
+		max-height: 50vh;
+		padding: 24rpx 36rpx;
+	}
+
+	.modal-footer {
+		padding: 24rpx 36rpx 36rpx;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+	}
+
+	.modal-close {
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 50%;
+		background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		box-shadow: 0 8rpx 24rpx rgba(46, 125, 50, 0.4);
+	}
+
+	.close-icon {
+		font-size: 56rpx;
+		color: #FFFFFF;
+		line-height: 1;
+		font-weight: 300;
+	}
+
+	.modal-list {
+		margin-top: 0;
+	}
+
+	.modal-list .schedule-item:last-child {
+		border-bottom: none;
+	}
+
+	/* 健康弹窗样式 */
+	.health-modal-body {
+		padding: 24rpx 0;
+	}
+
+	.health-icon-big {
+		width: 140rpx;
+		height: 140rpx;
+		background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
+		border-radius: 50%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin: 0 auto 32rpx;
+		box-shadow: 0 12rpx 32rpx rgba(46, 125, 50, 0.4);
+	}
+
+	.icon-text-big {
+		font-size: 64rpx;
+		color: #FFFFFF;
+		font-weight: 700;
+	}
+
+	.health-status {
+		text-align: center;
+		margin-bottom: 32rpx;
+	}
+
+	.health-status-text {
+		text-align:center;
+		font-size: 36rpx;
+		color: #2E7D32;
+		font-weight: 700;
+	}
+
+	.health-details {
+		background: #F5F5F5;
+		border-radius: 20rpx;
+		padding: 24rpx;
+		margin-bottom: 24rpx;
+	}
+
+	.health-detail-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 16rpx 0;
+		border-bottom: 1rpx solid #E0E0E0;
+	}
+
+	.health-detail-item:last-child {
+		border-bottom: none;
+	}
+
+	.detail-label {
+		font-size: 28rpx;
+		color: #616161;
+	}
+
+	.detail-value {
+		font-size: 28rpx;
+		color: #2E7D32;
+		font-weight: 600;
+	}
+
+	.health-advice {
+		background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+		border-radius: 20rpx;
+		padding: 24rpx;
+	}
+
+	.advice-title {
+		font-size: 30rpx;
+		color: #2E7D32;
+		font-weight: 700;
+		display: block;
+		margin-bottom: 12rpx;
+	}
+
+	.advice-content {
+		font-size: 26rpx;
+		color: #558B2F;
+		line-height: 1.6;
 	}
 </style>
