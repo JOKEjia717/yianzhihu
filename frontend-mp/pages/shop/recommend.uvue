@@ -1,0 +1,442 @@
+<template>
+	<view class="container">
+		<!-- 顶部导航栏 -->
+		<view class="nav-bar">
+			<text class="back-icon" @click="goBack">←</text>
+			<text class="title">为您推荐</text>
+			<view class="placeholder"></view>
+		</view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 推荐横幅 -->
+			<view class="banner">
+				<image src="/static/images/banner.jpg" mode="aspectFill"></image>
+				<view class="banner-overlay"></view>
+				<view class="banner-content">
+					<text class="banner-title">智能推荐</text>
+					<text class="banner-desc">根据您的喜好为您推荐</text>
+				</view>
+			</view>
+
+			<!-- 精选推荐 -->
+			<view class="section-header">
+				<text class="section-title">精选推荐</text>
+			</view>
+
+			<view class="featured-product">
+				<image class="featured-image" src="/static/images/product1.jpg" mode="aspectFill"></image>
+				<view class="featured-overlay"></view>
+				<view class="featured-info">
+					<text class="featured-badge">今日精选</text>
+					<text class="featured-name">智能按摩椅</text>
+					<text class="featured-desc">全身按摩 零重力体验</text>
+					<view class="featured-price-row">
+						<text class="featured-price">¥2999</text>
+						<view class="featured-btn">立即购买</view>
+					</view>
+				</view>
+			</view>
+
+			<!-- 猜你喜欢 -->
+			<view class="section-header">
+				<text class="section-title">猜你喜欢</text>
+			</view>
+
+			<view class="product-grid">
+				<view class="product-item" v-for="item in products" :key="item.id">
+					<image class="product-image" :src="item.image" mode="aspectFill" @click="goToDetail(item.id)"></image>
+					<text class="product-name">{{item.name}}</text>
+					<text class="product-desc">{{item.desc}}</text>
+					<text class="product-price">¥{{item.price}}</text>
+					<view class="add-cart-btn" @click.stop="addToCart(item)">
+						<text class="add-icon">+</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 浏览记录 -->
+			<view class="section-header">
+				<text class="section-title">浏览记录</text>
+			</view>
+
+			<view class="history-list">
+				<view class="history-item" v-for="item in history" :key="item.id" @click="goToDetail(item.id)">
+					<image class="history-image" :src="item.image" mode="aspectFill"></image>
+					<view class="history-info">
+						<text class="history-name">{{item.name}}</text>
+						<text class="history-price">¥{{item.price}}</text>
+					</view>
+					<text class="history-delete" @click.stop="deleteHistory(item.id)">删除</text>
+				</view>
+			</view>
+		</scroll-view>
+
+		<!-- 悬浮购物车图标 -->
+		<view class="float-cart" @click="goToCart">
+			<view class="cart-icon">🛒</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Product {
+		id: number
+		name: string
+		desc: string
+		price: number
+		image: string
+	}
+
+	export default {
+		data() {
+			return {
+				products: [
+					{ id: 1, name: '助行器', desc: '轻便折叠 稳固安全', price: 299, image: '/static/images/product4.jpg' },
+					{ id: 2, name: '血压计', desc: '一键测量 语音播报', price: 199, image: '/static/images/product6.jpg' },
+					{ id: 3, name: '奶粉', desc: '中老年高钙配方', price: 128, image: '/static/images/product2.jpg' },
+					{ id: 4, name: '放大镜', desc: '高清放大 手持便携', price: 59, image: '/static/images/product11.jpg' },
+					{ id: 5, name: '收音机', desc: '大音量 清晰音质', price: 168, image: '/static/images/product10.jpg' },
+					{ id: 6, name: '防滑拖鞋', desc: '柔软舒适 安全防滑', price: 35, image: '/static/images/product3.jpg' }
+				] as Product[],
+				history: [
+					{ id: 2, name: '智能血压计', price: 199, image: '/static/images/product6.jpg' },
+					{ id: 4, name: '放大镜', price: 59, image: '/static/images/product11.jpg' }
+				] as Product[]
+			}
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack()
+			},
+			goToDetail(id: number) {
+				uni.showToast({
+					title: '商品详情开发中',
+					icon: 'none'
+				})
+			},
+			addToCart(item: Product) {
+				uni.showToast({
+					title: '已加入购物车',
+					icon: 'success'
+				})
+			},
+			deleteHistory(id: number) {
+				this.history = this.history.filter(item => item.id !== id)
+				uni.showToast({
+					title: '已删除',
+					icon: 'none'
+				})
+			},
+			goToCart() {
+				uni.navigateTo({
+					url: '/pages/children/cart'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+	}
+
+	.nav-bar {
+		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+		padding: 20rpx 30rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.back-icon {
+		color: #FFFFFF;
+		font-size: 44rpx;
+		font-weight: bold;
+	}
+
+	.title {
+		color: #FFFFFF;
+		font-size: 34rpx;
+		font-weight: 600;
+	}
+
+	.placeholder {
+		width: 60rpx;
+	}
+
+	.content {
+		margin-top: 88rpx;
+		padding: 20rpx;
+	}
+
+	.banner {
+		position: relative;
+		height: 200rpx;
+		border-radius: 16rpx;
+		overflow: hidden;
+		margin-bottom: 20rpx;
+	}
+
+	.banner image {
+		width: 100%;
+		height: 100%;
+	}
+
+	.banner-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, rgba(76, 175, 80, 0.8) 0%, rgba(56, 142, 60, 0.6) 100%);
+	}
+
+	.banner-content {
+		position: absolute;
+		left: 40rpx;
+		top: 50%;
+		transform: translateY(-50%);
+		color: #FFFFFF;
+	}
+
+	.banner-title {
+		font-size: 36rpx;
+		font-weight: bold;
+		display: block;
+		margin-bottom: 6rpx;
+	}
+
+	.banner-desc {
+		font-size: 24rpx;
+		opacity: 0.9;
+	}
+
+	.section-header {
+		margin-bottom: 16rpx;
+	}
+
+	.section-title {
+		font-size: 32rpx;
+		font-weight: bold;
+		color: #2E7D32;
+		padding-left: 10rpx;
+		border-left: 6rpx solid #4CAF50;
+	}
+
+	.featured-product {
+		position: relative;
+		height: 360rpx;
+		border-radius: 16rpx;
+		overflow: hidden;
+		margin-bottom: 20rpx;
+	}
+
+	.featured-image {
+		width: 100%;
+		height: 100%;
+	}
+
+	.featured-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 100%);
+	}
+
+	.featured-info {
+		position: absolute;
+		left: 30rpx;
+		bottom: 30rpx;
+		color: #FFFFFF;
+	}
+
+	.featured-badge {
+		background: #FF9800;
+		font-size: 22rpx;
+		padding: 6rpx 14rpx;
+		border-radius: 6rpx;
+		display: inline-block;
+		margin-bottom: 12rpx;
+	}
+
+	.featured-name {
+		font-size: 36rpx;
+		font-weight: bold;
+		display: block;
+		margin-bottom: 8rpx;
+	}
+
+	.featured-desc {
+		font-size: 26rpx;
+		opacity: 0.9;
+		display: block;
+		margin-bottom: 16rpx;
+	}
+
+	.featured-price-row {
+		display: flex;
+		align-items: center;
+		gap: 20rpx;
+	}
+
+	.featured-price {
+		font-size: 44rpx;
+		font-weight: bold;
+		color: #FF9800;
+	}
+
+	.featured-btn {
+		background: #4CAF50;
+		padding: 12rpx 32rpx;
+		border-radius: 30rpx;
+		font-size: 26rpx;
+	}
+
+	.product-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 16rpx;
+		margin-bottom: 20rpx;
+	}
+
+	.product-item {
+		background: #FFFFFF;
+		border-radius: 12rpx;
+		overflow: hidden;
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
+		position: relative;
+	}
+
+	.product-image {
+		width: 100%;
+		height: 220rpx;
+	}
+
+	.product-name {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #333333;
+		padding: 12rpx 12rpx 6rpx;
+		display: block;
+	}
+
+	.product-desc {
+		font-size: 22rpx;
+		color: #999999;
+		padding: 0 12rpx 10rpx;
+		display: block;
+	}
+
+	.product-price {
+		font-size: 30rpx;
+		color: #E53935;
+		font-weight: bold;
+		padding: 0 12rpx 12rpx;
+		display: block;
+	}
+
+	.history-list {
+		background: #FFFFFF;
+		border-radius: 12rpx;
+		overflow: hidden;
+	}
+
+	.history-item {
+		display: flex;
+		align-items: center;
+		padding: 16rpx;
+		border-bottom: 1rpx solid #F0F0F0;
+	}
+
+	.history-item:last-child {
+		border-bottom: none;
+	}
+
+	.history-image {
+		width: 120rpx;
+		height: 120rpx;
+		border-radius: 8rpx;
+		margin-right: 16rpx;
+	}
+
+	.history-info {
+		flex: 1;
+	}
+
+	.history-name {
+		font-size: 28rpx;
+		color: #333333;
+		display: block;
+		margin-bottom: 6rpx;
+	}
+
+	.history-price {
+		font-size: 26rpx;
+		color: #E53935;
+		font-weight: bold;
+	}
+
+	.history-delete {
+		font-size: 26rpx;
+		color: #999999;
+		padding: 8rpx 16rpx;
+	}
+
+	.add-cart-btn {
+		position: absolute;
+		bottom: 12rpx;
+		right: 12rpx;
+		width: 56rpx;
+		height: 56rpx;
+		background: #4CAF50;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
+	}
+
+	.add-icon {
+		font-size: 40rpx;
+		color: #FFFFFF;
+		font-weight: bold;
+		line-height: 1;
+	}
+
+	/* 悬浮购物车图标 */
+	.float-cart {
+		position: fixed;
+		right: 50rpx;
+		bottom: 170rpx;
+		width: 100rpx;
+		height: 100rpx;
+		background: #FFFFFF;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		z-index: 9999;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1rpx solid #F0F0F0;
+	}
+
+	.float-cart:active {
+		transform: scale(0.92);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+	}
+
+	.cart-icon {
+		font-size: 48rpx;
+	}
+</style>

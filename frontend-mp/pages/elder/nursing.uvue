@@ -1,0 +1,548 @@
+<template>
+  <view class="page">
+    <!-- 顶部标题栏 -->
+    <view class="header">
+      <view class="header-left">
+        <view class="back-btn" @click="goBack">
+          <text class="back-icon">←</text>
+        </view>
+      </view>
+      <view class="header-center">
+        <text class="title">护理日常</text>
+      </view>
+      <view class="header-right">
+        <view class="dropdown">
+          <picker mode="date" :value="selectedDate" @change="handleDateChange">
+            <view class="picker-content">
+              <text class="picker-text">{{ selectedDate || '选择日期' }}</text>
+            </view>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主要内容区域 -->
+    <view class="content">
+      <!-- 每日三餐 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">每日三餐</text>
+        </view>
+        <view class="section-content">
+          <swiper v-if="mealData.breakfastPhotos || mealData.lunchPhotos || mealData.dinnerPhotos" class="meal-swiper" indicator-dots>
+            <swiper-item v-if="mealData.breakfastPhotos">
+              <image 
+                :src="mealData.breakfastPhotos" 
+                mode="aspectFill" 
+                class="meal-image"
+                @click="previewImage(mealData.breakfastPhotos)"
+              ></image>
+              <view class="meal-label">
+                <text class="meal-time">早餐：</text>
+                <text class="meal-description">{{ mealData.breakfastDesc || '小米粥一碗、鸡蛋一个' }}</text>
+              </view>
+            </swiper-item>
+            <swiper-item v-if="mealData.lunchPhotos">
+              <image 
+                :src="mealData.lunchPhotos" 
+                mode="aspectFill" 
+                class="meal-image"
+                @click="previewImage(mealData.lunchPhotos)"
+              ></image>
+              <view class="meal-label">
+                <text class="meal-time">午餐：</text>
+                <text class="meal-description">{{ mealData.lunchDesc || '米饭一碗、清蒸鱼、炒青菜' }}</text>
+              </view>
+            </swiper-item>
+            <swiper-item v-if="mealData.dinnerPhotos">
+              <image 
+                :src="mealData.dinnerPhotos" 
+                mode="aspectFill" 
+                class="meal-image"
+                @click="previewImage(mealData.dinnerPhotos)"
+              ></image>
+              <view class="meal-label">
+                <text class="meal-time">晚餐：</text>
+                <text class="meal-description">{{ mealData.dinnerDesc || '豆腐汤、馒头一个' }}</text>
+              </view>
+            </swiper-item>
+          </swiper>
+          <view v-else-if="mealData.mealRecords && mealData.mealRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in mealData.mealRecords" :key="index" class="record-item">
+              <text class="record-time">{{ record.time }}</text>
+              <text class="record-content">{{ record.content }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 衣物穿戴 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">衣物穿戴</text>
+        </view>
+        <view class="section-content">
+          <image 
+            v-if="clothingData.clothingPhotos" 
+            :src="clothingData.clothingPhotos" 
+            mode="aspectFill" 
+            class="clothing-image"
+            @click="previewImage(clothingData.clothingPhotos)"
+          ></image>
+          <view v-else-if="clothingData.clothingRecords && clothingData.clothingRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in clothingData.clothingRecords" :key="index" class="record-item">
+              <text class="record-time">{{ record.time }}</text>
+              <text class="record-content">{{ record.content }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 住宿环境 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">住宿环境</text>
+        </view>
+        <view class="section-content">
+          <image 
+            v-if="livingData.lodgingPhotos" 
+            :src="livingData.lodgingPhotos" 
+            mode="aspectFill" 
+            class="living-image"
+            @click="previewImage(livingData.lodgingPhotos)"
+          ></image>
+          <view v-else-if="livingData.livingRecords && livingData.livingRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in livingData.livingRecords" :key="index" class="record-item">
+              <text class="record-time">{{ record.time }}</text>
+              <text class="record-content">{{ record.content }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 健康状态 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">健康状态</text>
+        </view>
+        <view class="section-content">
+          <view v-if="healthData.report || healthData.healthSuggestion" class="health-info">
+            <view class="health-item" v-if="healthData.report">
+              <text class="health-label">健康报告</text>
+              <text class="health-value">{{ healthData.report }}</text>
+            </view>
+            <view class="health-item" v-if="healthData.healthSuggestion">
+              <text class="health-label">护理建议</text>
+              <text class="health-value">{{ healthData.healthSuggestion }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+
+      <!-- 护理记录 -->
+      <view class="section">
+        <view class="section-header">
+          <text class="section-title">护理记录</text>
+        </view>
+        <view class="section-content">
+          <view v-if="healthData.nursingRecords && healthData.nursingRecords.length > 0" class="record-list">
+            <view v-for="(record, index) in healthData.nursingRecords" :key="index" class="record-item">
+              <text class="record-content">{{ record }}</text>
+            </view>
+          </view>
+          <view v-else class="empty-tip">暂无记录</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+import { getDateIndex, getElderData, getClothingByDate } from '@/data/mockData.ts'
+
+interface DailyData {
+  dailyId: string
+  elderId: string
+  caretakerId: string
+  date: string
+  breakfastPhotos: string
+  lunchPhotos: string
+  dinnerPhotos: string
+  lodgingPhotos: string
+  clothingPhotos: string
+  aiComment: string | null
+  childrenId: string
+  deanId: string
+  mealRecords: any[]
+  clothingRecords: any[]
+  livingRecords: any[]
+  breakfastDesc: string
+  lunchDesc: string
+  dinnerDesc: string
+}
+
+export default {
+  data() {
+    return {
+      selectedDate: '',
+      mealData: {} as DailyData,
+      clothingData: {} as DailyData,
+      livingData: {} as DailyData,
+      currentDailyId: '',
+      healthData: {
+        healthId: null,
+        assessDate: '',
+        report: '',
+        healthSuggestion: '',
+        nursingRecords: [] as string[],
+        number: null
+      }
+    }
+  },
+  onLoad() {
+    this.initData()
+  },
+  methods: {
+    initData() {
+      this.setDefaultDates()
+      this.fetchDailyData('meal')
+      this.fetchDailyData('clothing')
+      this.fetchDailyData('living')
+      this.fetchHealthData()
+    },
+    setDefaultDates() {
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = String(today.getMonth() + 1).padStart(2, '0')
+      const day = String(today.getDate()).padStart(2, '0')
+      this.selectedDate = `${year}-${month}-${day}`
+    },
+    fetchDailyData(type: string) {
+      const date = this.selectedDate
+      const dateIndex = getDateIndex(date)
+      const elderData = getElderData(0)
+      const healthReportIndex = dateIndex % elderData.healthReports.length
+      const selectedMeal = elderData.mealOptions[healthReportIndex]
+      const selectedClothing = getClothingByDate(date, elderData.clothingOptions)
+      const selectedLiving = elderData.livingOptions[dateIndex % elderData.livingOptions.length]
+      const selectedHealthReport = elderData.healthReports[healthReportIndex]
+      
+      const nursingMealRecords = selectedHealthReport.nursingRecords.filter((record: string) => 
+        record.includes('早餐：') || record.includes('午餐：') || record.includes('晚餐：')
+      )
+      
+      const breakfastRecord = nursingMealRecords.find((r: string) => r.includes('早餐：'))
+      const lunchRecord = nursingMealRecords.find((r: string) => r.includes('午餐：'))
+      const dinnerRecord = nursingMealRecords.find((r: string) => r.includes('晚餐：'))
+      
+      const mockData: DailyData = {
+        dailyId: 'mock-' + Date.now(),
+        elderId: '1',
+        mealRecords: type === 'meal' ? selectedMeal.mealRecords : [],
+        clothingRecords: type === 'clothing' ? selectedClothing.clothingRecords : [],
+        livingRecords: type === 'living' ? selectedLiving.livingRecords : [],
+        date: date,
+        breakfastPhotos: selectedMeal.breakfastPhoto || `/static/images/breakfast${dateIndex % 3 + 1}.jpg`,
+        lunchPhotos: selectedMeal.lunchPhoto || `/static/images/lunch${dateIndex % 3 + 1}.jpg`,
+        dinnerPhotos: selectedMeal.dinnerPhoto || `/static/images/dinner${dateIndex % 3 + 1}.jpg`,
+        breakfastDesc: breakfastRecord ? breakfastRecord.replace('早餐：', '') : selectedMeal.breakfast,
+        lunchDesc: lunchRecord ? lunchRecord.replace('午餐：', '') : selectedMeal.lunch,
+        dinnerDesc: dinnerRecord ? dinnerRecord.replace('晚餐：', '') : selectedMeal.dinner,
+        clothingPhotos: selectedClothing.clothingPhoto || '/static/images/clothing.jpg',
+        lodgingPhotos: ''
+      }
+      
+      switch(type) {
+        case 'meal':
+          this.mealData = mockData
+          break
+        case 'clothing':
+          this.clothingData = mockData
+          break
+        case 'living':
+          this.livingData = mockData
+          break
+      }
+      this.currentDailyId = mockData.dailyId
+    },
+    fetchHealthData() {
+      const dateIndex = this.selectedDate ? getDateIndex(this.selectedDate) % 3 : 0
+      const elderData = getElderData(0)
+      const healthReport = elderData.healthReports[dateIndex % elderData.healthReports.length]
+      
+      this.healthData = {
+        healthId: null,
+        assessDate: this.selectedDate || healthReport.assessDate,
+        report: healthReport.report,
+        healthSuggestion: healthReport.healthSuggestion,
+        nursingRecords: healthReport.nursingRecords,
+        number: null
+      }
+    },
+    handleDateChange(e: any) {
+      this.selectedDate = e.detail.value
+      this.fetchDailyData('meal')
+      this.fetchDailyData('clothing')
+      this.fetchDailyData('living')
+      this.fetchHealthData()
+    },
+    goBack() {
+      uni.reLaunch({
+        url: '/pages/elder/index'
+      })
+    },
+    previewImage(url: string) {
+      if (!url) return
+      uni.previewImage({
+        urls: [url],
+        current: url,
+        indicator: 'number',
+        loop: false
+      })
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #f5f7f7;
+  padding-bottom: 100rpx;
+}
+
+.header {
+  display: flex;
+  padding: 60rpx 24rpx 24rpx;
+  background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
+  position: relative;
+}
+
+.header-left {
+  z-index: 10;
+}
+
+.back-btn {
+  padding-left: 0;
+}
+
+.back-icon {
+  font-size: 40rpx;
+  color: #FFFFFF;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.header-center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+  text-align:center;
+}
+
+.header-right {
+  position: absolute;
+  right: 24rpx;
+  z-index: 10;
+}
+
+.dropdown {
+  min-width: 160rpx;
+}
+
+.picker-content {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 8rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.picker-text {
+  font-size: 26rpx;
+  color: #fff;
+}
+
+.content {
+  padding: 30rpx;
+}
+
+.section {
+  background-color: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  border: 1rpx solid #e8f0ef;
+}
+
+.section:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 6rpx 24rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  position: relative;
+  height: 80rpx;
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  transform: translateX(-50%);
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #5A9A95;
+  white-space: nowrap;
+}
+
+.section-content {
+  min-height: 160rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f7f7;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  border: 1rpx solid #e8f0ef;
+}
+
+.empty-tip {
+  color: #7AB8B3;
+  font-size: 26rpx;
+}
+
+.record-list {
+  width: 100%;
+  padding: 10rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-item {
+  display: flex;
+  flex-direction: column;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #E8E8E8;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-time {
+  font-size: 28rpx;
+  color: #7AB8B3;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.record-content {
+  font-size: 28rpx;
+  color: #333333;
+  line-height: 1.5;
+}
+
+.meal-swiper {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.meal-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+}
+
+.meal-label {
+  position: absolute;
+  bottom: 20rpx;
+  left: 20rpx;
+  background-color: rgba(90, 154, 149, 0.8);
+  color: #fff;
+  padding: 10rpx 16rpx;
+  border-radius: 8rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  max-width: 80%;
+}
+
+.meal-time {
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.meal-description {
+  font-size: 22rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clothing-image {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 12rpx;
+}
+
+.living-image {
+  width: 100%;
+  height: 300rpx;
+  border-radius: 12rpx;
+}
+
+.health-info {
+  width: 100%;
+  padding: 10rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.health-item {
+  display: flex;
+  flex-direction: column;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid #E8E8E8;
+}
+
+.health-item:last-child {
+  border-bottom: none;
+}
+
+.health-label {
+  font-size: 28rpx;
+  color: #7AB8B3;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.health-value {
+  font-size: 28rpx;
+  color: #333333;
+  line-height: 1.5;
+}
+</style>

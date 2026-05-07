@@ -55,11 +55,11 @@
 					<text class="title-text">快捷功能</text>
 				</view>
 				<view class="quick-grid">
-					<view class="quick-item" @click="goToHealth">
-						<view class="quick-icon health">
-							<text class="icon-text">健</text>
+					<view class="quick-item" @click="goToMall">
+						<view class="quick-icon mall">
+							<text class="icon-text">商</text>
 						</view>
-						<text class="quick-name">健康查看</text>
+						<text class="quick-name">商城</text>
 					</view>
 					<view class="quick-item" @click="goToActivity">
 						<view class="quick-icon activity">
@@ -187,6 +187,13 @@
 						<text class="close-icon">×</text>
 					</view>
 				</view>
+			</view>
+		</view>
+
+		<!-- 退出登录按钮 -->
+		<view class="logout-section">
+			<view class="logout-btn" @click="handleLogout">
+				<text class="logout-text">退出登录</text>
 			</view>
 		</view>
 	</view>
@@ -381,28 +388,39 @@
 					this.schedules = [...todaySchedule.items]
 				}
 			},
-			goToHealth() {
-				uni.showToast({
-					title: '健康查看功能开发中',
-					icon: 'none'
+			goToMall() {
+				uni.navigateTo({
+					url: '/pages/shop/mall-entrance'
 				})
 			},
 			goToActivity() {
-				uni.showToast({
-					title: '活动预约功能开发中',
-					icon: 'none'
-				})
-			},
+					uni.navigateTo({
+						url: '/pages/elder/activity'
+					})
+				},
 			goToCare() {
-				uni.showToast({
-					title: '护理记录功能开发中',
-					icon: 'none'
+				uni.navigateTo({
+					url: '/pages/elder/nursing'
 				})
 			},
 			goToContact() {
 				uni.showToast({
 					title: '联系子女功能开发中',
 					icon: 'none'
+				})
+			},
+			handleLogout() {
+				uni.showModal({
+					title: '提示',
+					content: '确定要退出登录吗？',
+					success: (res) => {
+						if (res.confirm) {
+							uni.clearStorageSync()
+							uni.reLaunch({
+								url: '/pages/elder/login'
+							})
+						}
+					}
 				})
 			}
 		}
@@ -631,8 +649,8 @@
 		box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
 	}
 
-	.quick-icon.health {
-		background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%);
+	.quick-icon.mall {
+		background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
 	}
 
 	.quick-icon.activity {
@@ -921,5 +939,36 @@
 		font-size: 26rpx;
 		color: #558B2F;
 		line-height: 1.6;
+	}
+
+	/* 退出登录按钮 */
+	.logout-section {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		padding: 20rpx 30rpx;
+		padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+		background: #F8FAF8;
+	}
+
+	.logout-btn {
+		background: #FFFFFF;
+		border-radius: 44rpx;
+		padding: 24rpx 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 2rpx solid #E0E0E0;
+	}
+
+	.logout-text {
+		font-size: 30rpx;
+		color: #666666;
+		font-weight: 500;
+	}
+
+	.logout-btn:active {
+		background: #F5F5F5;
 	}
 </style>

@@ -1,0 +1,259 @@
+<template>
+	<view class="container">
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 分类标签 -->
+			<view class="category-tabs">
+				<view 
+					class="tab-item" 
+					:class="{active: activeCategory === item.id}" 
+					v-for="item in categories" 
+					:key="item.id"
+					@click="activeCategory = item.id"
+				>
+					<text>{{item.name}}</text>
+				</view>
+			</view>
+
+			<!-- 商品列表 -->
+			<view class="product-grid">
+				<view class="product-item" v-for="item in filteredProducts" :key="item.id">
+					<image class="product-image" :src="item.image" mode="aspectFill" @click="goToDetail(item.id)"></image>
+					<view class="product-badge" v-if="item.badge">{{item.badge}}</view>
+					<text class="product-name">{{item.name}}</text>
+					<text class="product-desc">{{item.desc}}</text>
+					<view class="product-price">
+						<text class="price-symbol">¥{{item.price}}</text>
+						<text class="price-unit">{{item.unit}}</text>
+					</view>
+					<view class="add-cart-btn" @click.stop="addToCart(item)">
+						<text class="add-icon">+</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+
+		<!-- 悬浮购物车图标 -->
+		<view class="float-cart" @click="goToCart">
+			<view class="cart-icon">🛒</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Category {
+		id: number
+		name: string
+	}
+
+	interface Product {
+		id: number
+		name: string
+		desc: string
+		price: number
+		unit: string
+		badge: string | null
+		category: number
+		image: string
+	}
+
+	export default {
+		data() {
+			return {
+				activeCategory: 1,
+				categories: [
+					{ id: 1, name: '全部' },
+					{ id: 2, name: '牛奶' },
+					{ id: 3, name: '酸奶' },
+					{ id: 4, name: '奶粉' },
+					{ id: 5, name: '奶酪' }
+				] as Category[],
+				products: [
+					{ id: 1, name: '纯牛奶', desc: '全脂鲜牛奶 营养早餐', price: 58, unit: '/箱', badge: '热销', category: 2, image: '/static/images/milk/product.png' },
+					{ id: 2, name: '无糖酸奶', desc: '益生菌发酵 无添加蔗糖', price: 35, unit: '/组', badge: null, category: 3, image: '/static/images/milk/product1.png' },
+					{ id: 3, name: '中老年奶粉', desc: '高钙配方 专为老人设计', price: 128, unit: '/罐', badge: '推荐', category: 4, image: '/static/images/milk/product2.png' },
+					{ id: 4, name: '芝士片', desc: '香浓奶酪 烘焙必备', price: 28, unit: '/包', badge: null, category: 5, image: '/static/images/milk/product3.png' },
+					{ id: 5, name: '低脂牛奶', desc: '低脂高蛋白 健康之选', price: 62, unit: '/箱', badge: '新品', category: 2, image: '/static/images/milk/product4.png' },
+					{ id: 6, name: '果粒酸奶', desc: '草莓果粒 口感丰富', price: 42, unit: '/组', badge: null, category: 3, image: '/static/images/milk/product5.png' },
+					{ id: 7, name: '儿童成长奶粉', desc: '益智配方 助力成长', price: 158, unit: '/罐', badge: null, category: 4, image: '/static/images/milk/product6.png' },
+					{ id: 8, name: '奶油奶酪', desc: '进口品质 细腻口感', price: 45, unit: '/盒', badge: '进口', category: 5, image: '/static/images/milk/product7.png' }
+				] as Product[]
+			}
+		},
+		computed: {
+			filteredProducts() {
+				if (this.activeCategory === 1) {
+					return this.products
+				}
+				return this.products.filter(item => item.category === this.activeCategory)
+			}
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack()
+			},
+			goToDetail(id: number) {
+				uni.showToast({
+					title: '商品详情开发中',
+					icon: 'none'
+				})
+			},
+			addToCart(item: Product) {
+				uni.showToast({
+					title: '已加入购物车',
+					icon: 'success'
+				})
+			},
+			goToCart() {
+				uni.navigateTo({
+					url: '/pages/children/cart'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+	}
+
+
+	.category-tabs {
+		display: flex;
+		padding: 20rpx;
+		gap: 16rpx;
+		background: #FFFFFF;
+		overflow-x: auto;
+		white-space: nowrap;
+	}
+
+	.tab-item {
+		padding: 16rpx 32rpx;
+		background: #F5F5F5;
+		border-radius: 30rpx;
+		font-size: 28rpx;
+		color: #666666;
+		transition: all 0.3s ease;
+	}
+
+	.tab-item.active {
+		background: #4CAF50;
+		color: #FFFFFF;
+	}
+
+	.product-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20rpx;
+		padding: 20rpx;
+	}
+
+	.product-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		overflow: hidden;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+		position: relative;
+	}
+
+	.product-image {
+		width: 100%;
+		height: 280rpx;
+	}
+
+	.product-badge {
+		position: absolute;
+		top: 10rpx;
+		left: 10rpx;
+		background: #E53935;
+		color: #FFFFFF;
+		font-size: 20rpx;
+		padding: 6rpx 12rpx;
+		border-radius: 6rpx;
+	}
+
+	.product-name {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #333333;
+		padding: 16rpx 16rpx 8rpx;
+		display: block;
+	}
+
+	.product-desc {
+		font-size: 22rpx;
+		color: #999999;
+		padding: 0 16rpx 12rpx;
+		display: block;
+	}
+
+	.product-price {
+		display: flex;
+		align-items: baseline;
+		padding: 0 16rpx 16rpx;
+	}
+
+	.price-symbol {
+		font-size: 32rpx;
+		color: #E53935;
+		font-weight: bold;
+	}
+
+
+	.price-unit {
+		font-size: 22rpx;
+		color: #999999;
+		margin-left: 4rpx;
+	}
+
+	.add-cart-btn {
+		position: absolute;
+		bottom: 16rpx;
+		right: 16rpx;
+		width: 56rpx;
+		height: 56rpx;
+		background: #4CAF50;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
+	}
+
+	.add-icon {
+		font-size: 40rpx;
+		color: #FFFFFF;
+		font-weight: bold;
+		line-height: 1;
+	}
+
+	/* 悬浮购物车图标 */
+	.float-cart {
+		position: fixed;
+		right: 50rpx;
+		bottom: 170rpx;
+		width: 100rpx;
+		height: 100rpx;
+		background: #FFFFFF;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		z-index: 9999;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1rpx solid #F0F0F0;
+	}
+
+	.float-cart:active {
+		transform: scale(0.92);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+	}
+
+	.cart-icon {
+		font-size: 48rpx;
+	}
+</style>

@@ -1,0 +1,388 @@
+<template>
+	<view class="container">
+		<!-- 顶部导航栏 -->
+		<view class="nav-bar">
+			<text class="back-icon" @click="goBack">←</text>
+			<text class="title">老人专区</text>
+			<view class="placeholder"></view>
+		</view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 专区介绍 -->
+			<view class="section-intro">
+				<view class="intro-icon">👴</view>
+				<view class="intro-text">
+					<text class="intro-title">关爱老人 用心呵护</text>
+					<text class="intro-desc">专为老年人设计的优质商品</text>
+				</view>
+			</view>
+
+			<!-- 商品分类 -->
+			<view class="section-header">
+				<text class="section-title">商品分类</text>
+			</view>
+
+			<view class="category-list">
+				<view class="category-item" v-for="item in categories" :key="item.id" @click="activeCategory = item.id">
+					<view class="category-icon-wrapper" :style="{background: item.bgColor}">
+						<text>{{item.icon}}</text>
+					</view>
+					<text class="category-name">{{item.name}}</text>
+				</view>
+			</view>
+
+			<!-- 推荐商品 -->
+			<view class="section-header">
+				<text class="section-title">推荐商品</text>
+			</view>
+
+			<view class="product-grid">
+				<view class="product-item" v-for="item in products" :key="item.id">
+					<view class="product-image-wrapper" @click="goToDetail(item.id)">
+						<image class="product-image" :src="item.image" mode="aspectFill"></image>
+						<view class="discount-tag">{{item.discount}}</view>
+					</view>
+					<view class="product-info">
+						<text class="product-name">{{item.name}}</text>
+						<text class="product-desc">{{item.desc}}</text>
+						<view class="product-price-row">
+							<text class="price-symbol">¥{{item.price}}</text>
+							<text class="original-price">¥{{item.originalPrice}}</text>
+						</view>
+					</view>
+					<view class="add-cart-btn" @click.stop="addToCart(item)">
+						<text class="add-icon">+</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+
+		<!-- 悬浮购物车图标 -->
+		<view class="float-cart" @click="goToCart">
+			<view class="cart-icon">🛒</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Category {
+		id: number
+		name: string
+		icon: string
+		bgColor: string
+	}
+
+	interface Product {
+		id: number
+		name: string
+		desc: string
+		price: number
+		originalPrice: number
+		discount: string
+		image: string
+	}
+
+	export default {
+		data() {
+			return {
+				activeCategory: 1,
+				categories: [
+					{ id: 1, name: '健康护理', icon: '💊', bgColor: '#E3F2FD' },
+					{ id: 2, name: '康复辅具', icon: '🦯', bgColor: '#E8F5E9' },
+					{ id: 3, name: '生活便利', icon: '🏠', bgColor: '#FFF3E0' },
+					{ id: 4, name: '营养食品', icon: '🥛', bgColor: '#FCE4EC' },
+					{ id: 5, name: '休闲娱乐', icon: '🎵', bgColor: '#EDE7F6' },
+					{ id: 6, name: '服饰鞋包', icon: '👔', bgColor: '#E0F7FA' }
+				] as Category[],
+				products: [
+					{ id: 1, name: '智能血压计', desc: '一键测量 语音播报', price: 199, originalPrice: 259, discount: '7.7折', image: '/static/images/elder/producet.png' },
+					{ id: 2, name: '轻便助行器', desc: '折叠便携 稳固安全', price: 299, originalPrice: 399, discount: '7.5折', image: '/static/images/elder/producet1.png' },
+					{ id: 3, name: '放大镜', desc: '高清放大 手持便携', price: 59, originalPrice: 89, discount: '6.6折', image: '/static/images/elder/producet2.png' },
+					{ id: 4, name: '中老年奶粉', desc: '高钙配方 营养丰富', price: 128, originalPrice: 168, discount: '7.6折', image: '/static/images/elder/producet3.png' },
+					{ id: 5, name: '收音机', desc: '大音量 清晰音质', price: 168, originalPrice: 218, discount: '7.7折', image: '/static/images/elder/producet4.png' },
+					{ id: 6, name: '防滑拖鞋', desc: '柔软舒适 安全防滑', price: 35, originalPrice: 49, discount: '7.1折', image: '/static/images/elder/producet5.png' }
+				] as Product[]
+			}
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack()
+			},
+			goToDetail(id: number) {
+				uni.showToast({
+					title: '商品详情开发中',
+					icon: 'none'
+				})
+			},
+			addToCart(product: Product) {
+				uni.showToast({
+					title: '已加入购物车',
+					icon: 'success'
+				})
+			},
+			goToCart() {
+				uni.navigateTo({
+					url: '/pages/children/cart'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+	}
+
+	.nav-bar {
+		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+		padding: 20rpx 30rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.back-icon {
+		color: #FFFFFF;
+		font-size: 44rpx;
+		font-weight: bold;
+	}
+
+	.title {
+		color: #FFFFFF;
+		font-size: 34rpx;
+		font-weight: 600;
+	}
+
+	.placeholder {
+		width: 60rpx;
+	}
+
+	.content {
+		margin-top: 88rpx;
+		padding: 20rpx;
+	}
+
+	.section-intro {
+		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+		border-radius: 20rpx;
+		padding: 30rpx;
+		display: flex;
+		align-items: center;
+		gap: 20rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.intro-icon {
+		font-size: 60rpx;
+	}
+
+	.intro-text {
+		color: #FFFFFF;
+	}
+
+	.intro-title {
+		font-size: 32rpx;
+		font-weight: bold;
+		display: block;
+		margin-bottom: 8rpx;
+	}
+
+	.intro-desc {
+		font-size: 24rpx;
+		opacity: 0.9;
+	}
+
+	.section-header {
+		margin-bottom: 20rpx;
+	}
+
+	.section-title {
+		font-size: 32rpx;
+		font-weight: bold;
+		color: #2E7D32;
+		padding-left: 10rpx;
+		border-left: 6rpx solid #4CAF50;
+	}
+
+	.category-list {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.category-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 24rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+	}
+
+	.category-icon-wrapper {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 36rpx;
+	}
+
+	.category-name {
+		font-size: 26rpx;
+		color: #333333;
+	}
+
+	.product-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20rpx;
+	}
+
+	.product-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		overflow: hidden;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+		position: relative;
+	}
+
+	.product-image-wrapper {
+		position: relative;
+		width: 100%;
+		padding-top: 100%;
+	}
+
+	.product-image {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.discount-tag {
+		position: absolute;
+		top: 16rpx;
+		left: 16rpx;
+		background: #E53935;
+		color: #FFFFFF;
+		font-size: 22rpx;
+		padding: 6rpx 16rpx;
+		border-radius: 8rpx;
+		font-weight: 500;
+	}
+
+	.product-info {
+		padding: 16rpx;
+		display: flex;
+		flex-direction: column;
+		gap: 8rpx;
+	}
+
+	.product-name {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #333333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.product-desc {
+		font-size: 22rpx;
+		color: #999999;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.product-price-row {
+		display: flex;
+		align-items: baseline;
+		gap: 8rpx;
+		white-space: nowrap;
+		margin-top: 8rpx;
+	}
+
+	.price-symbol {
+		font-size: 24rpx;
+		color: #E53935;
+		display: inline;
+	}
+
+	.price-value {
+		font-size: 32rpx;
+		color: #E53935;
+		font-weight: bold;
+		display: inline;
+	}
+
+	.original-price {
+		font-size: 22rpx;
+		color: #999999;
+		text-decoration: line-through;
+		display: inline;
+	}
+
+	.add-cart-btn {
+		position: absolute;
+		bottom: 16rpx;
+		right: 16rpx;
+		width: 56rpx;
+		height: 56rpx;
+		background: #4CAF50;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
+	}
+
+	.add-icon {
+		font-size: 40rpx;
+		color: #FFFFFF;
+		font-weight: bold;
+		line-height: 1;
+	}
+
+	/* 悬浮购物车图标 */
+	.float-cart {
+		position: fixed;
+		right: 50rpx;
+		bottom: 170rpx;
+		width: 100rpx;
+		height: 100rpx;
+		background: #FFFFFF;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		z-index: 9999;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1rpx solid #F0F0F0;
+	}
+
+	.float-cart:active {
+		transform: scale(0.92);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+	}
+
+	.cart-icon {
+		font-size: 48rpx;
+	}
+</style>

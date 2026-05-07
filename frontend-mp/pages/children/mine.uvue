@@ -32,6 +32,11 @@
 			</button>
 		</view>
 
+		<!-- 退出登录按钮 -->
+		<view class="logout-area">
+			<button class="logout-btn" @click="handleLogout">退出登录</button>
+		</view>
+
 		<!-- 编辑资料弹出层 -->
 		<view class="popup" v-if="showPopup">
 			<view class="popup-mask" @click="hideEditForm"></view>
@@ -419,6 +424,35 @@ export default {
 					})
 				}
 			})
+		},
+		handleLogout() {
+			uni.showModal({
+				title: '确认退出',
+				content: '确定要退出登录吗？',
+				confirmText: '确定',
+				cancelText: '取消',
+				success: (res) => {
+					if (res.confirm) {
+						// 清除本地存储的用户信息
+						uni.removeStorageSync('accessToken')
+						uni.removeStorageSync('refreshToken')
+						uni.removeStorageSync('userInfo')
+						
+						uni.showToast({
+							title: '退出成功',
+							icon: 'success',
+							duration: 1500
+						})
+						
+						setTimeout(() => {
+							// 跳转到登录选择页面
+							uni.navigateTo({
+								url: '/pages/index/index'
+							})
+						}, 1500)
+					}
+				}
+			})
 		}
 	}
 }
@@ -720,5 +754,36 @@ export default {
 		font-size: 28rpx;
 		color: #2D3748;
 		line-height: 1;
+	}
+
+	/* 退出登录按钮样式 */
+	.logout-area {
+		padding: 30rpx;
+		margin-top: 20rpx;
+	}
+
+	.logout-btn {
+		width: 100%;
+		height: 88rpx;
+		line-height: 88rpx;
+		text-align: center;
+		background: #FFFFFF;
+		color: #E53E3E;
+		font-size: 30rpx;
+		border-radius: 44rpx;
+		border: 2rpx solid #E53E3E;
+		padding: 0;
+		margin: 0;
+		box-shadow: 0 4rpx 20rpx rgba(229, 62, 62, 0.1);
+		transition: all 0.3s ease;
+	}
+
+	.logout-btn::after {
+		border: none;
+	}
+
+	.logout-btn:active {
+		background: #FEF2F2;
+		transform: scale(0.98);
 	}
 </style>

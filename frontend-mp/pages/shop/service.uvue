@@ -1,0 +1,323 @@
+<template>
+	<view class="container">
+		<!-- 顶部导航栏 -->
+		<view class="nav-bar">
+			<text class="back-icon" @click="goBack">←</text>
+			<text class="title">服务中心</text>
+			<view class="placeholder"></view>
+		</view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 服务分类 -->
+			<view class="category-grid">
+				<view class="category-item" v-for="item in categories" :key="item.id" @click="activeCategory = item.id">
+					<view class="category-icon" :style="{background: item.bgColor}">
+						<text>{{item.icon}}</text>
+					</view>
+					<text class="category-name">{{item.name}}</text>
+				</view>
+			</view>
+
+			<!-- 服务列表 -->
+			<view class="service-list">
+				<view class="service-item" v-for="item in filteredServices" :key="item.id">
+					<image class="service-image" :src="item.image" mode="aspectFill" @click="goToDetail(item.id)"></image>
+					<view class="service-info">
+						<text class="service-name">{{item.name}}</text>
+						<text class="service-desc">{{item.desc}}</text>
+						<view class="service-meta">
+							<text class="service-tag" v-for="tag in item.tags" :key="tag">{{tag}}</text>
+						</view>
+						<view class="service-price-row">
+							<text class="price">¥{{item.price}}<text class="unit">{{item.unit}}</text></text>
+							<text class="service-count">已服务 {{item.count}} 人</text>
+						</view>
+					</view>
+					<view class="add-cart-btn" @click.stop="addToCart(item)">
+						<text class="add-icon">+</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+
+		<!-- 悬浮购物车图标 -->
+		<view class="float-cart" @click="goToCart">
+			<view class="cart-icon">🛒</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Category {
+		id: number
+		name: string
+		icon: string
+		bgColor: string
+	}
+
+	interface Service {
+		id: number
+		name: string
+		desc: string
+		price: number
+		unit: string
+		count: number
+		tags: string[]
+		category: number
+		image: string
+	}
+
+	export default {
+		data() {
+			return {
+				activeCategory: 1,
+				categories: [
+					{ id: 1, name: '全部', icon: '✨', bgColor: '#4CAF50' },
+					{ id: 2, name: '家政', icon: '🧹', bgColor: '#FF9800' },
+					{ id: 3, name: '维修', icon: '🔧', bgColor: '#2196F3' },
+					{ id: 4, name: '清洗', icon: '🚿', bgColor: '#00BCD4' },
+					{ id: 5, name: '配送', icon: '🚚', bgColor: '#9C27B0' },
+					{ id: 6, name: '其他', icon: '📦', bgColor: '#607D8B' }
+				] as Category[],
+				services: [
+					{ id: 1, name: '家庭保洁', desc: '全屋清洁、深度打扫', price: 120, unit: '/次', count: 1280, tags: ['专业', '高效'], category: 2, image: '/static/images/product1.jpg' },
+					{ id: 2, name: '家电维修', desc: '空调、冰箱、洗衣机维修', price: 80, unit: '/起', count: 860, tags: ['上门', '质保'], category: 3, image: '/static/images/product4.jpg' },
+					{ id: 3, name: '窗帘清洗', desc: '专业清洗、上门取送', price: 68, unit: '/幅', count: 520, tags: ['清洗', '杀菌'], category: 4, image: '/static/images/product3.jpg' },
+					{ id: 4, name: '药品配送', desc: '正规药店、快速送达', price: 15, unit: '/次', count: 2350, tags: ['24小时', '正品'], category: 5, image: '/static/images/product6.jpg' },
+					{ id: 5, name: '管道疏通', desc: '专业疏通、快速解决', price: 150, unit: '/次', count: 680, tags: ['快速', '专业'], category: 3, image: '/static/images/product1.jpg' },
+					{ id: 6, name: '钟点工', desc: '临时用工、灵活安排', price: 35, unit: '/小时', count: 1890, tags: ['灵活', '便捷'], category: 2, image: '/static/images/product4.jpg' }
+				] as Service[]
+			}
+		},
+		computed: {
+			filteredServices() {
+				if (this.activeCategory === 1) {
+					return this.services
+				}
+				return this.services.filter(item => item.category === this.activeCategory)
+			}
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack()
+			},
+			goToDetail(id: number) {
+				uni.showToast({
+					title: '服务详情开发中',
+					icon: 'none'
+				})
+			},
+			addToCart(item: Service) {
+				uni.showToast({
+					title: '已加入购物车',
+					icon: 'success'
+				})
+			},
+			goToCart() {
+				uni.navigateTo({
+					url: '/pages/children/cart'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+	}
+
+	.nav-bar {
+		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+		padding: 20rpx 30rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.back-icon {
+		color: #FFFFFF;
+		font-size: 44rpx;
+		font-weight: bold;
+	}
+
+	.title {
+		color: #FFFFFF;
+		font-size: 34rpx;
+		font-weight: 600;
+	}
+
+	.placeholder {
+		width: 60rpx;
+	}
+
+	.content {
+		margin-top: 88rpx;
+		padding: 20rpx;
+	}
+
+	.category-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.category-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 24rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+	}
+
+	.category-icon {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 36rpx;
+	}
+
+	.category-name {
+		font-size: 26rpx;
+		color: #333333;
+	}
+
+	.service-list {
+		display: flex;
+		flex-direction: column;
+		gap: 20rpx;
+	}
+
+	.service-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		display: flex;
+		gap: 20rpx;
+		padding: 20rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+		position: relative;
+	}
+
+	.service-image {
+		width: 200rpx;
+		height: 200rpx;
+		border-radius: 12rpx;
+		flex-shrink: 0;
+	}
+
+	.service-info {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 10rpx;
+	}
+
+	.service-name {
+		font-size: 30rpx;
+		font-weight: 600;
+		color: #333333;
+	}
+
+	.service-desc {
+		font-size: 24rpx;
+		color: #999999;
+	}
+
+	.service-meta {
+		display: flex;
+		gap: 10rpx;
+	}
+
+	.service-tag {
+		font-size: 22rpx;
+		color: #4CAF50;
+		background: #E8F5E9;
+		padding: 4rpx 12rpx;
+		border-radius: 6rpx;
+	}
+
+	.service-price-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: auto;
+	}
+
+	.price {
+		font-size: 32rpx;
+		color: #E53935;
+		font-weight: bold;
+	}
+
+	.unit {
+		font-size: 22rpx;
+		font-weight: normal;
+	}
+
+	.service-count {
+		font-size: 22rpx;
+		color: #999999;
+	}
+
+	.add-cart-btn {
+		position: absolute;
+		bottom: 16rpx;
+		right: 16rpx;
+		width: 56rpx;
+		height: 56rpx;
+		background: #4CAF50;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
+	}
+
+	.add-icon {
+		font-size: 40rpx;
+		color: #FFFFFF;
+		font-weight: bold;
+		line-height: 1;
+	}
+
+	/* 悬浮购物车图标 */
+	.float-cart {
+		position: fixed;
+		right: 50rpx;
+		bottom: 170rpx;
+		width: 100rpx;
+		height: 100rpx;
+		background: #FFFFFF;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		z-index: 9999;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1rpx solid #F0F0F0;
+	}
+
+	.float-cart:active {
+		transform: scale(0.92);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+	}
+
+	.cart-icon {
+		font-size: 48rpx;
+	}
+</style>

@@ -202,6 +202,81 @@
 			"style": {
 				"navigationBarTitleText": "老人注册"
 			}
+		},
+		{
+			"path": "pages/elder/nursing",
+			"style": {
+				"navigationBarTitleText": "护理日常",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/elder/activity",
+			"style": {
+				"navigationBarTitleText": "精彩活动",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/shop/mall-entrance",
+			"style": {
+				"navigationBarTitleText": "商城",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/shop/popular",
+			"style": {
+				"navigationBarTitleText": "热门促销"
+			}
+		},
+		{
+			"path": "pages/shop/presale",
+			"style": {
+				"navigationBarTitleText": "预售商品"
+			}
+		},
+		{
+			"path": "pages/shop/fresh",
+			"style": {
+				"navigationBarTitleText": "生鲜专区"
+			}
+		},
+		{
+			"path": "pages/shop/milk",
+			"style": {
+				"navigationBarTitleText": "乳品专区"
+			}
+		},
+		{
+			"path": "pages/shop/nurse-home",
+			"style": {
+				"navigationBarTitleText": "护工到家"
+			}
+		},
+		{
+			"path": "pages/shop/service",
+			"style": {
+				"navigationBarTitleText": "服务中心"
+			}
+		},
+		{
+			"path": "pages/shop/convenience",
+			"style": {
+				"navigationBarTitleText": "便利店"
+			}
+		},
+		{
+			"path": "pages/shop/elder",
+			"style": {
+				"navigationBarTitleText": "老人专区"
+			}
+		},
+		{
+			"path": "pages/shop/recommend",
+			"style": {
+				"navigationBarTitleText": "为您推荐"
+			}
 		}
 	],
 	"globalStyle": {

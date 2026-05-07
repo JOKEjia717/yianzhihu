@@ -5,7 +5,7 @@
 			<view class="back-btn" @click="handleBack">
 				<text class="back-icon">←</text>
 			</view>
-			<text class="title">养老院详情</text>
+			<text class="title">社区详情</text>
 		</view>
 
 		<!-- 内容区域 -->
@@ -22,7 +22,7 @@
 			<!-- 详细信息 -->
 			<view class="detail-card">
 				<view class="detail-item">
-					<text class="label">院长</text>
+					<text class="label">社区管理员</text>
 					<text class="value">{{ nursingDetail.director }}</text>
 				</view>
 				<view class="detail-item">
@@ -300,7 +300,7 @@ export default {
 }
 
 .nav-bar {
-	height: 88rpx;
+	height: 100rpx;
 	background: #FFFFFF;
 	display: flex;
 	align-items: center;
@@ -321,6 +321,7 @@ export default {
 	justify-content: center;
 	position: absolute;
 	left: 24rpx;
+	margin-top:10px;
 }
 
 .back-icon {
@@ -334,6 +335,7 @@ export default {
 	font-size: 32rpx;
 	font-weight: 500;
 	color: #2D3748;
+	margin-top:18px;
 }
 
 .content {

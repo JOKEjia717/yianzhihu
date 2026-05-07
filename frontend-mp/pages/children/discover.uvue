@@ -14,17 +14,13 @@
 		<view v-if="currentTab === 'list'" class="list-container">
 			<!-- 搜索区域 -->
 			<view class="search-card">
-				<view class="search-header">
-					<text class="search-title">搜索养老院</text>
-				</view>
+				
 				<view class="search-content">
 					<view class="search-box">
 						<view class="input-group">
-							<image class="search-icon" src="/static/images/search.png" mode="aspectFit"></image>
 							<input class="search-input" type="text" v-model="searchParams.name" placeholder="请输入机构名称" @confirm="handleSearch" />
 						</view>
 						<view class="input-group">
-							<image class="search-icon" src="/static/images/location.png" mode="aspectFit"></image>
 							<input class="search-input" type="text" v-model="searchParams.address" placeholder="请输入地址" @confirm="handleSearch" />
 						</view>
 					</view>
@@ -717,6 +713,7 @@ export default {
 	color: #FFFFFF;
 	font-size: 24rpx;
 	font-weight: normal;
+	text-align:center;
 }
 
 .nursing-list {

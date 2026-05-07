@@ -1,0 +1,289 @@
+<template>
+	<view class="container">
+		<!-- 顶部导航栏 -->
+		<view class="nav-bar">
+			<text class="back-icon" @click="goBack">←</text>
+			<text class="title">便利店</text>
+			<view class="placeholder"></view>
+		</view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 分类标签 -->
+			<view class="category-tabs">
+				<view 
+					class="tab-item" 
+					:class="{active: activeCategory === item.id}" 
+					v-for="item in categories" 
+					:key="item.id"
+					@click="activeCategory = item.id"
+				>
+					<text>{{item.name}}</text>
+				</view>
+			</view>
+
+			<!-- 商品列表 -->
+			<view class="product-grid">
+				<view class="product-item" v-for="item in filteredProducts" :key="item.id">
+					<image class="product-image" :src="item.image" mode="aspectFill" @click="goToDetail(item.id)"></image>
+					<text class="product-name">{{item.name}}</text>
+					<text class="product-desc">{{item.desc}}</text>
+					<view class="product-price">
+						<text class="price-symbol">¥</text>
+						<text class="price-value">{{item.price}}</text>
+						<text class="price-unit">{{item.unit}}</text>
+					</view>
+					<view class="add-cart-btn" @click.stop="addToCart(item)">
+						<text class="add-icon">+</text>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
+
+		<!-- 悬浮购物车图标 -->
+		<view class="float-cart" @click="goToCart">
+			<view class="cart-icon">🛒</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Category {
+		id: number
+		name: string
+	}
+
+	interface Product {
+		id: number
+		name: string
+		desc: string
+		price: number
+		unit: string
+		category: number
+		image: string
+	}
+
+	export default {
+		data() {
+			return {
+				activeCategory: 1,
+				categories: [
+					{ id: 1, name: '全部' },
+					{ id: 2, name: '零食' },
+					{ id: 3, name: '饮料' },
+					{ id: 4, name: '日用品' },
+					{ id: 5, name: '速食' }
+				] as Category[],
+				products: [
+					{ id: 1, name: '矿泉水', desc: '550ml*24瓶', price: 24.9, unit: '/箱', category: 3, image: '/static/images/convenience/product.png' },
+					{ id: 2, name: '方便面', desc: '红烧牛肉面5连包', price: 12.9, unit: '/组', category: 5, image: '/static/images/convenience/product1.png' },
+					{ id: 3, name: '纸巾', desc: '抽纸3层*10包', price: 18.8, unit: '/组', category: 4, image: '/static/images/convenience/product2.png' },
+					{ id: 4, name: '饼干', desc: '酥脆饼干400g', price: 15.8, unit: '/袋', category: 2, image: '/static/images/convenience/product3.png' },
+					{ id: 5, name: '可乐', desc: '330ml*24罐', price: 58, unit: '/箱', category: 3, image: '/static/images/convenience/product4.png' },
+					{ id: 6, name: '火腿肠', desc: '香肠240g', price: 9.9, unit: '/袋', category: 5, image: '/static/images/convenience/product5.png' },
+					{ id: 7, name: '牙膏', desc: '清新口气120g', price: 12.8, unit: '/支', category: 4, image: '/static/images/convenience/product6.png' },
+					{ id: 8, name: '巧克力', desc: '牛奶巧克力100g', price: 18.8, unit: '/块', category: 2, image: '/static/images/convenience/product7.png' }
+				] as Product[]
+			}
+		},
+		computed: {
+			filteredProducts() {
+				if (this.activeCategory === 1) {
+					return this.products
+				}
+				return this.products.filter(item => item.category === this.activeCategory)
+			}
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack()
+			},
+			goToDetail(id: number) {
+				uni.showToast({
+					title: '商品详情开发中',
+					icon: 'none'
+				})
+			},
+			addToCart(item: Product) {
+				uni.showToast({
+					title: '已加入购物车',
+					icon: 'success'
+				})
+			},
+			goToCart() {
+				uni.navigateTo({
+					url: '/pages/children/cart'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+	}
+
+	.nav-bar {
+		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+		padding: 20rpx 30rpx;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+	}
+
+	.back-icon {
+		color: #FFFFFF;
+		font-size: 44rpx;
+		font-weight: bold;
+	}
+
+	.title {
+		color: #FFFFFF;
+		font-size: 34rpx;
+		font-weight: 600;
+	}
+
+	.placeholder {
+		width: 60rpx;
+	}
+
+	.content {
+		margin-top: 88rpx;
+	}
+
+	.category-tabs {
+		display: flex;
+		padding: 20rpx;
+		gap: 16rpx;
+		background: #FFFFFF;
+		overflow-x: auto;
+		white-space: nowrap;
+	}
+
+	.tab-item {
+		padding: 16rpx 32rpx;
+		background: #F5F5F5;
+		border-radius: 30rpx;
+		font-size: 28rpx;
+		color: #666666;
+		transition: all 0.3s ease;
+	}
+
+	.tab-item.active {
+		background: #4CAF50;
+		color: #FFFFFF;
+	}
+
+	.product-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20rpx;
+		padding: 20rpx;
+	}
+
+	.product-item {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		overflow: hidden;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+		position: relative;
+	}
+
+	.product-image {
+		width: 100%;
+		height: 280rpx;
+	}
+
+	.product-name {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #333333;
+		padding: 16rpx 16rpx 8rpx;
+		display: block;
+	}
+
+	.product-desc {
+		font-size: 22rpx;
+		color: #999999;
+		padding: 0 16rpx 12rpx;
+		display: block;
+	}
+
+	.product-price {
+		display: flex;
+		align-items: baseline;
+		padding: 0 16rpx 16rpx;
+	}
+
+	.price-symbol {
+		font-size: 24rpx;
+		color: #E53935;
+	}
+
+	.price-value {
+		font-size: 32rpx;
+		color: #E53935;
+		font-weight: bold;
+	}
+
+	.price-unit {
+		font-size: 22rpx;
+		color: #999999;
+		margin-left: 4rpx;
+	}
+
+	.add-cart-btn {
+		position: absolute;
+		bottom: 16rpx;
+		right: 16rpx;
+		width: 56rpx;
+		height: 56rpx;
+		background: #4CAF50;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 12rpx rgba(76, 175, 80, 0.3);
+	}
+
+	.add-icon {
+		font-size: 40rpx;
+		color: #FFFFFF;
+		font-weight: bold;
+		line-height: 1;
+	}
+
+	/* 悬浮购物车图标 */
+	.float-cart {
+		position: fixed;
+		right: 50rpx;
+		bottom: 170rpx;
+		width: 100rpx;
+		height: 100rpx;
+		background: #FFFFFF;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		z-index: 9999;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1rpx solid #F0F0F0;
+	}
+
+	.float-cart:active {
+		transform: scale(0.92);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+	}
+
+	.cart-icon {
+		font-size: 48rpx;
+	}
+</style>

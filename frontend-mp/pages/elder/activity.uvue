@@ -1,0 +1,755 @@
+<template>
+  <view class="page">
+    <!-- 顶部导航栏 -->
+    <view class="header">
+      <view class="header-left">
+        <view class="back-btn" @click="goBack">
+          <text class="back-icon">←</text>
+        </view>
+      </view>
+      <text class="title">精彩活动</text>
+      <view class="header-right">
+        <picker mode="date" :value="selectedDate" @change="onDateChange" class="date-picker">
+          <view class="date-picker-content">
+            <text class="date-text">{{ formatDate(selectedDate) }}</text>
+            <text class="date-arrow">▼</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 活动分类标签 -->
+    <view class="filter-tabs">
+      <view 
+        :class="['filter-tab', { active: currentFilter === 'all' }]" 
+        @click="currentFilter = 'all'"
+      >
+        <text>全部</text>
+        <text class="tab-count">{{ activities.length }}</text>
+      </view>
+      <view 
+        :class="['filter-tab', { active: currentFilter === 'ongoing' }]" 
+        @click="currentFilter = 'ongoing'"
+      >
+        <text>进行中</text>
+        <text class="tab-count">{{ ongoingCount }}</text>
+      </view>
+      <view 
+        :class="['filter-tab', { active: currentFilter === 'upcoming' }]" 
+        @click="currentFilter = 'upcoming'"
+      >
+        <text>即将开始</text>
+        <text class="tab-count">{{ upcomingCount }}</text>
+      </view>
+      <view 
+        :class="['filter-tab', { active: currentFilter === 'ended' }]" 
+        @click="currentFilter = 'ended'"
+      >
+        <text>已结束</text>
+        <text class="tab-count">{{ endedCount }}</text>
+      </view>
+    </view>
+
+    <!-- 活动列表 -->
+    <scroll-view class="content" scroll-y>
+      <view v-if="filteredActivities.length === 0" class="empty-state">
+        <view class="empty-icon">📭</view>
+        <text class="empty-text">暂无相关活动</text>
+        <text class="empty-hint">换个筛选条件试试吧~</text>
+      </view>
+
+      <view class="activity-card" v-for="(activity, index) in filteredActivities" :key="index">
+        <view class="card-inner">
+          <!-- 活动图片 -->
+          <view class="activity-image-wrapper">
+            <image 
+              :src="activity.image" 
+              mode="aspectFill" 
+              class="activity-image"
+              @click="previewImage(activity.image)"
+            ></image>
+            <!-- 状态标签 -->
+            <view :class="['status-tag', activity.status]">
+              {{ activity.status === 'ended' ? '已结束' : activity.status === 'ongoing' ? '进行中' : '即将开始' }}
+            </view>
+            <view class="image-overlay"></view>
+          </view>
+
+          <!-- 活动信息 -->
+          <view class="activity-info">
+            <text class="activity-title">{{ activity.title }}</text>
+            
+            <!-- 日期时间 -->
+            <view class="time-location-row">
+              <view class="time-info">
+                <view class="time-content">
+                  <text class="date-text">{{ activity.date }}</text>
+                  <text class="time-range">{{ activity.time }}</text>
+                </view>
+              </view>
+              <view class="location-info">
+                <text class="location-icon">📍</text>
+                <text class="location-text">{{ activity.location }}</text>
+              </view>
+            </view>
+
+            <!-- 详情 -->
+            <view class="detail-section">
+              <text class="detail-content">{{ activity.description }}</text>
+            </view>
+
+            <!-- 底部信息 -->
+            <view class="card-footer">
+              <view class="participants-info">
+                <text class="participants-icon">👥</text>
+                <text class="participants-count">{{ activity.participants }}人参与</text>
+              </view>
+              
+              <!-- 报名按钮 -->
+              <view 
+                :class="['join-btn', { disabled: activity.status === 'ended' }, { joined: activity.joined }]" 
+                @click="handleJoin(activity)"
+              >
+                <text class="join-text">{{ activity.status === 'ended' ? '已结束' : (activity.joined ? '已报名' : '立即报名') }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script lang="uts">
+export default {
+  data() {
+    return {
+      activities: [
+        {
+          id: 1,
+          title: '羽毛球活动',
+          image: '/static/images/act/act.png',
+          date: '06月15日',
+          time: '09:00 - 12:00',
+          location: '活动室',
+          description: '每周三下午举行，适合中老年人的健康运动，锻炼身体，增强体质。',
+          participants: 5,
+          status: 'ended',
+          joined: false
+        },
+        {
+          id: 2,
+          title: '书法兴趣班',
+          image: '/static/images/act/act5.png',
+          date: '05月18日',
+          time: '14:00 - 16:00',
+          location: '书画室',
+          description: '专业书法老师指导，学习楷书、行书等多种字体，陶冶情操。',
+          participants: 8,
+          status: 'ongoing',
+          joined: false
+        },
+        {
+          id: 3,
+          title: '健康讲座',
+          image: '/static/images/act/act1.png',
+          date: '04月20日',
+          time: '10:00 - 11:30',
+          location: '多功能厅',
+          description: '邀请专业医生讲解老年健康知识，解答健康疑问。',
+          participants: 15,
+          status: 'upcoming',
+          joined: false
+        },
+        {
+          id: 4,
+          title: '太极晨练',
+          image: '/static/images/act/act2.png',
+          date: '每天',
+          time: '06:30 - 07:30',
+          location: '花园广场',
+          description: '舒缓身心，增强身体柔韧性和平衡能力，适合所有年龄段。',
+          participants: 12,
+          status: 'ongoing',
+          joined: true
+        },
+        {
+          id: 5,
+          title: '茶艺品鉴会',
+          image: '/static/images/act/act3.png',
+          date: '04月22日',
+          time: '14:30 - 16:30',
+          location: '茶艺室',
+          description: '品茗赏茶，感受传统茶文化的魅力，修身养性。',
+          participants: 10,
+          status: 'upcoming',
+          joined: false
+        },
+        {
+          id: 6,
+          title: '电影放映',
+          image: '/static/images/act/act4.png',
+          date: '每周六',
+          time: '19:00 - 21:00',
+          location: '影音室',
+          description: '精选经典老电影，重温美好时光，享受悠闲周末。',
+          participants: 20,
+          status: 'ongoing',
+          joined: false
+        }
+      ],
+      currentFilter: 'all',
+      selectedDate: '',
+      showCalendar: false
+    }
+  },
+  computed: {
+    filteredActivities() {
+      if (this.currentFilter === 'all') {
+        return this.activities
+      }
+      return this.activities.filter(item => item.status === this.currentFilter)
+    },
+    ongoingCount() {
+      return this.activities.filter(item => item.status === 'ongoing').length
+    },
+    upcomingCount() {
+      return this.activities.filter(item => item.status === 'upcoming').length
+    },
+    endedCount() {
+      return this.activities.filter(item => item.status === 'ended').length
+    }
+  },
+  onLoad() {
+    const now = new Date()
+    this.selectedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    this.updateActivityStatus()
+  },
+  methods: {
+    updateActivityStatus() {
+      var now = new Date()
+      var month = String(now.getMonth() + 1).padStart(2, '0')
+      var day = String(now.getDate()).padStart(2, '0')
+      var today = month + '月' + day + '日'
+      
+      for (var i = 0; i < this.activities.length; i++) {
+        var activity = this.activities[i]
+        var newStatus = activity.status
+        
+        if (activity.date === '每天' || activity.date.indexOf('每周') !== -1) {
+          newStatus = 'ongoing'
+        } else if (activity.date === today) {
+          var timeSplit = activity.time.split('-')
+          var endTime = ''
+          if (timeSplit.length > 1) {
+            endTime = timeSplit[1].trim()
+          }
+          if (endTime) {
+            var endTimeSplit = endTime.split(':')
+            var endHour = parseInt(endTimeSplit[0])
+            var endMinute = parseInt(endTimeSplit[1])
+            var endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHour, endMinute)
+            newStatus = now > endDate ? 'ended' : 'ongoing'
+          } else {
+            newStatus = 'ongoing'
+          }
+        } else {
+          var matchResult = activity.date.match(/(\d{2})月(\d{2})日/)
+          if (matchResult) {
+            var actMonth = parseInt(matchResult[1])
+            var actDay = parseInt(matchResult[2])
+            var activityDate = new Date(now.getFullYear(), actMonth - 1, actDay)
+            newStatus = now > activityDate ? 'ended' : 'upcoming'
+          }
+        }
+        
+        if (newStatus !== activity.status) {
+          activity.status = newStatus
+        }
+      }
+      
+      this.activities = [...this.activities]
+    },
+    goBack() {
+      uni.reLaunch({
+        url: '/pages/elder/index'
+      })
+    },
+    previewImage(url) {
+      uni.previewImage({
+        urls: [url],
+        current: url
+      })
+    },
+    handleJoin(activity) {
+      if (activity.status === 'ended') {
+        uni.showToast({
+          title: '活动已结束',
+          icon: 'none'
+        })
+        return
+      }
+      
+      if (activity.joined) {
+        uni.showModal({
+          title: '取消报名',
+          content: `确定取消「${activity.title}」的报名吗？`,
+          success: (res) => {
+            if (res.confirm) {
+              activity.joined = false
+              activity.participants--
+              uni.showToast({
+                title: '取消报名成功',
+                icon: 'success'
+              })
+            }
+          }
+        })
+      } else {
+        uni.showModal({
+          title: '报名确认',
+          content: `确定报名参加「${activity.title}」吗？`,
+          success: (res) => {
+            if (res.confirm) {
+              activity.joined = true
+              activity.participants++
+              uni.showToast({
+                title: '报名成功',
+                icon: 'success'
+              })
+            }
+          }
+        })
+      }
+    },
+    goToHome() {
+      uni.reLaunch({
+        url: '/pages/elder/index'
+      })
+    },
+    goToItems() {
+      uni.showToast({
+        title: '物品管理功能开发中',
+        icon: 'none'
+      })
+    },
+    goToMine() {
+      uni.showToast({
+        title: '个人中心功能开发中',
+        icon: 'none'
+      })
+    },
+    onDateChange(e) {
+      this.selectedDate = e.detail.value
+      this.showCalendar = false
+    },
+    formatDate(dateStr) {
+      if (!dateStr) return ''
+      const date = new Date(dateStr)
+      const month = date.getMonth() + 1
+      const day = date.getDate()
+      return `${month}月${day}日`
+    }
+  }
+}
+</script>
+
+<style>
+.page {
+  min-height: 100vh;
+  background-color: #F5F7F7;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 60rpx 24rpx 24rpx;
+  background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
+  position: relative;
+}
+
+.header-left {
+  width: 72rpx;
+}
+
+.back-btn {
+  width: 72rpx;
+}
+
+.back-icon {
+  font-size: 40rpx;
+  color: #FFFFFF;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.header-right {
+  width: auto;
+}
+
+.date-picker {
+  display: inline-block;
+}
+
+.date-picker-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 24rpx;
+}
+
+.date-text {
+  font-size: 28rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.date-arrow {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.filter-tabs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  padding: 20rpx 24rpx;
+  gap: 12rpx;
+  background-color: #FFFFFF;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+
+.filter-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  padding: 16rpx 12rpx;
+  background-color: #F5F7F7;
+  border-radius: 32rpx;
+  transition: all 0.3s ease;
+}
+
+.filter-tab.active {
+  background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
+}
+
+.filter-tab text {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.filter-tab.active text {
+  color: #FFFFFF;
+}
+
+.tab-count {
+  font-size: 24rpx !important;
+  padding: 4rpx 12rpx;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 20rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  height: calc(100vh - 320rpx);
+  padding: 24rpx;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 32rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #666666;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #999999;
+}
+
+.activity-card {
+  margin-bottom: 24rpx;
+}
+
+.card-inner {
+  background-color: #FFFFFF;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+.activity-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 320rpx;
+}
+
+.activity-image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120rpx;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.4));
+}
+
+.status-tag {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  padding: 10rpx 24rpx;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  z-index: 10;
+  font-weight: 500;
+}
+
+.status-tag.ended {
+  background-color: rgba(224, 224, 224, 0.9);
+  color: #666666;
+}
+
+.status-tag.ongoing {
+  background-color: rgba(76, 175, 80, 0.9);
+  color: #FFFFFF;
+}
+
+.status-tag.upcoming {
+  background-color: rgba(255, 152, 0, 0.9);
+  color: #FFFFFF;
+}
+
+.activity-info {
+  padding: 28rpx;
+}
+
+.activity-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #2C3E50;
+  display: block;
+  margin-bottom: 24rpx;
+  line-height: 1.3;
+}
+
+.time-location-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.time-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.time-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+
+.time-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.time-content .date-text {
+  font-size: 28rpx;
+  color: #333333;
+  font-weight: 500;
+}
+
+.time-range {
+  font-size: 26rpx;
+  color: #8E8E93;
+  margin-top: 4rpx;
+}
+
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.location-icon {
+  font-size: 28rpx;
+}
+
+.location-text {
+  font-size: 26rpx;
+  color: #8E8E93;
+}
+
+.detail-section {
+  background-color: #F8FAF9;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.detail-content {
+  font-size: 28rpx;
+  color: #666666;
+  line-height: 1.7;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #F0F0F0;
+}
+
+.participants-info {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.participants-icon {
+  font-size: 28rpx;
+}
+
+.participants-count {
+  font-size: 28rpx;
+  color: #5A9A95;
+  font-weight: 500;
+}
+
+.join-btn {
+  background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
+  border-radius: 40rpx;
+  padding: 18rpx 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 20rpx rgba(90, 154, 149, 0.35);
+  transition: all 0.3s ease;
+}
+
+.join-btn.disabled {
+  background: #E8E8E8;
+  box-shadow: none;
+}
+
+.join-btn.joined {
+  background: #E0E0E0;
+  box-shadow: none;
+}
+
+.join-btn.joined .join-text {
+  color: #999999;
+}
+
+.join-text {
+  font-size: 30rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.join-btn.disabled .join-text {
+  color: #999999;
+}
+
+.join-btn:active:not(.disabled) {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100rpx;
+  background-color: #FFFFFF;
+  display: flex;
+  border-top: 1rpx solid #E8E8E8;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+.tab-icon {
+  font-size: 42rpx;
+}
+
+.tab-text {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.tab-item.active {
+  position: relative;
+}
+
+.tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: 8rpx;
+  width: 8rpx;
+  height: 8rpx;
+  background-color: #5A9A95;
+  border-radius: 50%;
+}
+
+.tab-item.active .tab-text {
+  color: #5A9A95;
+  font-weight: 500;
+}
+</style>

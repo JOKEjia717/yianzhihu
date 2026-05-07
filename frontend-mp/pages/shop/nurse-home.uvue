@@ -1,0 +1,320 @@
+<template>
+	<view class="container">
+
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 服务介绍 -->
+			<view class="service-intro">
+				<image src="/static/images/banner.jpg" mode="aspectFill"></image>
+				<view class="intro-overlay"></view>
+				<view class="intro-content">
+					<text class="intro-title">专业护工 贴心服务</text>
+					<text class="intro-desc">24小时上门服务 专业护理团队</text>
+				</view>
+			</view>
+
+			<!-- 服务项目 -->
+			<view class="section-header">
+				<text class="section-title">服务项目</text>
+			</view>
+
+			<view class="service-list">
+				<view class="service-item" v-for="item in services" :key="item.id" @click="selectService(item)">
+					<view class="service-icon-wrapper" :style="{background: item.bgColor}">
+						<text class="service-icon">{{item.icon}}</text>
+					</view>
+					<view class="service-info">
+						<text class="service-name">{{item.name}}</text>
+						<text class="service-desc">{{item.desc}}</text>
+						<text class="service-price">{{item.price}}</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 服务保障 -->
+			<view class="section-header">
+				<text class="section-title">服务保障</text>
+			</view>
+
+			<view class="guarantee-list">
+				<view class="guarantee-item" v-for="item in guarantees" :key="item.id">
+					<view class="guarantee-icon">{{item.icon}}</view>
+					<text class="guarantee-text">{{item.text}}</text>
+				</view>
+			</view>
+
+			<!-- 立即预约 -->
+			<view class="bottom-btn" @click="submitOrder">
+				<text class="btn-text">立即预约</text>
+			</view>
+		</scroll-view>
+
+		<!-- 悬浮购物车图标 -->
+		<view class="float-cart" @click="goToCart">
+			<view class="cart-icon">🛒</view>
+		</view>
+	</view>
+</template>
+
+<script lang="uts">
+	interface Service {
+		id: number
+		name: string
+		desc: string
+		price: string
+		icon: string
+		bgColor: string
+	}
+
+	interface Guarantee {
+		id: number
+		icon: string
+		text: string
+	}
+
+	export default {
+		data() {
+			return {
+				services: [
+					{ id: 1, name: '日常护理', desc: '生活照料、健康监测', price: '¥150/小时起', icon: '💉', bgColor: '#E3F2FD' },
+					{ id: 2, name: '康复护理', desc: '术后康复、功能训练', price: '¥200/小时起', icon: '🏥', bgColor: '#E8F5E9' },
+					{ id: 3, name: '专业陪护', desc: '医院陪护、全程照顾', price: '¥260/天起', icon: '👩‍⚕️', bgColor: '#FFF3E0' },
+					{ id: 4, name: '居家护理', desc: '家庭病床、长期照料', price: '¥300/天起', icon: '🏠', bgColor: '#FCE4EC' },
+					{ id: 5, name: '健康管理', desc: '健康评估、定制方案', price: '¥180/次', icon: '📊', bgColor: '#EDE7F6' },
+					{ id: 6, name: '心理疏导', desc: '情绪安抚、心理支持', price: '¥200/小时', icon: '💚', bgColor: '#E0F7FA' }
+				] as Service[],
+				guarantees: [
+					{ id: 1, icon: '✅', text: '持证上岗' },
+					{ id: 2, icon: '✅', text: '全程保险' },
+					{ id: 3, icon: '✅', text: '不满意退款' },
+					{ id: 4, icon: '✅', text: '隐私保护' }
+				] as Guarantee[]
+			}
+		},
+		methods: {
+			goBack() {
+				uni.navigateBack()
+			},
+			selectService(service: Service) {
+				uni.showToast({
+					title: `已选择：${service.name}`,
+					icon: 'none'
+				})
+			},
+			submitOrder() {
+				uni.showModal({
+					title: '预约成功',
+					content: '我们将尽快安排护工上门服务',
+					showCancel: false
+				})
+			},
+			goToCart() {
+				uni.navigateTo({
+					url: '/pages/children/cart'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		min-height: 100vh;
+		background: #F5F9F6;
+		padding-bottom: 140rpx;
+	}
+
+	.content {
+		padding: 20rpx;
+	}
+
+	.service-intro {
+		position: relative;
+		height: 300rpx;
+		border-radius: 20rpx;
+		overflow: hidden;
+		margin-bottom: 30rpx;
+	}
+
+	.service-intro image {
+		width: 100%;
+		height: 100%;
+	}
+
+	.intro-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: linear-gradient(135deg, rgba(76, 175, 80, 0.85) 0%, rgba(56, 142, 60, 0.7) 100%);
+	}
+
+	.intro-content {
+		position: absolute;
+		right: 40rpx;
+		top: 50%;
+		transform: translateY(-50%);
+		color: #FFFFFF;
+	}
+
+	.intro-title {
+		font-size: 40rpx;
+		font-weight: bold;
+		display: block;
+		margin-bottom: 12rpx;
+	}
+
+	.intro-desc {
+		font-size: 26rpx;
+		opacity: 0.9;
+	}
+
+	.section-header {
+		margin-bottom: 20rpx;
+	}
+
+	.section-title {
+		font-size: 32rpx;
+		font-weight: bold;
+		color: #2E7D32;
+		padding-left: 10rpx;
+		border-left: 6rpx solid #4CAF50;
+	}
+
+	.service-list {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20rpx;
+		margin-bottom: 30rpx;
+	}
+
+	.service-item {
+		background: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 28rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+		transition: all 0.3s ease;
+	}
+
+	.service-item:active {
+		transform: scale(0.98);
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+	}
+
+	.service-icon-wrapper {
+		width: 100rpx;
+		height: 100rpx;
+		border-radius: 20rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 20rpx;
+	}
+
+	.service-icon {
+		font-size: 48rpx;
+	}
+
+	.service-info {
+		text-align: center;
+		width: 100%;
+	}
+
+	.service-name {
+		font-size: 28rpx;
+		font-weight: 600;
+		color: #1A1A1A;
+		display: block;
+		margin-bottom: 8rpx;
+	}
+
+	.service-desc {
+		font-size: 22rpx;
+		color: #909399;
+		display: block;
+		margin-bottom: 12rpx;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		overflow: hidden;
+	}
+
+	.service-price {
+		font-size: 28rpx;
+		color: #FF4D4F;
+		font-weight: 600;
+	}
+
+	.guarantee-list {
+		background: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 24rpx;
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 20rpx;
+	}
+
+	.guarantee-item {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+	}
+
+	.guarantee-icon {
+		font-size: 28rpx;
+	}
+
+	.guarantee-text {
+		font-size: 26rpx;
+		color: #666666;
+	}
+
+	.bottom-btn {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+		padding: 28rpx;
+		text-align: center;
+		color: #FFFFFF;
+		font-size: 32rpx;
+		font-weight: bold;
+	}
+
+	.btn-text{
+		text-align:center;
+	}
+
+	/* 悬浮购物车图标 */
+	.float-cart {
+		position: fixed;
+		right: 50rpx;
+		bottom: 170rpx;
+		width: 100rpx;
+		height: 100rpx;
+		background: #FFFFFF;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		z-index: 9999;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1rpx solid #F0F0F0;
+	}
+
+	.float-cart:active {
+		transform: scale(0.92);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+	}
+
+	.cart-icon {
+		font-size: 48rpx;
+	}
+</style>
