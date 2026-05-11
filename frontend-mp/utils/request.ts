@@ -41,6 +41,10 @@ const createRequest = (config: RequestConfig) => {
     }
   }
 
+  // 每次请求都从存储中读取，避免退出登录后还带着旧 token
+  accessToken = uni.getStorageSync('accessToken') || ''
+  refreshToken = uni.getStorageSync('refreshToken') || ''
+
   // 如果不需要携带 token，直接使用默认配置
   if (!config.skipToken && accessToken && refreshToken) {
     defaultConfig.header['accessToken'] = accessToken
