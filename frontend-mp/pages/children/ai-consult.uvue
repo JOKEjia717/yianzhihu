@@ -15,7 +15,106 @@
 			<view class="message-list">
 				<view v-for="(message, index) in messages" :key="index" class="message-item" :class="message.type">
 					<view class="message-content">
-						<text class="message-text">{{message.content}}</text>
+						<template v-if="message.type === 'ai'">
+							<view v-for="(block, blockIndex) in parseMessageContent(message.content)" :key="blockIndex" class="message-block" :class="['block-' + block.type]">
+								<view v-if="block.type === 'gap'" class="message-gap"></view>
+								<view v-else-if="block.type === 'heading'" class="heading-row" :class="['heading-level-' + (block.level || 1)]">
+									<view class="message-inline">
+										<text
+											v-for="(part, partIndex) in block.parts"
+											:key="partIndex"
+											class="message-text"
+											:class="{ 'bold': part.bold, 'code': part.code }"
+										>{{ part.text }}</text>
+									</view>
+								</view>
+								<view v-else-if="block.type === 'bullet'" class="list-row">
+									<text class="list-marker">•</text>
+									<view class="message-inline">
+										<text
+											v-for="(part, partIndex) in block.parts"
+											:key="partIndex"
+											class="message-text"
+											:class="{ 'bold': part.bold, 'code': part.code }"
+										>{{ part.text }}</text>
+									</view>
+								</view>
+								<view v-else-if="block.type === 'ordered'" class="list-row">
+									<text class="list-marker">{{ block.order }}.</text>
+									<view class="message-inline">
+										<text
+											v-for="(part, partIndex) in block.parts"
+											:key="partIndex"
+											class="message-text"
+											:class="{ 'bold': part.bold, 'code': part.code }"
+										>{{ part.text }}</text>
+									</view>
+								</view>
+								<view v-else-if="block.type === 'quote'" class="quote-row">
+									<view class="quote-bar"></view>
+									<view class="message-inline quote-content">
+										<text
+											v-for="(part, partIndex) in block.parts"
+											:key="partIndex"
+											class="message-text"
+											:class="{ 'bold': part.bold, 'code': part.code }"
+										>{{ part.text }}</text>
+									</view>
+								</view>
+								<view v-else-if="block.type === 'table'" class="table-wrapper">
+									<scroll-view class="table-scroll" scroll-x="true">
+										<view class="table">
+											<view class="table-row table-header-row">
+												<view
+													v-for="(cell, cellIndex) in block.tableHeaders"
+													:key="cellIndex"
+													class="table-cell table-header-cell"
+												>
+													<text
+														v-for="(part, partIndex) in cell.parts"
+														:key="partIndex"
+														class="message-text table-text"
+														:class="{ 'bold': part.bold, 'code': part.code }"
+													>{{ part.text }}</text>
+												</view>
+											</view>
+											<view
+												v-for="(row, rowIndex) in block.tableRows"
+												:key="rowIndex"
+												class="table-row"
+											>
+												<view
+													v-for="(cell, cellIndex) in row.cells"
+													:key="cellIndex"
+													class="table-cell"
+												>
+													<text
+														v-for="(part, partIndex) in cell.parts"
+														:key="partIndex"
+														class="message-text table-text"
+														:class="{ 'bold': part.bold, 'code': part.code }"
+													>{{ part.text }}</text>
+												</view>
+											</view>
+										</view>
+									</scroll-view>
+								</view>
+								<view v-else-if="block.type === 'code'" class="code-block">
+									<text class="code-text">{{ block.codeText }}</text>
+								</view>
+								<view v-else class="paragraph-row">
+									<view class="message-inline">
+										<text
+											v-for="(part, partIndex) in block.parts"
+											:key="partIndex"
+											class="message-text"
+											:class="{ 'bold': part.bold, 'code': part.code }"
+										>{{ part.text }}</text>
+									</view>
+								</view>
+							</view>
+						</template>
+						<text v-else class="message-text user-text">{{ message.content }}</text>
 						<image v-if="message.imageUrl" :src="message.imageUrl" class="message-image" mode="widthFix"></image>
 					</view>
 				</view>
@@ -49,6 +148,30 @@
 </template>
 
 <script lang="uts">
+interface InlinePart {
+	text: string
+	bold: boolean
+	code: boolean
+}
+
+interface TableCell {
+	parts: InlinePart[]
+}
+
+interface TableRow {
+	cells: TableCell[]
+}
+
+interface MessageBlock {
+	type: 'paragraph' | 'heading' | 'bullet' | 'ordered' | 'quote' | 'table' | 'code' | 'gap'
+	parts: InlinePart[]
+	level?: number
+	order?: string
+	codeText?: string
+	tableHeaders?: TableCell[]
+	tableRows?: TableRow[]
+}
+
 interface Message {
 	content: string
 	type: 'user' | 'ai'
@@ -77,6 +200,340 @@ export default {
 		})
 	},
 	methods: {
+		parseInlineParts(content: string): InlinePart[] {
+			if (!content) {
+				return []
+			}
+			const parts: InlinePart[] = []
+			const regex = /(\*\*[^*]+?\*\*|`[^`]+`)/g
+			let lastIndex = 0
+			let match
+			
+			while ((match = regex.exec(content)) !== null) {
+				if (match.index > lastIndex) {
+					const normalText = content.substring(lastIndex, match.index)
+					if (normalText) {
+						parts.push({ text: normalText, bold: false, code: false })
+					}
+				}
+				const token = match[0]
+				if (token.startsWith('**') && token.endsWith('**')) {
+					const boldText = token.substring(2, token.length - 2)
+					if (boldText) {
+						parts.push({ text: boldText, bold: true, code: false })
+					}
+				} else if (token.startsWith('`') && token.endsWith('`')) {
+					const codeText = token.substring(1, token.length - 1)
+					if (codeText) {
+						parts.push({ text: codeText, bold: false, code: true })
+					}
+				}
+				lastIndex = regex.lastIndex
+			}
+			
+			if (lastIndex < content.length) {
+				const remainingText = content.substring(lastIndex)
+				if (remainingText) {
+					parts.push({ text: remainingText, bold: false, code: false })
+				}
+			}
+			
+			if (parts.length === 0) {
+				parts.push({ text: content, bold: false, code: false })
+			}
+			
+			return parts
+		},
+		parseMessageContent(content: string): MessageBlock[] {
+			if (!content) {
+				return []
+			}
+
+			const normalized = content.replace(/\r\n/g, '\n')
+			const lines = normalized.split('\n')
+			const blocks: MessageBlock[] = []
+			let paragraphBuffer: string[] = []
+			let codeBuffer: string[] = []
+			let inCodeBlock = false
+
+			const flushParagraph = () => {
+				if (paragraphBuffer.length === 0) {
+					return
+				}
+				const paragraphText = paragraphBuffer.join(' ').replace(/\s+/g, ' ').trim()
+				if (paragraphText) {
+					blocks.push({
+						type: 'paragraph',
+						parts: this.parseInlineParts(paragraphText)
+					})
+				}
+				paragraphBuffer = []
+			}
+
+			const flushCodeBlock = () => {
+				if (codeBuffer.length === 0) {
+					return
+				}
+				blocks.push({
+					type: 'code',
+					parts: [],
+					codeText: codeBuffer.join('\n')
+				})
+				codeBuffer = []
+			}
+
+			const pushGap = () => {
+				if (blocks.length === 0) {
+					return
+				}
+				const lastBlock = blocks[blocks.length - 1]
+				if (lastBlock.type === 'gap') {
+					return
+				}
+				blocks.push({
+					type: 'gap',
+					parts: []
+				})
+			}
+
+			const isMarkdownSeparator = (line: string): boolean => {
+				return /^(-{3,}|\*{3,}|_{3,})$/.test(line)
+			}
+
+			const isMarkdownTableDivider = (line: string): boolean => {
+				let cleaned = line.trim()
+				if (cleaned.startsWith('|')) {
+					cleaned = cleaned.substring(1)
+				}
+				if (cleaned.endsWith('|')) {
+					cleaned = cleaned.substring(0, cleaned.length - 1)
+				}
+
+				if (!cleaned.includes('|')) {
+					return false
+				}
+
+				const cells = cleaned.split('|').map(cell => cell.trim())
+				if (cells.length < 2) {
+					return false
+				}
+
+				return cells.every(cell => /^:?-{3,}:?$/.test(cell))
+			}
+
+			const splitMarkdownTableRow = (line: string): string[] => {
+				let row = line.trim()
+				if (row.startsWith('|')) {
+					row = row.substring(1)
+				}
+				if (row.endsWith('|')) {
+					row = row.substring(0, row.length - 1)
+				}
+
+				const cells: string[] = []
+				let currentCell = ''
+				let escapeNext = false
+
+				for (let index = 0; index < row.length; index++) {
+					const char = row.charAt(index)
+					if (escapeNext) {
+						currentCell += char
+						escapeNext = false
+						continue
+					}
+					if (char === '\\') {
+						escapeNext = true
+						continue
+					}
+					if (char === '|') {
+						cells.push(currentCell.trim())
+						currentCell = ''
+						continue
+					}
+					currentCell += char
+				}
+
+				cells.push(currentCell.trim())
+				return cells
+			}
+
+			const parseTableBlock = (startIndex: number): { block: MessageBlock; consumed: number } | null => {
+				if (startIndex + 1 >= lines.length) {
+					return null
+				}
+
+				const headerLine = lines[startIndex].trim()
+				const dividerLine = lines[startIndex + 1].trim()
+				if (!headerLine.includes('|') || !isMarkdownTableDivider(dividerLine)) {
+					return null
+				}
+
+				const rowTexts: string[][] = [splitMarkdownTableRow(headerLine)]
+				let consumed = 2
+				let cursor = startIndex + 2
+
+				while (cursor < lines.length) {
+					const candidate = lines[cursor].trim()
+					if (!candidate) {
+						break
+					}
+					if (!candidate.includes('|') || candidate.startsWith('```') || isMarkdownSeparator(candidate)) {
+						break
+					}
+					rowTexts.push(splitMarkdownTableRow(candidate))
+					consumed += 1
+					cursor += 1
+				}
+
+				const columnCount = rowTexts.reduce((max, row) => Math.max(max, row.length), 0)
+				if (columnCount === 0) {
+					return null
+				}
+
+				const buildCells = (row: string[]): TableCell[] => {
+					const cells: TableCell[] = []
+					for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+						cells.push({
+							parts: this.parseInlineParts(row[columnIndex] || '')
+						})
+					}
+					return cells
+				}
+
+				return {
+					type: 'table',
+					parts: [],
+					tableHeaders: buildCells(rowTexts[0]),
+					tableRows: rowTexts.slice(1).map(row => ({
+						cells: buildCells(row)
+					}))
+				}
+			}
+
+			let lineIndex = 0
+			while (lineIndex < lines.length) {
+				const rawLine = lines[lineIndex]
+				const trimmedLine = rawLine.trim()
+
+				if (trimmedLine.startsWith('```')) {
+					if (inCodeBlock) {
+						flushCodeBlock()
+						inCodeBlock = false
+					} else {
+						flushParagraph()
+						inCodeBlock = true
+					}
+					lineIndex++
+					continue
+				}
+
+				if (inCodeBlock) {
+					codeBuffer.push(rawLine)
+					lineIndex++
+					continue
+				}
+
+				if (!trimmedLine) {
+					flushParagraph()
+					pushGap()
+					lineIndex++
+					continue
+				}
+
+				// Markdown 分隔线只保留为空白，不直接展示在正文里
+				if (isMarkdownSeparator(trimmedLine)) {
+					flushParagraph()
+					pushGap()
+					lineIndex++
+					continue
+				}
+
+				const tableBlock = parseTableBlock(lineIndex)
+				if (tableBlock) {
+					flushParagraph()
+					blocks.push(tableBlock.block)
+					lineIndex += tableBlock.consumed
+					continue
+				}
+
+				if (trimmedLine.startsWith('### ')) {
+					flushParagraph()
+					blocks.push({
+						type: 'heading',
+						parts: this.parseInlineParts(trimmedLine.substring(4).trim()),
+						level: 3
+					})
+					lineIndex++
+					continue
+				}
+
+				if (trimmedLine.startsWith('## ')) {
+					flushParagraph()
+					blocks.push({
+						type: 'heading',
+						parts: this.parseInlineParts(trimmedLine.substring(3).trim()),
+						level: 2
+					})
+					lineIndex++
+					continue
+				}
+
+				if (trimmedLine.startsWith('# ')) {
+					flushParagraph()
+					blocks.push({
+						type: 'heading',
+						parts: this.parseInlineParts(trimmedLine.substring(2).trim()),
+						level: 1
+					})
+					lineIndex++
+					continue
+				}
+
+				const orderedMatch = trimmedLine.match(/^(\d+)[\.、]\s+(.*)$/)
+				if (orderedMatch) {
+					flushParagraph()
+					blocks.push({
+						type: 'ordered',
+						parts: this.parseInlineParts(orderedMatch[2].trim()),
+						order: orderedMatch[1]
+					})
+					lineIndex++
+					continue
+				}
+
+				const bulletMatch = trimmedLine.match(/^[-*•·]\s+(.*)$/)
+				if (bulletMatch) {
+					flushParagraph()
+					blocks.push({
+						type: 'bullet',
+						parts: this.parseInlineParts(bulletMatch[1].trim())
+					})
+					lineIndex++
+					continue
+				}
+
+				const quoteMatch = trimmedLine.match(/^>\s?(.*)$/)
+				if (quoteMatch) {
+					flushParagraph()
+					blocks.push({
+						type: 'quote',
+						parts: this.parseInlineParts(quoteMatch[1].trim())
+					})
+					lineIndex++
+					continue
+				}
+
+				paragraphBuffer.push(trimmedLine)
+				lineIndex++
+			}
+
+			flushParagraph()
+			if (inCodeBlock) {
+				flushCodeBlock()
+			}
+
+			return blocks
+		},
 		goBack() {
 			// 返回到mine页面
 			uni.navigateBack({
@@ -192,9 +649,19 @@ export default {
 					},
 					success: (uploadFileRes) => {
 						try {
-							const response = JSON.parse(uploadFileRes.data)
+							if (!uploadFileRes || !uploadFileRes.data) {
+								throw new Error('响应数据为空')
+							}
+							const response = typeof uploadFileRes.data === 'object' 
+								? uploadFileRes.data 
+								: JSON.parse(uploadFileRes.data)
+							if (!response || typeof response !== 'object') {
+								throw new Error('响应数据格式错误')
+							}
 							if (response.code === 1) {
-								// 获取到taskid后，开始轮询获取结果
+								if (!response.data) {
+									throw new Error('缺少taskId')
+								}
 								this.pollImageResult(response.data)
 							} else {
 								uni.showToast({
@@ -204,8 +671,9 @@ export default {
 								this.isLoading = false
 							}
 						} catch (error) {
+							console.error('图片分析失败:', error)
 							uni.showToast({
-								title: '解析响应失败',
+								title: '图片分析失败',
 								icon: 'none'
 							})
 							this.isLoading = false
@@ -327,58 +795,121 @@ export default {
 			
 			// 存储当前实例的引用
 			const self = this
-			let buffer = ''
+			let responseBuffer = ''
+			let lastProcessedLength = 0
+			let pendingEventLines: string[] = []
+
+			const appendAssistantContent = (content: string) => {
+				if (!content) {
+					return
+				}
+
+				self.streamResponse += content
+				if (self.messages.length > 0) {
+					self.messages[self.messages.length - 1].content = self.streamResponse
+				}
+				self.scrollToBottom()
+			}
+
+			const flushPendingEvent = () => {
+				if (pendingEventLines.length === 0) {
+					return
+				}
+
+				const dataContent = pendingEventLines
+					.filter(line => line.startsWith('data:'))
+					.map(line => line.substring(5).trimStart())
+					.join('\n')
+					.trim()
+				pendingEventLines = []
+
+				if (!dataContent || dataContent === '[DONE]') {
+					return
+				}
+
+				let jsonData = null
+				try {
+					jsonData = JSON.parse(dataContent)
+				} catch (parseError) {
+					console.warn('JSON解析失败，跳过:', dataContent)
+					return
+				}
+
+				if (!jsonData || typeof jsonData !== 'object') {
+					return
+				}
+
+				if (!jsonData.choices ||
+					!Array.isArray(jsonData.choices) ||
+					jsonData.choices.length === 0 ||
+					!jsonData.choices[0].delta ||
+					jsonData.choices[0].delta.content === undefined) {
+					return
+				}
+
+				const content = jsonData.choices[0].delta.content
+				if (typeof content === 'string' && content.length > 0) {
+					appendAssistantContent(content)
+				}
+			}
+
+			const consumeResponseBuffer = (finalChunk: boolean = false) => {
+				while (true) {
+					const newlineIndex = responseBuffer.indexOf('\n')
+					if (newlineIndex === -1) {
+						break
+					}
+
+					const rawLine = responseBuffer.substring(0, newlineIndex)
+					responseBuffer = responseBuffer.substring(newlineIndex + 1)
+					const line = rawLine.replace(/\r$/, '')
+
+					if (!line.trim()) {
+						flushPendingEvent()
+						continue
+					}
+
+					pendingEventLines.push(line)
+				}
+
+				if (finalChunk) {
+					const tail = responseBuffer.replace(/\r$/, '')
+					responseBuffer = ''
+					if (tail.trim()) {
+						pendingEventLines.push(tail)
+					}
+					flushPendingEvent()
+				}
+			}
 			
 			// 设置响应类型为文本
 			xhr.responseType = 'text'
 			
 			// 处理流式数据
 			xhr.onprogress = function() {
-				// 获取新的响应文本
-				const newData = xhr.responseText.substring(buffer.length)
-				buffer = xhr.responseText
-				
-				// 处理新数据
-				if (newData.trim()) {
-					const lines = newData.split('\n')
-					for (let i = 0; i < lines.length; i++) {
-						const line = lines[i].trim()
-						if (line.startsWith('data:')) {
-							if (line === 'data:[DONE]') {
-								// 流式响应结束
-								continue
-							}
-							try {
-								const dataContent = line.substring(5) // 去掉 'data:' 前缀
-								const jsonData = JSON.parse(dataContent)
-								
-								// 提取content
-								if (jsonData.choices && 
-									jsonData.choices.length > 0 && 
-									jsonData.choices[0].delta && 
-									jsonData.choices[0].delta.content !== undefined) {
-									const content = jsonData.choices[0].delta.content
-									// 追加内容到当前响应
-									self.streamResponse += content
-									
-									// 更新最后一条AI消息
-									if (self.messages.length > 0) {
-										self.messages[self.messages.length - 1].content = self.streamResponse
-									}
-									
-									// 滚动到底部
-									self.scrollToBottom()
-								}
-							} catch (error) {
-								console.error('解析响应数据失败:', error)
-							}
-						}
+				try {
+					if (!xhr.responseText) {
+						return
 					}
+
+					const newData = xhr.responseText.substring(lastProcessedLength)
+					lastProcessedLength = xhr.responseText.length
+
+					if (!newData) {
+						return
+					}
+
+					responseBuffer += newData
+					consumeResponseBuffer()
+				} catch (error) {
+					console.error('流式响应处理失败:', error)
 				}
 			}
 			
 			// 请求完成处理
 			xhr.onload = function() {
+				consumeResponseBuffer(true)
+				
 				if (xhr.status === 200) {
 					// 请求成功完成
 					self.isLoading = false
@@ -503,6 +1034,10 @@ export default {
 	padding: 20rpx;
 	border-radius: 20rpx;
 	word-break: break-all;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	display: flex;
+	flex-direction: column;
 }
 
 .user .message-content {
@@ -511,16 +1046,206 @@ export default {
 
 .ai .message-content {
 	background-color: #FFFFFF;
+	max-width: 82%;
 }
 
 .message-text {
 	font-size: 28rpx;
 	line-height: 1.5;
 	color: #333333;
+	display: inline-block;
+	max-width: 100%;
+	min-width: 0;
+	white-space: pre-wrap;
+	word-break: break-all;
+	overflow-wrap: anywhere;
+	flex-shrink: 1;
+}
+
+.message-text.bold {
+	font-weight: bold;
+}
+
+.message-text.code {
+	padding: 2rpx 8rpx;
+	border-radius: 8rpx;
+	background-color: rgba(79, 209, 197, 0.12);
+	color: #0f766e;
+	font-family: monospace;
 }
 
 .user .message-text {
 	color: #FFFFFF;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.user .message-text.code {
+	background-color: rgba(255, 255, 255, 0.18);
+	color: #FFFFFF;
+}
+
+.user-text {
+	white-space: pre-wrap;
+}
+
+.message-block {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 12rpx;
+}
+
+.message-block:last-child {
+	margin-bottom: 0;
+}
+
+.message-gap {
+	height: 10rpx;
+}
+
+.paragraph-row,
+.heading-row,
+.list-row,
+.quote-row {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+}
+
+.message-inline {
+	flex: 1;
+	min-width: 0;
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.heading-row .message-text {
+	font-size: 30rpx;
+	font-weight: 600;
+}
+
+.heading-row {
+	padding-left: 16rpx;
+	border-left: 6rpx solid #4FD1C5;
+}
+
+.heading-level-1 .message-text {
+	font-size: 34rpx;
+	font-weight: 700;
+}
+
+.heading-level-2 .message-text {
+	font-size: 31rpx;
+	font-weight: 700;
+}
+
+.heading-level-3 .message-text {
+	font-size: 28rpx;
+	font-weight: 600;
+}
+
+.list-row {
+	gap: 10rpx;
+}
+
+.list-marker {
+	color: #4FD1C5;
+	font-size: 28rpx;
+	font-weight: 700;
+	line-height: 1.5;
+	flex-shrink: 0;
+	width: 28rpx;
+	text-align: center;
+}
+
+.quote-row {
+	padding-left: 12rpx;
+	align-items: stretch;
+}
+
+.quote-bar {
+	width: 6rpx;
+	border-radius: 999rpx;
+	background-color: #4FD1C5;
+	margin-right: 12rpx;
+	align-self: stretch;
+	flex-shrink: 0;
+}
+
+.quote-content {
+	background-color: rgba(79, 209, 197, 0.08);
+	border-radius: 12rpx;
+	padding: 12rpx 16rpx;
+}
+
+.table-wrapper {
+	width: 100%;
+	background-color: #FFFFFF;
+	border: 1rpx solid #E2E8F0;
+	border-radius: 14rpx;
+	overflow: hidden;
+}
+
+.table-scroll {
+	width: 100%;
+}
+
+.table {
+	min-width: 100%;
+}
+
+.table-row {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+}
+
+.table-cell {
+	flex: 1;
+	min-width: 180rpx;
+	padding: 14rpx 16rpx;
+	box-sizing: border-box;
+	border-right: 1rpx solid #E2E8F0;
+	border-bottom: 1rpx solid #E2E8F0;
+}
+
+.table-row .table-cell:last-child {
+	border-right: none;
+}
+
+.table-row:last-child .table-cell {
+	border-bottom: none;
+}
+
+.table-header-row .table-cell,
+.table-header-cell {
+	background-color: #F8FAFC;
+}
+
+.table-text {
+	font-size: 24rpx;
+	line-height: 1.45;
+}
+
+.code-block {
+	background-color: #f6f8fa;
+	border-radius: 14rpx;
+	padding: 16rpx 18rpx;
+	border: 1rpx solid #e6edf3;
+}
+
+.code-text {
+	font-size: 24rpx;
+	line-height: 1.6;
+	color: #1f2937;
+	display: block;
+	max-width: 100%;
+	white-space: pre-wrap;
+	word-break: break-all;
+	overflow-wrap: anywhere;
 }
 
 .input-wrapper {
@@ -561,12 +1286,12 @@ export default {
 .message-input {
 	flex: 1 1 60%;
 	min-width: 0;
-	height: 80rpx;
+	height: 96rpx;
 	background-color: #F5F7FA;
-	border-radius: 40rpx;
-	padding: 0 30rpx;
-	font-size: 28rpx;
-	margin: 0 8rpx;
+	border-radius: 48rpx;
+	padding: 0 48rpx;
+	font-size: 30rpx;
+	margin: 0 12rpx;
 }
 
 .send-btn {
