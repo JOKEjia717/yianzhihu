@@ -10,6 +10,7 @@ import com.zhihu.po.Health;
 import com.zhihu.query.ElderQuery;
 import com.zhihu.result.Result;
 import com.zhihu.service.ElderService;
+import com.zhihu.vo.ElderContactChildVo;
 import com.zhihu.vo.ElderLoginVo;
 import com.zhihu.vo.ElderVo;
 import com.zhihu.vo.HealthVo;
@@ -45,6 +46,13 @@ public class ElderController {
         log.info("老人注册：{}", elderSaveDto);
         ElderLoginVo loginVo = elderService.save(elderSaveDto);
         return Result.success(loginVo);
+    }
+
+    @GetMapping("contact-child")
+    public Result<ElderContactChildVo> contactChild() {
+        log.info("查询当前老人联系子女信息：{}", BaseContext.getCurrentId());
+        ElderContactChildVo contactChildVo = elderService.contactChild();
+        return Result.success(contactChildVo);
     }
 
     @PostMapping("bind")

@@ -33,11 +33,13 @@ import com.zhihu.util.AliOssUtil;
 import com.zhihu.util.MD5Util;
 import com.zhihu.util.TokenUtils;
 import com.zhihu.vo.ChildrenLoginVo;
+import com.zhihu.vo.ElderContactChildVo;
 import com.zhihu.vo.ElderLoginVo;
 import com.zhihu.vo.ElderVo;
 import com.zhihu.vo.HealthVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -92,6 +94,32 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
         return StringUtils.hasText(value);
     }
 
+    private Long resolveContactChildrenId(Elder elder) {
+        if (elder == null) {
+            return null;
+        }
+        if (elder.getChildrenId() != null && elder.getChildrenId() != 0L) {
+            return elder.getChildrenId();
+        }
+        if (elder.getElderId() == null) {
+            return null;
+        }
+        try {
+            List<ElderChildrenBind> binds = elderChildrenBindMapper.selectList(new LambdaQueryWrapper<ElderChildrenBind>()
+                    .eq(ElderChildrenBind::getElderId, elder.getElderId())
+                    .orderByDesc(ElderChildrenBind::getCreatedTime));
+            if (CollUtil.isNotEmpty(binds)) {
+                ElderChildrenBind latestBind = binds.get(0);
+                if (latestBind != null && latestBind.getChildrenId() != null && latestBind.getChildrenId() != 0L) {
+                    return latestBind.getChildrenId();
+                }
+            }
+        } catch (DataAccessException e) {
+            log.warn("elder_children_bind 不可用，跳过绑定关系查询: elderId={}", elder.getElderId(), e);
+        }
+        return null;
+    }
+
     private ElderLoginVo buildLoginVo(Elder elder) {
         ElderLoginVo loginVo = new ElderLoginVo();
         BeanUtil.copyProperties(elder, loginVo);
@@ -101,10 +129,39 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
         if (elder.getCaretakerId() != null) {
             loginVo.setCaretakerId(String.valueOf(elder.getCaretakerId()));
         }
-        if (elder.getChildrenId() != null && elder.getChildrenId() != 0L) {
-            loginVo.setChildrenId(String.valueOf(elder.getChildrenId()));
+        Long contactChildrenId = resolveContactChildrenId(elder);
+        if (contactChildrenId != null) {
+            loginVo.setChildrenId(String.valueOf(contactChildrenId));
         }
+        fillChildrenContact(elder, loginVo);
         return loginVo;
+    }
+
+    private void fillChildrenContact(Elder elder, ElderLoginVo target) {
+        target.setChildrenName("");
+        target.setChildrenPhone("");
+        Long contactChildrenId = resolveContactChildrenId(elder);
+        if (contactChildrenId == null) {
+            return;
+        }
+        if (elder != null) {
+            if (hasText(elder.getChildrenName())) {
+                target.setChildrenName(elder.getChildrenName());
+            }
+            if (hasText(elder.getChildrenPhone())) {
+                target.setChildrenPhone(elder.getChildrenPhone());
+            }
+        }
+        ChildrenLoginVo childrenInfo = loadChildrenInfo(String.valueOf(contactChildrenId));
+        if (childrenInfo == null) {
+            return;
+        }
+        if (hasText(childrenInfo.getName())) {
+            target.setChildrenName(childrenInfo.getName());
+        }
+        if (hasText(childrenInfo.getPhone())) {
+            target.setChildrenPhone(childrenInfo.getPhone());
+        }
     }
 
     private ElderLoginVo buildTokenVo(Elder elder) {
@@ -171,8 +228,8 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
         elder.setAccount(account);
         elder.setPassword(MD5Util.md5(elderSaveDto.getPassword()));
         elder.setPhone(elderSaveDto.getPhone());
-        elder.setChildrenName(name);
-        elder.setChildrenPhone(elderSaveDto.getPhone());
+        elder.setChildrenName(hasText(elderSaveDto.getChildrenName()) ? elderSaveDto.getChildrenName() : "");
+        elder.setChildrenPhone(hasText(elderSaveDto.getChildrenPhone()) ? elderSaveDto.getChildrenPhone() : "");
         elder.setDeanId(0L);
         elder.setChildrenId(0L);
         elder.setApplicationTime(LocalDate.now());
@@ -225,10 +282,20 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
         if (elder.getCaretakerId() != null) {
             elderVo.setCaretakerId(String.valueOf(elder.getCaretakerId()));
         }
-        if (elder.getChildrenId() != null && elder.getChildrenId() != 0L) {
-            elderVo.setChildrenId(String.valueOf(elder.getChildrenId()));
+        Long contactChildrenId = resolveContactChildrenId(elder);
+        if (contactChildrenId != null) {
+            elderVo.setChildrenId(String.valueOf(contactChildrenId));
         }
-        ChildrenLoginVo childrenInfo = loadChildrenInfo(elderVo.getChildrenId());
+        if (contactChildrenId == null) {
+            return elderVo;
+        }
+        if (hasText(elder.getChildrenName())) {
+            elderVo.setChildrenName(elder.getChildrenName());
+        }
+        if (hasText(elder.getChildrenPhone())) {
+            elderVo.setChildrenPhone(elder.getChildrenPhone());
+        }
+        ChildrenLoginVo childrenInfo = loadChildrenInfo(String.valueOf(contactChildrenId));
         if (childrenInfo != null) {
             if (hasText(childrenInfo.getName())) {
                 elderVo.setChildrenName(childrenInfo.getName());
@@ -238,6 +305,34 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
             }
         }
         return elderVo;
+    }
+
+    private ElderContactChildVo buildContactChildVo(Elder elder) {
+        ElderContactChildVo contactChildVo = new ElderContactChildVo();
+        contactChildVo.setChildrenName("");
+        contactChildVo.setChildrenPhone("");
+        Long contactChildrenId = resolveContactChildrenId(elder);
+        if (contactChildrenId == null) {
+            return contactChildVo;
+        }
+        if (elder != null) {
+            if (hasText(elder.getChildrenName())) {
+                contactChildVo.setChildrenName(elder.getChildrenName());
+            }
+            if (hasText(elder.getChildrenPhone())) {
+                contactChildVo.setChildrenPhone(elder.getChildrenPhone());
+            }
+        }
+        ChildrenLoginVo childrenInfo = loadChildrenInfo(String.valueOf(contactChildrenId));
+        if (childrenInfo != null) {
+            if (hasText(childrenInfo.getName())) {
+                contactChildVo.setChildrenName(childrenInfo.getName());
+            }
+            if (hasText(childrenInfo.getPhone())) {
+                contactChildVo.setChildrenPhone(childrenInfo.getPhone());
+            }
+        }
+        return contactChildVo;
     }
 
     @Override
@@ -380,6 +475,20 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
         });
         return elderVoList;
     }
+
+    @Override
+    public ElderContactChildVo contactChild() {
+        String currentId = BaseContext.getCurrentId();
+        if (!hasText(currentId)) {
+            throw new LoginFailedException("请先登录");
+        }
+        Elder elder = this.getById(Long.valueOf(currentId));
+        if (elder == null) {
+            throw new BaseException("老人信息不存在");
+        }
+        return buildContactChildVo(elder);
+    }
+
     @Override
     public List<ElderVo> getByChildrenId() {
         Long childrenId = getCurrentChildrenId();
@@ -428,6 +537,16 @@ public class ElderServiceImpl extends ServiceImpl<ElderMapper, Elder> implements
             throw new BaseException("老人不存在");
         }
         bindChildrenToElder(currentElderId, currentChildrenId);
+        elder.setChildrenId(currentChildrenId);
+        ChildrenLoginVo childrenInfo = loadChildrenInfo(String.valueOf(currentChildrenId));
+        if (childrenInfo != null) {
+            elder.setChildrenName(hasText(childrenInfo.getName()) ? childrenInfo.getName() : "");
+            elder.setChildrenPhone(hasText(childrenInfo.getPhone()) ? childrenInfo.getPhone() : "");
+        } else {
+            elder.setChildrenName("");
+            elder.setChildrenPhone("");
+        }
+        this.updateById(elder);
     }
 
     @Override

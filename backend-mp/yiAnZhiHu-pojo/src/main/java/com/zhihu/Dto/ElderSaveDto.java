@@ -20,4 +20,14 @@ public class ElderSaveDto implements Serializable {
     private String password;
 
     private String phone;
+
+    /**
+     * 子女姓名。老年人自助注册时可不填，后端会兜底为空字符串。
+     */
+    private String childrenName;
+
+    /**
+     * 子女电话。老年人自助注册时可不填，后端会兜底为空字符串。
+     */
+    private String childrenPhone;
 }

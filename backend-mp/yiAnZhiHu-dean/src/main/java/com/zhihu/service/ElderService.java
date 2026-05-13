@@ -10,6 +10,7 @@ import com.zhihu.po.Application;
 import com.zhihu.po.Elder;
 import com.zhihu.query.ElderQuery;
 import com.zhihu.vo.ApplicationVo;
+import com.zhihu.vo.ElderContactChildVo;
 import com.zhihu.vo.ElderLoginVo;
 import com.zhihu.vo.ElderVo;
 import com.zhihu.vo.HealthVo;
@@ -38,6 +39,7 @@ public interface ElderService extends IService<Elder> {
 
     List<ElderVo> elders();
     List<ElderVo> getByChildrenId();
+    ElderContactChildVo contactChild();
 
     Integer isApplication(String deanId, String childrenId);
     List<ElderVo> getElder(List<Long> ElderId);
