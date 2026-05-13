@@ -35,6 +35,9 @@ public interface DeanClient {
     @PostMapping("/elder/create")
     void create(@RequestBody ElderDto elderDto, @RequestParam String deanId);
 
+    @PostMapping("/elder/bind")
+    void bindElder(@RequestParam("elderId") String elderId);
+
     @GetMapping("/elder/list")
     List<Elder> list();
 

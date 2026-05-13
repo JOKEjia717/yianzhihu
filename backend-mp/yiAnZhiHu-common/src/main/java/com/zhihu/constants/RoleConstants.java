@@ -18,4 +18,9 @@ public class RoleConstants {
      * 用户
      */
     public static final String CHILDREN ="children";
+
+    /**
+     * 老人
+     */
+    public static final String ELDER ="elder";
 }

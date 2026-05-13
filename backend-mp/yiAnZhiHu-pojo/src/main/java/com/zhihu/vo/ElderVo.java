@@ -36,6 +36,10 @@ public class ElderVo {
      */
     private int age;
 
+    private String account;
+
+    private String phone;
+
     private String childrenName;
 
     private String childrenPhone;

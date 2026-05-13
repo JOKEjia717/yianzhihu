@@ -20,6 +20,8 @@ public class JWTConstants {
     public static final String DEAN_SecretKey="dean";
 
     public static final String CARETAKER_SecretKey="caretaker";
+
+    public static final String ELDER_SecretKey="elder";
     /**
      * 用户标识
      */
@@ -32,6 +34,8 @@ public class JWTConstants {
     public static final String DEAN_ID="dean_id";
 
     public static final String CARETAKER_ID="caretaker_id";
+
+    public static final String ELDER_ID="elder_id";
     /**
      * 短token两小时
      */

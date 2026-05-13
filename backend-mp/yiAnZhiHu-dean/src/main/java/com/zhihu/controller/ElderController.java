@@ -1,7 +1,8 @@
 package com.zhihu.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.zhihu.Dto.ElderDto;
+import com.zhihu.Dto.ElderLoginDto;
+import com.zhihu.Dto.ElderSaveDto;
 import com.zhihu.Dto.PageDTO;
 import com.zhihu.context.BaseContext;
 import com.zhihu.po.Elder;
@@ -9,6 +10,7 @@ import com.zhihu.po.Health;
 import com.zhihu.query.ElderQuery;
 import com.zhihu.result.Result;
 import com.zhihu.service.ElderService;
+import com.zhihu.vo.ElderLoginVo;
 import com.zhihu.vo.ElderVo;
 import com.zhihu.vo.HealthVo;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +33,35 @@ public class ElderController {
 
     private final ElderService elderService;
 
+    @PostMapping({"login", "loginByUsername"})
+    public Result<ElderLoginVo> login(@RequestBody ElderLoginDto elderLoginDto) {
+        log.info("老人登录：{}", elderLoginDto);
+        ElderLoginVo loginVo = elderService.loginByUsernameAndPwd(elderLoginDto);
+        return Result.success(loginVo);
+    }
+
+    @PostMapping("register")
+    public Result<ElderLoginVo> register(@RequestBody ElderSaveDto elderSaveDto) {
+        log.info("老人注册：{}", elderSaveDto);
+        ElderLoginVo loginVo = elderService.save(elderSaveDto);
+        return Result.success(loginVo);
+    }
+
+    @PostMapping("bind")
+    public Result bind(@RequestParam("elderId") String elderId) {
+        log.info("绑定当前子女和老人: elderId={}", elderId);
+        elderService.bindElder(elderId);
+        return Result.success();
+    }
+
     @PostMapping("create")
     public Result create(@RequestParam String deanId,
                          @RequestParam String caretakerId,
                          @RequestParam String name,
                          @RequestParam int gender,
                          @RequestParam int age,
-                         @RequestParam String childrenName,
-                         @RequestParam String childrenPhone,
+                         @RequestParam(required = false) String childrenName,
+                         @RequestParam(required = false) String childrenPhone,
                          @RequestParam MultipartFile photo,
                          @RequestParam String childrenId) {
         ElderDto elderDto = new ElderDto();

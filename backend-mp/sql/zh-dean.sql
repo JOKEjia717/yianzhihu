@@ -134,6 +134,21 @@ INSERT INTO `elder` VALUES (1916373460536270849, 1, 1, 1909796231132647425, '王
 INSERT INTO `elder` VALUES (1916379068878671873, 1000, 1000, 1909796231132647425, '李淑兰', 0, 71, 'https://yianzhihu.oss-cn-beijing.aliyuncs.com/%E8%80%81%E4%BA%BA1.1.jpg', '孙嘉豪', '1234567898', NULL, '2025-04-27', 2);
 
 -- ----------------------------
+-- Table structure for elder_children_bind
+-- ----------------------------
+DROP TABLE IF EXISTS `elder_children_bind`;
+CREATE TABLE `elder_children_bind`  (
+  `elder_children_bind_id` bigint NOT NULL,
+  `elder_id` bigint NOT NULL COMMENT '老人id',
+  `children_id` bigint NOT NULL COMMENT '子女id',
+  `created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '绑定时间',
+  PRIMARY KEY (`elder_children_bind_id`) USING BTREE,
+  UNIQUE INDEX `uk_elder_children`(`elder_id` ASC, `children_id` ASC) USING BTREE,
+  INDEX `idx_children_id`(`children_id` ASC) USING BTREE,
+  INDEX `idx_elder_id`(`elder_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '老人子女绑定关系表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for nursing_home
 -- ----------------------------
 DROP TABLE IF EXISTS `nursing_home`;

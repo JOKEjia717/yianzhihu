@@ -16,6 +16,8 @@ public class RedisConstants {
 
      public static final String CARETAKER_LOGIN_CACHE="caretaker:";
 
+     public static final String ELDER_LOGIN_CACHE="elder:";
+
      public static final String CACHE_ITEM="cache:item:";
 
      public static final String CACHE_CART="cache:cart:";

@@ -2,8 +2,6 @@ package com.zhihu.Dto;
 
 import lombok.Data;
 
-import java.time.LocalDate;
-
 /**
  * @author BangLin
  * @Date 2025/4/14 18:52
@@ -34,6 +32,12 @@ public class ElderDto {
      * 这个字段存储了老人的年龄信息，是评估老人健康状况和护理需求的重要指标
      */
     private int age;
+
+    private String account;
+
+    private String password;
+
+    private String phone;
 
     private String childrenName;
 

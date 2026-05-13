@@ -1,5 +1,6 @@
 package com.zhihu.po;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
@@ -49,6 +50,22 @@ public class Elder {
      * 这个字段存储了老人的年龄信息，是评估老人健康状况和护理需求的重要指标
      */
     private int age;
+
+    /**
+     * 账号，老人端登录使用
+     */
+    private String account;
+
+    /**
+     * 密码，使用 MD5 加密后存储
+     */
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
+    /**
+     * 电话，老人端注册/联系使用
+     */
+    private String phone;
 
     private String childrenName;
 

@@ -7,6 +7,7 @@ import com.zhihu.Dto.PageDTO;
 import com.zhihu.client.ActivityClient;
 import com.zhihu.client.caretakerClient;
 import com.zhihu.context.BaseContext;
+import com.zhihu.po.Children;
 import com.zhihu.query.NursingHomeQuery;
 import com.zhihu.result.Result;
 import com.zhihu.service.ChildrenService;
@@ -14,6 +15,7 @@ import com.zhihu.vo.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -132,5 +134,17 @@ public class ChildrenController {
     @PostMapping("newmoney")
     void money(@RequestBody Integer newMoney){
         childrenService.newMoney(newMoney);
+    }
+
+    @GetMapping("info/{childrenId}")
+    public Result<ChildrenLoginVo> getChildrenInfo(@PathVariable String childrenId) {
+        Children children = childrenService.getById(Long.valueOf(childrenId));
+        if (children == null) {
+            return Result.error("子女信息不存在");
+        }
+        ChildrenLoginVo childrenLoginVo = new ChildrenLoginVo();
+        BeanUtils.copyProperties(children, childrenLoginVo);
+        childrenLoginVo.setChildrenId(String.valueOf(children.getChildrenId()));
+        return Result.success(childrenLoginVo);
     }
 }

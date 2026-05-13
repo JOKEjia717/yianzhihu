@@ -11,6 +11,10 @@ import java.time.LocalDate;
 @Data
 public class ElderQuery extends PageQuery{
 
+    private String name;
+
+    private String elderName;
+
     private String childrenName;
 
     private String childrenPhone;
