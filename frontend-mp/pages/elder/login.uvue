@@ -47,9 +47,10 @@ interface UserInfo {
   accessToken: string
   refreshToken: string
   elderId: string
-  avatar: string
+  account: string
   name: string
   phone: string
+  photo?: string
   isEnable: number
 }
 
@@ -75,7 +76,10 @@ export default {
   },
   methods: {
     async handleLogin() {
-      if (!this.formData.account || !this.formData.password) {
+      const account = this.formData.account.trim()
+      const password = this.formData.password
+
+      if (!account || !password) {
         uni.showToast({
           title: '请输入账号和密码',
           icon: 'none'
@@ -84,10 +88,10 @@ export default {
       }
 
       try {
-        const res = await request.post('/children/loginByUsername', {
+        const res = await request.post('/elder/login', {
           data: {
-            account: this.formData.account,
-            password: this.formData.password
+            account,
+            password
           },
           skipToken: true
         }) as { 

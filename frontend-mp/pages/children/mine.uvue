@@ -3,22 +3,21 @@
 		<view class="bg-orb bg-orb--one"></view>
 		<view class="bg-orb bg-orb--two"></view>
 		<view class="bg-orb bg-orb--three"></view>
-
 		<view class="hero-card">
 			<view class="hero-content">
 				<view class="hero-head">
-					<view class="hero-copy">
-						<text class="hero-kicker">子女端 · 我的</text>
-						<text class="hero-name">{{ userInfo.name || '未设置昵称' }}</text>
-						<text class="hero-desc">关注长者照护、消费与订单，重要信息一屏掌握。</text>
-					</view>
-
 					<view class="hero-avatar-shell" @click="showEditForm">
 						<image class="hero-avatar" :src="userInfo.avatar || defaultAvatar" mode="aspectFill"></image>
 						<view class="hero-avatar-tag">
 							<image class="hero-avatar-tag-icon" src="/static/images/pen.png" mode="aspectFit"></image>
 							<text class="hero-avatar-tag-text">编辑</text>
 						</view>
+					</view>
+
+					<view class="hero-copy">
+						<text class="hero-kicker">子女端 · 我的</text>
+						<text class="hero-name">{{ userInfo.name || '未设置昵称' }}</text>
+						<text class="hero-desc">关注长者照护，重要信息一屏掌握。</text>
 					</view>
 				</view>
 
@@ -27,24 +26,12 @@
 						<text class="meta-label">手机号</text>
 						<text class="meta-value">{{ getPhoneText() }}</text>
 					</view>
-					<view class="meta-item">
-						<text class="meta-label">家庭编号</text>
-						<text class="meta-value">{{ getChildrenIdText() }}</text>
-					</view>
-					<view class="meta-item" :class="getStatusClass()">
-						<text class="meta-label">账号状态</text>
-						<text class="meta-value">{{ getStatusText() }}</text>
-					</view>
 				</view>
 
 				<view class="hero-actions">
 					<view class="hero-action hero-action--primary" @click="showEditForm">
 						<text class="hero-action-title">编辑资料</text>
 						<text class="hero-action-sub">头像、昵称、手机号</text>
-					</view>
-					<view class="hero-action hero-action--secondary" @click="goToOrders">
-						<text class="hero-action-title">查看订单</text>
-						<text class="hero-action-sub">快速进入订单列表</text>
 					</view>
 				</view>
 			</view>
@@ -54,39 +41,22 @@
 			<view class="panel-head">
 				<view>
 					<text class="panel-title">快捷入口</text>
-					<text class="panel-subtitle">重点入口更突出，常用功能更顺手</text>
+					<text class="panel-subtitle">常用功能一眼可达，点击即可快速进入</text>
 				</view>
-			</view>
-
-			<view class="shortcut-featured" @click="handleQuickAction(featuredShortcut.type)">
-				<view class="shortcut-featured-icon-shell">
-					<image class="shortcut-featured-icon" :src="featuredShortcut.icon" mode="aspectFit"></image>
-				</view>
-				<view class="shortcut-featured-copy">
-					<text class="shortcut-featured-kicker">智能推荐</text>
-					<text class="shortcut-featured-title">{{ featuredShortcut.title }}</text>
-					<text class="shortcut-featured-desc">{{ featuredShortcut.desc }}</text>
-				</view>
-				<image class="shortcut-featured-arrow" src="/static/images/arrow-right.png" mode="aspectFit"></image>
 			</view>
 
 			<view class="shortcut-grid">
 				<view
-					v-for="item in miniShortcuts"
+					v-for="(item, index) in shortcutItems"
 					:key="item.type"
-					class="shortcut-card"
-					:class="'shortcut-card--' + item.type + (item.type === 'nursing' ? ' shortcut-card--wide' : '')"
+					class="shortcut-item"
+					:class="'shortcut-item--' + item.type + ' ' + (index === 0 ? 'shortcut-item--featured' : 'shortcut-item--compact')"
 					@click="handleQuickAction(item.type)"
 				>
-					<view class="shortcut-card-icon-shell" :class="'shortcut-card-icon-shell--' + item.type">
-						<image class="shortcut-card-icon" :src="item.icon" mode="aspectFit"></image>
+					<view class="shortcut-item-icon-shell" :class="'shortcut-item-icon-shell--' + item.type">
+						<image class="shortcut-item-icon" :src="item.icon" mode="aspectFit"></image>
 					</view>
-					<view class="shortcut-card-copy">
-						<text class="shortcut-card-badge">{{ item.badge }}</text>
-						<text class="shortcut-card-title">{{ item.title }}</text>
-						<text class="shortcut-card-desc">{{ item.desc }}</text>
-					</view>
-					<image class="shortcut-card-arrow" src="/static/images/arrow-right.png" mode="aspectFit"></image>
+					<text class="shortcut-item-name">{{ item.name }}</text>
 				</view>
 			</view>
 		</view>
@@ -179,9 +149,7 @@ interface EditFormData {
 
 interface QuickAction {
 	type: string
-	badge: string
-	title: string
-	desc: string
+	name: string
 	icon: string
 }
 
@@ -207,33 +175,21 @@ export default {
 				newPassword: '',
 				confirmPassword: ''
 			} as EditFormData,
-			featuredShortcut: {
-				type: 'ai',
-				title: 'AI咨询',
-				desc: '智能问答与照护建议，随时可用',
-				icon: '/static/images/ai.png'
-			},
-			miniShortcuts: [
+			shortcutItems: [
 				{
-					type: 'cart',
-					badge: '消费',
-					title: '购物车',
-					desc: '待结算商品一目了然',
-					icon: '/static/images/cart.png'
+					type: 'ai',
+					name: 'AI咨询',
+					icon: 'https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/icon/ai.png'
 				},
 				{
-					type: 'orders',
-					badge: '订单',
-					title: '我的订单',
-					desc: '最近订单快速查看',
-					icon: '/static/images/order.png'
+					type: 'cart',
+					name: '购物车',
+					icon: 'https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/icon/cart.png'
 				},
 				{
 					type: 'nursing',
-					badge: '护理',
-					title: '护理日常',
-					desc: '进入日常护理页面',
-					icon: '/static/images/nursing.png'
+					name: '护理日常',
+					icon: 'https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/icon/nursing.png'
 				}
 			] as QuickAction[]
 		}
@@ -315,9 +271,6 @@ export default {
 			switch (type) {
 				case 'cart':
 					this.goToCart()
-					break
-				case 'orders':
-					this.goToOrders()
 					break
 				case 'ai':
 					this.goToAIConsult()
@@ -569,63 +522,6 @@ export default {
 				}
 			})
 		},
-		async goToOrders() {
-			if (!this.ensureLoggedIn()) {
-				return
-			}
-
-			uni.showLoading({
-				title: '加载订单...'
-			})
-
-			let orders: any[] = []
-			let errorMessage = ''
-
-			try {
-				const accessToken = uni.getStorageSync('accessToken')
-				const refreshToken = uni.getStorageSync('refreshToken')
-
-				const res = await uni.request({
-					url: 'http://localhost:8080/goods/order/list',
-					method: 'GET',
-					header: {
-						'accessToken': accessToken,
-						'refreshToken': refreshToken
-					}
-				})
-
-				const responseData = res.data as any
-				if (res.statusCode === 200 && responseData.code === 1) {
-					orders = Array.isArray(responseData.data) ? responseData.data : []
-				} else {
-					errorMessage = responseData.msg || '订单加载失败'
-				}
-			} catch (error) {
-				errorMessage = '订单加载失败'
-			} finally {
-				uni.hideLoading()
-			}
-
-			if (errorMessage) {
-				uni.showToast({
-					title: errorMessage,
-					icon: 'none'
-				})
-			}
-
-			uni.navigateTo({
-				url: '/pages/children/order-list',
-				success: (res: any) => {
-					res.eventChannel.emit('acceptDataFromOpenerPage', { orders: orders })
-				},
-				fail: () => {
-					uni.showToast({
-						title: '页面加载失败',
-						icon: 'none'
-					})
-				}
-			})
-		},
 		goToAIConsult() {
 			if (!this.ensureLoggedIn()) {
 				return
@@ -764,14 +660,16 @@ export default {
 
 	.hero-head {
 		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 24rpx;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 18rpx;
 	}
 
 	.hero-copy {
 		flex: 1;
 		min-width: 0;
+		margin-left: 5%;
 	}
 
 	.hero-kicker {
@@ -985,119 +883,97 @@ export default {
 		color: #6B7280;
 	}
 
-	.shortcut-featured {
-		display: flex;
-		align-items: center;
-		gap: 20rpx;
-		padding: 28rpx;
-		border-radius: 28rpx;
-		background: linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%);
-		box-shadow: 0 18rpx 36rpx rgba(14, 165, 233, 0.18);
-		transition: transform 0.2s ease, opacity 0.2s ease;
-	}
-
-	.shortcut-featured:active {
-		transform: translateY(1rpx) scale(0.99);
-	}
-
-	.shortcut-featured-icon-shell {
-		width: 88rpx;
-		height: 88rpx;
-		border-radius: 28rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-		background: rgba(255, 255, 255, 0.16);
-		border: 1rpx solid rgba(255, 255, 255, 0.18);
-	}
-
-	.shortcut-featured-icon {
-		width: 44rpx;
-		height: 44rpx;
-	}
-
-	.shortcut-featured-copy {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.shortcut-featured-kicker {
-		display: block;
-		font-size: 22rpx;
-		line-height: 1.25;
-		color: rgba(255, 255, 255, 0.82);
-		margin-bottom: 6rpx;
-	}
-
-	.shortcut-featured-title {
-		display: block;
-		font-size: 34rpx;
-		line-height: 1.2;
-		font-weight: 700;
-		color: #FFFFFF;
-	}
-
-	.shortcut-featured-desc {
-		display: block;
-		margin-top: 8rpx;
-		font-size: 24rpx;
-		line-height: 1.45;
-		color: rgba(255, 255, 255, 0.88);
-	}
-
-	.shortcut-featured-arrow {
-		width: 28rpx;
-		height: 28rpx;
-		flex-shrink: 0;
-		opacity: 0.9;
-	}
-
 	.shortcut-grid {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 14rpx;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 16rpx;
 		margin-top: 18rpx;
 	}
 
-	.shortcut-card {
-		width: calc((100% - 14rpx) / 2);
-		min-height: 148rpx;
-		padding: 22rpx;
+	.shortcut-item {
 		box-sizing: border-box;
-		border-radius: 24rpx;
-		display: flex;
-		align-items: center;
-		gap: 16rpx;
+		border-radius: 26rpx;
 		box-shadow: 0 12rpx 24rpx rgba(15, 76, 123, 0.05);
 		border: 1rpx solid rgba(120, 146, 172, 0.08);
 		transition: transform 0.2s ease, opacity 0.2s ease;
+		overflow: hidden;
 	}
 
-	.shortcut-card:active {
+	.shortcut-item:active {
 		transform: translateY(1rpx) scale(0.99);
 		opacity: 0.96;
 	}
 
-	.shortcut-card--cart {
+	.shortcut-item--featured {
+		grid-column: 1 / -1;
+		min-height: 118rpx;
+		padding: 18rpx 18rpx 18rpx 20rpx;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		gap: 14rpx;
+		text-align: center;
+	}
+
+	.shortcut-item--compact {
+		min-height: 118rpx;
+		padding: 18rpx 18rpx 18rpx 20rpx;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 14rpx;
+		text-align: left;
+	}
+
+	.shortcut-item--ai {
+		background: linear-gradient(180deg, rgba(240, 249, 255, 0.96), #FFFFFF);
+	}
+
+	.shortcut-item--featured.shortcut-item--ai {
+		box-shadow: 0 18rpx 32rpx rgba(14, 165, 233, 0.12);
+		border-color: rgba(14, 165, 233, 0.14);
+	}
+
+	.shortcut-item--cart {
 		background: linear-gradient(180deg, rgba(240, 253, 250, 0.96), #FFFFFF);
 	}
 
-	.shortcut-card--orders {
-		background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), #FFFFFF);
-	}
-
-	.shortcut-card--nursing {
+	.shortcut-item--nursing {
 		background: linear-gradient(180deg, rgba(255, 251, 235, 0.96), #FFFFFF);
 	}
 
-	.shortcut-card--wide {
-		width: 100%;
+	.shortcut-item-main {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
 	}
 
-	.shortcut-card-icon-shell {
-		width: 68rpx;
-		height: 68rpx;
+	.shortcut-item-copy {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 0;
+		flex: 1;
+		min-width: 0;
+		text-align: left;
+	}
+
+	.shortcut-item-kicker {
+		display: block;
+		margin-bottom: 6rpx;
+		font-size: 22rpx;
+		line-height: 1.25;
+		font-weight: 600;
+		letter-spacing: 1rpx;
+		color: #0E7490;
+	}
+
+	.shortcut-item-icon-shell {
+		width: 76rpx;
+		height: 76rpx;
 		border-radius: 22rpx;
 		display: flex;
 		align-items: center;
@@ -1105,48 +981,42 @@ export default {
 		flex-shrink: 0;
 	}
 
-	.shortcut-card-icon-shell--cart {
-		background: linear-gradient(135deg, rgba(20, 184, 166, 0.18), rgba(59, 130, 246, 0.12));
+	.shortcut-item--compact .shortcut-item-icon-shell {
+		width: 68rpx;
+		height: 68rpx;
 	}
 
-	.shortcut-card-icon-shell--orders {
-		background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(14, 165, 233, 0.12));
+	.shortcut-item--featured .shortcut-item-icon-shell {
+		width: 68rpx;
+		height: 68rpx;
+		border-radius: 22rpx;
 	}
 
-	.shortcut-card-icon-shell--nursing {
+	.shortcut-item-icon-shell--ai {
 		background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(251, 191, 36, 0.12));
 	}
 
-	.shortcut-card-icon {
+	.shortcut-item-icon-shell--cart {
+		background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(251, 191, 36, 0.12));
+	}
+
+	.shortcut-item-icon-shell--nursing {
+		background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(251, 191, 36, 0.12));
+	}
+
+	.shortcut-item-icon {
 		width: 36rpx;
 		height: 36rpx;
 	}
 
-	.shortcut-card-copy {
-		flex: 1;
-		min-width: 0;
+	.shortcut-item--featured .shortcut-item-icon {
+		width: 36rpx;
+		height: 36rpx;
 	}
 
-	.shortcut-card-badge {
+	.shortcut-item-name {
 		display: block;
-		font-size: 20rpx;
-		line-height: 1.25;
-		font-weight: 600;
-		color: #0F766E;
-		margin-bottom: 6rpx;
-	}
-
-	.shortcut-card--orders .shortcut-card-badge {
-		color: #2563EB;
-	}
-
-	.shortcut-card--nursing .shortcut-card-badge {
-		color: #B45309;
-	}
-
-	.shortcut-card-title {
-		display: block;
-		font-size: 28rpx;
+		font-size: 26rpx;
 		line-height: 1.3;
 		font-weight: 600;
 		color: #0F172A;
@@ -1155,31 +1025,40 @@ export default {
 		white-space: nowrap;
 	}
 
-	.shortcut-card-desc {
-		display: block;
-		margin-top: 6rpx;
-		font-size: 22rpx;
-		line-height: 1.35;
-		color: #64748B;
-		overflow: hidden;
-		text-overflow: ellipsis;
+	.shortcut-item--featured .shortcut-item-name {
+		font-size: 28rpx;
+		line-height: 1.25;
 		white-space: nowrap;
 	}
 
-	.shortcut-card-arrow {
-		width: 24rpx;
-		height: 24rpx;
-		flex-shrink: 0;
-		opacity: 0.72;
+	.shortcut-item--compact .shortcut-item-name {
+		flex: 1;
+		min-width: 0;
+		font-size: 28rpx;
+		line-height: 1.25;
+	}
+
+	.shortcut-item-desc {
+		display: block;
+		flex: 1;
+		min-width: 0;
+		margin-top: 8rpx;
+		font-size: 22rpx;
+		line-height: 1.45;
+		color: #64748B;
+		text-align: left;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.logout-panel {
 		margin-top: 24rpx;
 		padding: 28rpx;
 		border-radius: 32rpx;
-		background: linear-gradient(180deg, rgba(255, 247, 247, 0.94), #FFFFFF);
-		border: 1rpx solid rgba(229, 62, 62, 0.12);
-		box-shadow: 0 18rpx 40rpx rgba(15, 76, 123, 0.05);
+		background: rgba(255, 255, 255, 0.96);
+		border: 1rpx solid rgba(148, 163, 184, 0.1);
+		box-shadow: 0 12rpx 28rpx rgba(15, 76, 123, 0.04);
 	}
 
 	.logout-copy {
@@ -1192,15 +1071,15 @@ export default {
 		display: block;
 		font-size: 32rpx;
 		line-height: 1.25;
-		font-weight: 700;
-		color: #B91C1C;
+		font-weight: 600;
+		color: #64748B;
 	}
 
 	.logout-subtitle {
 		display: block;
 		font-size: 24rpx;
 		line-height: 1.55;
-		color: #7F1D1D;
+		color: #94A3B8;
 		opacity: 0.82;
 	}
 
@@ -1210,21 +1089,23 @@ export default {
 		line-height: 84rpx;
 		text-align: center;
 		border-radius: 999rpx;
-		background: #FFFFFF;
-		color: #E11D48;
-		border: 2rpx solid rgba(225, 29, 72, 0.16);
-		box-shadow: 0 12rpx 24rpx rgba(225, 29, 72, 0.08);
+		background: #F8FAFC;
+		color: #64748B;
+		border: 1rpx solid rgba(148, 163, 184, 0.16);
+		box-shadow: none;
 		transition: transform 0.2s ease, opacity 0.2s ease;
 	}
 
 	.logout-button:active {
 		transform: scale(0.985);
-		opacity: 0.95;
+		opacity: 0.85;
+		background: #F1F5F9;
 	}
 
 	.logout-button-text {
 		font-size: 30rpx;
-		font-weight: 600;
+		font-weight: 500;
+		text-align: center;
 	}
 
 	.popup {

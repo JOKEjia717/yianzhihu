@@ -59,9 +59,10 @@ interface UserInfo {
   accessToken: string
   refreshToken: string
   elderId: string
-  avatar: string
+  account: string
   name: string
   phone: string
+  photo?: string
   isEnable: number
 }
 
@@ -146,7 +147,7 @@ export default {
       this.isLoading = true
       
       try {
-        const res = await request.post('/children/register', {
+        const res = await request.post('/elder/register', {
           data: {
             name: this.name.trim(),
             account: this.account.trim(),
@@ -168,7 +169,7 @@ export default {
           })
           
           setTimeout(() => {
-            uni.switchTab({
+            uni.redirectTo({
               url: '/pages/elder/index'
             })
           }, 1500)
