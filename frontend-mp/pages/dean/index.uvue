@@ -18,10 +18,6 @@
                 <text class="status-badge-text">{{ getStatusText() }}</text>
               </view>
             </view>
-            <view class="sync-badge">
-              <text class="sync-label">最后更新</text>
-              <text class="sync-value">{{ lastUpdatedText }}</text>
-            </view>
           </view>
 
           <text class="hero-name">{{ nursingHome.name || '养老院详情' }}</text>
