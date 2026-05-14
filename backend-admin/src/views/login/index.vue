@@ -66,17 +66,35 @@ const handleLogin = () => {
 
 <style scoped>
 .login-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #2d3a4b;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/backend-admin/background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(8px);
+  transform: scale(1.05);
 }
 
 .login-box {
+  position: relative;
+  z-index: 1;
   width: 400px;
   padding: 40px;
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
