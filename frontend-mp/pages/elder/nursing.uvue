@@ -291,6 +291,19 @@ export default {
       this.fetchHealthData()
     },
     goBack() {
+      const pages = getCurrentPages()
+      if (pages && pages.length > 1) {
+        uni.navigateBack({
+          delta: 1,
+          fail: () => {
+            uni.reLaunch({
+              url: '/pages/elder/index'
+            })
+          }
+        })
+        return
+      }
+
       uni.reLaunch({
         url: '/pages/elder/index'
       })
@@ -317,17 +330,28 @@ export default {
 
 .header {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   padding: 60rpx 24rpx 24rpx;
   background: linear-gradient(135deg, #7AB8B3 0%, #5A9A95 100%);
   position: relative;
 }
 
 .header-left {
-  z-index: 10;
+  width: 72rpx;
+  position: relative;
+  z-index: 2;
 }
 
 .back-btn {
-  padding-left: 0;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .back-icon {
@@ -355,12 +379,13 @@ export default {
   color: #FFFFFF;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
   text-align:center;
+  pointer-events: none;
 }
 
 .header-right {
   position: absolute;
   right: 24rpx;
-  z-index: 10;
+  z-index: 2;
 }
 
 .dropdown {

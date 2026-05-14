@@ -19,6 +19,45 @@ interface RequestConfig {
   [key: string]: any
 }
 
+const isSafeHeaderValue = (value: string) => {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i)
+    if (code > 255 || code === 10 || code === 13) {
+      return false
+    }
+  }
+
+  return true
+}
+
+const normalizeHeaderValue = (value: any) => {
+  if (value === null || value === undefined) {
+    return ''
+  }
+
+  const text = String(value).trim()
+  if (!text) {
+    return ''
+  }
+
+  return isSafeHeaderValue(text) ? text : ''
+}
+
+const buildSafeHeaders = (headers: Record<string, any>) => {
+  const safeHeaders: Record<string, string> = {}
+
+  Object.keys(headers || {}).forEach(key => {
+    const safeValue = normalizeHeaderValue(headers[key])
+    if (safeValue) {
+      safeHeaders[key] = safeValue
+    } else if (headers[key] !== undefined && headers[key] !== null) {
+      console.warn(`[request] 跳过非法请求头值: ${key}`)
+    }
+  })
+
+  return safeHeaders
+}
+
 // 存储 token
 let accessToken = uni.getStorageSync('accessToken') || ''
 let refreshToken = uni.getStorageSync('refreshToken') || ''
@@ -56,10 +95,10 @@ const createRequest = (config: RequestConfig) => {
     ...defaultConfig,
     ...config,
     url: `${defaultConfig.baseURL}${config.url}`,
-    header: {
+    header: buildSafeHeaders({
       ...defaultConfig.header,
       ...(config.header || {})
-    }
+    })
   }
 
   return new Promise((resolve, reject) => {
@@ -94,11 +133,11 @@ const createRequest = (config: RequestConfig) => {
           updateTokens(newAccessToken, newRefreshToken)
           
           // 更新当前请求的 header
-          finalConfig.header = {
+          finalConfig.header = buildSafeHeaders({
             ...finalConfig.header,
             'accessToken': newAccessToken,
             'refreshToken': newRefreshToken
-          }
+          })
         }
         
         resolve(res)

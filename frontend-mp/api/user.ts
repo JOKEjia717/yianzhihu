@@ -1,7 +1,5 @@
 import { request } from '../utils/request'
 
-const BASE_URL = 'http://localhost:8080'
-
 // 登录接口
 export const login = (account: string, password: string) => {
   return request.post('/children/loginByUsername', {
@@ -27,4 +25,14 @@ export const register = (data: {
       phone: data.phone
     }
   })
-} 
+}
+
+// 绑定老人
+export const bindElder = (elderId: string) => {
+  return request.post(`/children/elder/bind?elderId=${encodeURIComponent(elderId)}`)
+}
+
+// 获取当前子女绑定的老人列表
+export const getBoundElders = () => {
+  return request.get('/children/elder/bound')
+}

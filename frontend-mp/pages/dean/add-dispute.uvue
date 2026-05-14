@@ -1,113 +1,212 @@
 <template>
   <view class="page">
-    <!-- 顶部标题 -->
-    <view class="header">
-      <view class="back-btn" @click="goBack">
-        <text class="back-icon">←</text>
+    <view class="page-glow page-glow--left"></view>
+    <view class="page-glow page-glow--right"></view>
+
+    <view class="container">
+      <view class="hero-card">
+
+        <text class="page-title">新增纠纷</text>
+        <text class="page-desc">先把事实写清楚，再补充时间、类型和紧急程度，方便后续处理和跟进。</text>
+
+        <view class="progress-card">
+          <view class="progress-card__top">
+            <text class="progress-label">填写进度</text>
+            <text class="progress-text">{{ getFilledCount() }}/6 项已填写</text>
+          </view>
+          <view class="progress-bar">
+            <view class="progress-bar__fill" :style="{ width: getFormProgress() + '%' }"></view>
+          </view>
+          <text class="progress-hint">{{ getCompletionHint() }}</text>
+        </view>
+
+<!--       <view class="summary-chips">
+          <view class="summary-chip">
+            <text class="summary-chip__label">时间</text>
+            <text class="summary-chip__value">{{ disputeForm.date }} {{ disputeForm.time }}</text>
+          </view>
+          <view class="summary-chip">
+            <text class="summary-chip__label">类型</text>
+            <text class="summary-chip__value">{{ getSelectedType() }}</text>
+          </view>
+          <view class="summary-chip">
+            <text class="summary-chip__label">紧急</text>
+            <text class="summary-chip__value">{{ getUrgencyLabel(disputeForm.urgencyLevel) }}</text>
+          </view>
+        </view> -->
       </view>
-      <text class="header-title">新增纠纷</text>
-    </view>
-    
-    <!-- 表单内容 -->
-    <view class="form-container">
-      <!-- 纠纷标题 -->
-      <view class="form-item">
-        <text class="form-label">纠纷标题</text>
-        <input 
-          class="form-input" 
-          v-model="disputeForm.title" 
-          placeholder="请输入纠纷标题" 
-          maxlength="30"
-        />
+
+      <view class="section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">基础信息</text>
+            <text class="section-subtitle">标题和详情尽量写清楚，方便快速定位问题。</text>
+          </view>
+          <view class="section-pill">
+            <text class="section-pill-text">必填</text>
+          </view>
+        </view>
+
+        <view class="form-card">
+          <view class="field">
+            <view class="field-head">
+              <text class="field-label">纠纷标题</text>
+              <text class="field-required">必填</text>
+            </view>
+            <input
+              class="field-input"
+              v-model="disputeForm.title"
+              placeholder="例如：食堂餐费争议"
+              maxlength="30"
+            />
+          </view>
+
+          <view class="field">
+            <view class="field-head">
+              <text class="field-label">纠纷详情</text>
+              <text class="field-required">必填</text>
+            </view>
+            <textarea
+              class="field-textarea"
+              v-model="disputeForm.description"
+              placeholder="请写清楚时间、地点、人物、发生了什么，以及目前影响..."
+              maxlength="200"
+              auto-height
+            />
+            <view class="field-foot">
+              <text class="field-hint">建议写清楚具体事实，不要只写结论。</text>
+              <text class="char-count">{{ disputeForm.description.length }}/200</text>
+            </view>
+          </view>
+        </view>
       </view>
-      
-      <!-- 纠纷详情 -->
-      <view class="form-item">
-        <text class="form-label">纠纷详情</text>
-        <textarea 
-          class="form-textarea" 
-          v-model="disputeForm.description" 
-          placeholder="请详细描述纠纷内容..." 
-          maxlength="200"
-        />
-        <text class="char-count">{{ disputeForm.description.length }}/200</text>
-      </view>
-      
-      <!-- 纠纷发生时间 -->
-      <view class="form-item">
-        <text class="form-label">发生时间</text>
-        <view class="time-picker">
-          <picker 
-            mode="date" 
-            :value="disputeForm.date" 
-            @change="(e) => { disputeForm.date = e.detail.value; onDateChange(e) }"
-          >
-            <view class="picker-value">
-              <text>{{ disputeForm.date || '请选择日期' }}</text>
-              <text class="picker-arrow">▼</text>
+
+      <view class="section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">时间与分类</text>
+            <text class="section-subtitle">发生时间和类型会影响后续处理优先级。</text>
+          </view>
+          <view class="section-pill section-pill--soft">
+            <text class="section-pill-text">{{ getUrgencyLabel(disputeForm.urgencyLevel) }}优先</text>
+          </view>
+        </view>
+
+        <view class="picker-grid">
+          <picker mode="date" :value="disputeForm.date" @change="onDateChange">
+            <view class="picker-card">
+              <text class="picker-label">发生日期</text>
+              <view class="picker-value-row">
+                <text class="picker-value-text">{{ disputeForm.date || '请选择日期' }}</text>
+<!--                <text class="picker-arrow">▾</text> -->
+              </view>
             </view>
           </picker>
-          <picker 
-            mode="time" 
-            :value="disputeForm.time" 
-            @change="(e) => { disputeForm.time = e.detail.value; onTimeChange(e) }"
-          >
-            <view class="picker-value">
-              <text>{{ disputeForm.time || '请选择时间' }}</text>
-              <text class="picker-arrow">▼</text>
+
+          <picker mode="time" :value="disputeForm.time" @change="onTimeChange">
+            <view class="picker-card">
+              <text class="picker-label">发生时间</text>
+              <view class="picker-value-row">
+                <text class="picker-value-text">{{ disputeForm.time || '请选择时间' }}</text>
+<!--                <text class="picker-arrow">▾</text> -->
+              </view>
             </view>
           </picker>
         </view>
-      </view>
-      
-      <!-- 纠纷类型 -->
-      <view class="form-item">
-        <text class="form-label">纠纷类型</text>
-        <picker 
-          mode="selector" 
-          :range="disputeTypes" 
-          :value="disputeForm.typeIndex" 
-          @change="(e) => { disputeForm.typeIndex = Number(e.detail.value); onTypeChange(e) }"
-        >
-          <view class="picker-value">
-            <text>{{ disputeTypes[disputeForm.typeIndex] || '请选择纠纷类型' }}</text>
-            <text class="picker-arrow">▼</text>
+
+        <picker mode="selector" :range="disputeTypes" :value="disputeForm.typeIndex" @change="onTypeChange">
+          <view class="picker-card picker-card--full">
+            <text class="picker-label">纠纷类型</text>
+            <view class="picker-value-row">
+              <text class="picker-value-text">{{ getSelectedType() }}</text>
+<!--              <text class="picker-arrow">▾</text> -->
+            </view>
           </view>
         </picker>
       </view>
-      
-      <!-- 紧急程度 -->
-      <view class="form-item">
-        <text class="form-label">紧急程度</text>
-        <view class="urgency-selector">
-          <view 
-            v-for="(level, index) in urgencyLevels" 
-            :key="index"
-            :class="['urgency-item', { 'selected': disputeForm.urgencyLevel === index }]"
-            @click="selectUrgency(index)"
+
+      <view class="section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">紧急程度</text>
+            <text class="section-subtitle">尽量按实际情况选择，方便后续优先处理。</text>
+          </view>
+        </view>
+
+        <view class="urgency-grid">
+          <view
+            v-for="level in urgencyLevels"
+            :key="level.value"
+            :class="['urgency-card', level.tone, disputeForm.urgencyLevel === level.value ? 'selected' : '']"
+            @click="selectUrgency(level.value)"
           >
-            <text>{{ level.text }}</text>
+            <view class="urgency-card__top">
+              <text class="urgency-label">{{ level.label }}</text>
+              <view class="urgency-dot"></view>
+            </view>
+            <text class="urgency-desc">{{ level.desc }}</text>
           </view>
         </view>
       </view>
-      
-      <!-- 提交按钮 -->
-      <button class="submit-btn" @click="submitDispute" :disabled="isSubmitting">
-        {{ isSubmitting ? '提交中...' : '提交纠纷' }}
-      </button>
+
+      <view class="section tip-section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">填写提示</text>
+            <text class="section-subtitle">少写空话，多写事实，后续处理会更快。</text>
+          </view>
+        </view>
+
+        <view class="tip-list">
+          <view class="tip-item">
+            <text class="tip-index">1</text>
+            <text class="tip-text">优先写清楚“谁、何时、何地、发生了什么”。</text>
+          </view>
+          <view class="tip-item">
+            <text class="tip-index">2</text>
+            <text class="tip-text">尽量描述客观现象，避免只写结论。</text>
+          </view>
+          <view class="tip-item">
+            <text class="tip-index">3</text>
+            <text class="tip-text">如果影响面较大，建议把紧急程度调高。</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="submit-bar">
+      <text class="submit-bar__hint">{{ getSubmitHint() }}</text>
+      <view class="submit-btn" :class="{ disabled: isSubmitting }" @click="submitDispute">
+        <text class="submit-btn__text">{{ isSubmitting ? '提交中...' : '提交纠纷' }}</text>
+      </view>
     </view>
   </view>
 </template>
 
 <script lang="uts">
+import { request } from '../../utils/request'
+
 interface DisputeForm {
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  typeIndex: number;
-  urgencyLevel: number;
-  deanId: string;
+  title: string
+  description: string
+  date: string
+  time: string
+  typeIndex: number
+  urgencyLevel: number
+  deanId: string
+}
+
+interface UrgencyOption {
+  value: number
+  label: string
+  desc: string
+  tone: string
+}
+
+interface ApiResponse {
+  code: number
+  msg: string | null
+  data?: any
 }
 
 export default {
@@ -132,323 +231,800 @@ export default {
         '其他'
       ],
       urgencyLevels: [
-        { text: '低', color: '#26c48b' },
-        { text: '中', color: '#ffaa00' },
-        { text: '高', color: '#ff6b6b' }
-      ]
-    };
-  },
-  onLoad() {
-    // 获取当前日期和时间作为默认值
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = this.padZero(now.getMonth() + 1);
-    const day = this.padZero(now.getDate());
-    const hours = this.padZero(now.getHours());
-    const minutes = this.padZero(now.getMinutes());
-    
-    this.disputeForm.date = `${year}-${month}-${day}`;
-    this.disputeForm.time = `${hours}:${minutes}`;
-    
-    // 从本地存储获取deanId
-    const userInfo = uni.getStorageSync('userInfo');
-    if (userInfo && userInfo.deanId) {
-      this.disputeForm.deanId = userInfo.deanId;
+        { value: 0, label: '低', desc: '先记录，后续安排处理', tone: 'low' },
+        { value: 1, label: '中', desc: '尽快纳入处理计划', tone: 'medium' },
+        { value: 2, label: '高', desc: '优先跟进，避免扩大影响', tone: 'high' }
+      ] as UrgencyOption[]
     }
   },
+  onLoad() {
+    this.initForm()
+  },
   methods: {
+    initForm() {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = this.padZero(now.getMonth() + 1)
+      const day = this.padZero(now.getDate())
+      const hours = this.padZero(now.getHours())
+      const minutes = this.padZero(now.getMinutes())
+
+      this.disputeForm.date = `${year}-${month}-${day}`
+      this.disputeForm.time = `${hours}:${minutes}`
+
+      const userInfo = uni.getStorageSync('userInfo')
+      if (userInfo && userInfo.deanId) {
+        this.disputeForm.deanId = String(userInfo.deanId)
+      }
+    },
     padZero(num: number): string {
-      return num < 10 ? `0${num}` : `${num}`;
+      return num < 10 ? `0${num}` : `${num}`
     },
     goBack() {
-      uni.navigateBack();
+      uni.navigateBack({
+        fail: () => {
+          uni.redirectTo({
+            url: '/pages/dean/dispute'
+          })
+        }
+      })
     },
     onDateChange(e: any) {
-      this.disputeForm.date = e.detail.value;
+      this.disputeForm.date = String(e.detail.value || '')
     },
     onTimeChange(e: any) {
-      this.disputeForm.time = e.detail.value;
+      this.disputeForm.time = String(e.detail.value || '')
     },
     onTypeChange(e: any) {
-      this.disputeForm.typeIndex = Number(e.detail.value);
+      this.disputeForm.typeIndex = Number(e.detail.value)
     },
     selectUrgency(level: number) {
-      this.disputeForm.urgencyLevel = level;
+      this.disputeForm.urgencyLevel = level
+    },
+    getSelectedType(): string {
+      return this.disputeTypes[this.disputeForm.typeIndex] || '请选择纠纷类型'
+    },
+    getUrgencyLabel(level: number): string {
+      switch (level) {
+        case 0:
+          return '低'
+        case 1:
+          return '中'
+        case 2:
+          return '高'
+        default:
+          return '中'
+      }
+    },
+    getUrgencyDesc(level: number): string {
+      switch (level) {
+        case 0:
+          return '先记录，后续安排处理'
+        case 1:
+          return '尽快纳入处理计划'
+        case 2:
+          return '优先跟进，避免扩大影响'
+        default:
+          return '尽快纳入处理计划'
+      }
+    },
+    getFilledCount(): number {
+      let count = 0
+
+      if (String(this.disputeForm.title || '').trim()) {
+        count++
+      }
+      if (String(this.disputeForm.description || '').trim()) {
+        count++
+      }
+      if (String(this.disputeForm.date || '').trim()) {
+        count++
+      }
+      if (String(this.disputeForm.time || '').trim()) {
+        count++
+      }
+      if (String(this.getSelectedType() || '').trim() !== '请选择纠纷类型') {
+        count++
+      }
+      if (this.disputeForm.urgencyLevel >= 0) {
+        count++
+      }
+
+      return count
+    },
+    getFormProgress(): number {
+      const progress = Math.round((this.getFilledCount() / 6) * 100)
+      return progress > 100 ? 100 : progress
+    },
+    getMissingFields(): string[] {
+      const missing: string[] = []
+
+      if (!String(this.disputeForm.title || '').trim()) {
+        missing.push('标题')
+      }
+      if (!String(this.disputeForm.description || '').trim()) {
+        missing.push('详情')
+      }
+      if (!String(this.disputeForm.date || '').trim()) {
+        missing.push('日期')
+      }
+      if (!String(this.disputeForm.time || '').trim()) {
+        missing.push('时间')
+      }
+      if (String(this.getSelectedType() || '').trim() === '请选择纠纷类型') {
+        missing.push('类型')
+      }
+      if (this.disputeForm.urgencyLevel < 0) {
+        missing.push('紧急程度')
+      }
+
+      return missing
+    },
+    getCompletionHint(): string {
+      const missing = this.getMissingFields()
+      if (missing.length === 0) {
+        return '信息已经填写完整，可以直接提交'
+      }
+      if (missing.length === 1) {
+        return `还差${missing[0]}，补齐后即可提交`
+      }
+      if (missing.length === 2) {
+        return `还差${missing[0]}和${missing[1]}`
+      }
+      return `还差${missing[0]}、${missing[1]}等${missing.length}项`
+    },
+    getSubmitHint(): string {
+      const missing = this.getMissingFields()
+      if (missing.length === 0) {
+        return `已完善全部信息，建议直接提交。当前紧急程度：${this.getUrgencyDesc(this.disputeForm.urgencyLevel)}`
+      }
+      return `请先补齐${missing.slice(0, 2).join('、')}。`
     },
     async submitDispute() {
-      // 表单验证
-      if (!this.disputeForm.title.trim()) {
+      if (this.isSubmitting) {
+        return
+      }
+
+      if (!String(this.disputeForm.title || '').trim()) {
         uni.showToast({
           title: '请输入纠纷标题',
           icon: 'none'
-        });
-        return;
+        })
+        return
       }
-      
-      if (!this.disputeForm.description.trim()) {
+
+      if (!String(this.disputeForm.description || '').trim()) {
         uni.showToast({
           title: '请输入纠纷详情',
           icon: 'none'
-        });
-        return;
+        })
+        return
       }
-      
-      if (!this.disputeForm.date || !this.disputeForm.time) {
+
+      if (!String(this.disputeForm.date || '').trim() || !String(this.disputeForm.time || '').trim()) {
         uni.showToast({
           title: '请选择发生时间',
           icon: 'none'
-        });
-        return;
+        })
+        return
       }
-      
-      this.isSubmitting = true;
-      
+
+      if (String(this.getSelectedType() || '').trim() === '请选择纠纷类型') {
+        uni.showToast({
+          title: '请选择纠纷类型',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (!this.disputeForm.deanId) {
+        uni.showToast({
+          title: '院长信息缺失，请重新登录',
+          icon: 'none'
+        })
+        uni.redirectTo({
+          url: '/pages/dean/login'
+        })
+        return
+      }
+
+      const accessToken = String(uni.getStorageSync('accessToken') || '').trim()
+      const refreshToken = String(uni.getStorageSync('refreshToken') || '').trim()
+
+      if (!accessToken || !refreshToken) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none'
+        })
+        uni.redirectTo({
+          url: '/pages/dean/login'
+        })
+        return
+      }
+
+      this.isSubmitting = true
+      uni.showLoading({
+        title: '提交中...'
+      })
+
       try {
-        // 获取Token
-        const accessToken = uni.getStorageSync('accessToken');
-        const refreshToken = uni.getStorageSync('refreshToken');
-        
-        if (!accessToken || !refreshToken) {
-          uni.showToast({
-            title: '请先登录',
-            icon: 'none'
-          });
-          return;
-        }
-        
-        // 构造请求数据
         const disputeData = {
-          title: this.disputeForm.title,
-          description: this.disputeForm.description,
+          title: String(this.disputeForm.title).trim(),
+          description: String(this.disputeForm.description).trim(),
           occurTime: `${this.disputeForm.date} ${this.disputeForm.time}`,
-          type: this.disputeTypes[this.disputeForm.typeIndex],
+          type: this.getSelectedType(),
           urgencyLevel: this.disputeForm.urgencyLevel,
           deanId: this.disputeForm.deanId,
-          status: 'new' // 新增纠纷默认状态为"新增"
-        };
-        
-        // 发送添加纠纷请求
-        const result = await uni.request({
-          url: 'http://localhost:8080/dispute/add',
-          method: 'POST',
-          data: disputeData,
-          header: {
-            'Content-Type': 'application/json',
-            'accessToken': accessToken,
-            'refreshToken': refreshToken
-          }
-        });
-        
-        const response = result.data as any;
-        console.log('添加纠纷响应:', response);
-        
-        if (response && response.code === 1) {
+          status: 'new'
+        }
+
+        const result = await request.post('/dispute/add', {
+          data: disputeData
+        }) as {
+          statusCode: number
+          data: ApiResponse
+        }
+
+        const response = result.data
+        if (result.statusCode === 200 && response && response.code === 1) {
           uni.showToast({
             title: '添加纠纷成功',
             icon: 'success',
-            duration: 2000
-          });
-          
-          // 延迟返回上一页
+            duration: 1500
+          })
+
           setTimeout(() => {
-            uni.navigateBack();
-          }, 2000);
-        } else {
-          uni.showToast({
-            title: response.msg || '添加失败',
-            icon: 'none'
-          });
+            uni.navigateBack({
+              fail: () => {
+                uni.redirectTo({
+                  url: '/pages/dean/dispute'
+                })
+              }
+            })
+          }, 1200)
+          return
         }
+
+        uni.showToast({
+          title: response && response.msg ? response.msg : '添加失败',
+          icon: 'none'
+        })
       } catch (error) {
-        console.error('请求错误:', error);
+        console.error('请求错误:', error)
         uni.showToast({
           title: '网络错误',
           icon: 'none'
-        });
+        })
       } finally {
-        this.isSubmitting = false;
+        this.isSubmitting = false
+        uni.hideLoading()
       }
     }
   }
-};
+}
 </script>
 
 <style>
 .page {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 40rpx;
-}
-
-.header {
-  background-color: #26c48b;
-  height: 180rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 30rpx;
+  background: linear-gradient(180deg, #f4fbf8 0%, #ffffff 48%, #f6f9f7 100%);
   position: relative;
+  overflow: hidden;
+  padding-bottom: 200rpx;
 }
 
-.back-btn {
+.page-glow {
   position: absolute;
-  left: 30rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 60rpx;
-  height: 60rpx;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.page-glow--left {
+  width: 360rpx;
+  height: 360rpx;
+  top: -120rpx;
+  left: -160rpx;
+  background: radial-gradient(circle, rgba(67, 160, 71, 0.22) 0%, rgba(67, 160, 71, 0) 70%);
+}
+
+.page-glow--right {
+  width: 320rpx;
+  height: 320rpx;
+  top: 160rpx;
+  right: -180rpx;
+  background: radial-gradient(circle, rgba(38, 195, 137, 0.14) 0%, rgba(38, 195, 137, 0) 72%);
+}
+
+.container {
+  position: relative;
+  z-index: 2;
+  padding: 24rpx 24rpx 36rpx;
+}
+
+.hero-card {
+  padding: 28rpx;
+  border-radius: 34rpx;
+  background: linear-gradient(135deg, #eff9f1 0%, #ffffff 56%, #f6fbf8 100%);
+  border: 1rpx solid #e0ede3;
+  box-shadow: 0 24rpx 56rpx rgba(17, 60, 42, 0.08);
+}
+
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.back-chip,
+.page-badge {
+  flex-shrink: 0;
+  border-radius: 999rpx;
+  padding: 10rpx 16rpx;
+}
+
+.back-chip {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8rpx;
+  background: rgba(67, 160, 71, 0.1);
+  border: 1rpx solid rgba(67, 160, 71, 0.16);
 }
 
-.back-icon {
-  color: #ffffff;
-  font-size: 40rpx;
-  font-weight: bold;
+.back-chip__icon {
+  font-size: 24rpx;
+  color: #2e7d32;
+  font-weight: 800;
 }
 
-.header-title {
-  color: #ffffff;
-  font-size: 40rpx;
-  font-weight: bold;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+.back-chip__text {
+  font-size: 22rpx;
+  color: #2e7d32;
+  font-weight: 700;
 }
 
-.form-container {
-  margin: -40rpx 30rpx 20rpx;
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.1);
-  z-index: 2;
-  position: relative;
+.page-badge {
+  background: rgba(245, 166, 35, 0.14);
 }
 
-.form-item {
-  margin-bottom: 30rpx;
+.page-badge__text {
+  font-size: 22rpx;
+  color: #8a5a00;
+  font-weight: 700;
 }
 
-.form-label {
-  font-size: 28rpx;
-  color: #333333;
-  margin-bottom: 15rpx;
+.page-title {
   display: block;
-  font-weight: bold;
+  margin-top: 18rpx;
+  font-size: 50rpx;
+  line-height: 1.2;
+  color: #143c2a;
+  font-weight: 800;
 }
 
-.form-input {
-  width: 100%;
-  height: 80rpx;
-  border: 1rpx solid #eeeeee;
-  border-radius: 8rpx;
-  padding: 0 20rpx;
+.page-desc {
+  display: block;
+  margin-top: 10rpx;
   font-size: 28rpx;
-  background-color: #f9f9f9;
+  line-height: 1.6;
+  color: #5c6b63;
 }
 
-.form-textarea {
-  width: 100%;
-  height: 200rpx;
-  border: 1rpx solid #eeeeee;
-  border-radius: 8rpx;
-  padding: 20rpx;
+.progress-card {
+  margin-top: 22rpx;
+  padding: 22rpx;
+  border-radius: 26rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1rpx solid #e3eee6;
+}
+
+.progress-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.progress-label {
+  font-size: 24rpx;
+  color: #6b7b75;
+  font-weight: 700;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  color: #143c2a;
+  font-weight: 800;
+}
+
+.progress-bar {
+  margin-top: 14rpx;
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: #eef4ef;
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #2e7d32 0%, #66bb6a 100%);
+}
+
+.progress-hint {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #6b7b75;
+}
+
+.summary-chips {
+  margin-top: 18rpx;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12rpx;
+}
+
+.summary-chip {
+  padding: 12rpx 16rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1rpx solid #e4eee7;
+}
+
+.summary-chip__label {
+  display: block;
+  font-size: 20rpx;
+  color: #6b7b75;
+  font-weight: 700;
+}
+
+.summary-chip__value {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.35;
+  color: #182822;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.section {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  background: #ffffff;
+  border-radius: 30rpx;
+  border: 1rpx solid #eaf2ed;
+  box-shadow: 0 16rpx 40rpx rgba(17, 60, 42, 0.06);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-bottom: 22rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 34rpx;
+  color: #143c2a;
+  font-weight: 800;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #6c7b73;
+}
+
+.section-pill {
+  flex-shrink: 0;
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(67, 160, 71, 0.12);
+}
+
+.section-pill--soft {
+  background: rgba(67, 160, 71, 0.08);
+}
+
+.section-pill-text {
+  font-size: 22rpx;
+  color: #2e7d32;
+  font-weight: 700;
+}
+
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 14rpx;
+}
+
+.field-label {
   font-size: 28rpx;
-  background-color: #f9f9f9;
+  color: #182822;
+  font-weight: 800;
+}
+
+.field-required {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(245, 166, 35, 0.12);
+  font-size: 20rpx;
+  color: #8a5a00;
+  font-weight: 700;
+}
+
+.field-input,
+.field-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  border: 1rpx solid #e3eee6;
+  background: #f8fbf9;
+  color: #1f2d27;
+  font-size: 28rpx;
+}
+
+.field-input {
+  height: 88rpx;
+  padding: 0 22rpx;
+}
+
+.field-textarea {
+  min-height: 220rpx;
+  padding: 20rpx 22rpx;
+  line-height: 1.6;
+}
+
+.field-input::placeholder,
+.field-textarea::placeholder {
+  color: #8a9a93;
+}
+
+.field-foot {
+  margin-top: 12rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.field-hint {
+  flex: 1;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #6c7b73;
 }
 
 .char-count {
-  font-size: 24rpx;
-  color: #999999;
-  text-align: right;
-  margin-top: 10rpx;
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #8a9a93;
 }
 
-.time-picker {
-  display: flex;
-  justify-content: space-between;
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
 }
 
-.picker-value {
+.picker-card {
+  padding: 28rpx 24rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #e3eee6;
+  background: linear-gradient(180deg, #f7fbf8 0%, #ffffff 100%);
+  box-shadow: 0 10rpx 22rpx rgba(0, 0, 0, 0.03);
+}
+
+.picker-card--full {
   width: 100%;
-  height: 80rpx;
-  border: 1rpx solid #eeeeee;
-  border-radius: 8rpx;
-  padding: 0 20rpx;
-  font-size: 28rpx;
-  background-color: #f9f9f9;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  margin-top: 16rpx;
 }
 
-.time-picker .picker-value {
-  width: 48%;
-}
-
-.picker-arrow {
-  color: #999999;
+.picker-label {
+  display: block;
   font-size: 24rpx;
+  color: #6b7b75;
+  font-weight: 700;
 }
 
-.urgency-selector {
+.picker-value-row {
+  margin-top: 14rpx;
   display: flex;
   justify-content: space-between;
-}
-
-.urgency-item {
-  flex: 1;
-  height: 80rpx;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  border: 1rpx solid #eeeeee;
-  border-radius: 8rpx;
-  margin: 0 10rpx;
-  background-color: #f9f9f9;
+  gap: 16rpx;
 }
 
-.urgency-item:first-child {
-  margin-left: 0;
+.picker-value-text {
+  font-size: 32rpx;
+  line-height: 1.4;
+  color: #1f2d27;
+  font-weight: 800;
+  word-break: break-all;
 }
 
-.urgency-item:last-child {
-  margin-right: 0;
+/* .picker-arrow {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  color: #93a39c;
+} */
+
+.urgency-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
 }
 
-.urgency-item.selected:nth-child(1) {
-  background-color: #26c48b;
-  color: #ffffff;
-  border-color: #26c48b;
+.urgency-card {
+  min-height: 170rpx;
+  padding: 24rpx;
+  border-radius: 28rpx;
+  border: 2rpx solid #e3eee6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
-.urgency-item.selected:nth-child(2) {
-  background-color: #ffaa00;
-  color: #ffffff;
-  border-color: #ffaa00;
+.urgency-card.low {
+  background: linear-gradient(180deg, #eff9f1 0%, #ffffff 100%);
 }
 
-.urgency-item.selected:nth-child(3) {
-  background-color: #ff6b6b;
-  color: #ffffff;
-  border-color: #ff6b6b;
+.urgency-card.medium {
+  background: linear-gradient(180deg, #fff6e8 0%, #ffffff 100%);
+}
+
+.urgency-card.high {
+  background: linear-gradient(180deg, #fff0f0 0%, #ffffff 100%);
+}
+
+.urgency-card.selected {
+  border-color: rgba(67, 160, 71, 0.5);
+  box-shadow: 0 18rpx 36rpx rgba(67, 160, 71, 0.16);
+  transform: translateY(-2rpx);
+}
+
+.urgency-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.urgency-label {
+  font-size: 34rpx;
+  color: #182822;
+  font-weight: 800;
+}
+
+.urgency-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: rgba(67, 160, 71, 0.36);
+  box-shadow: 0 0 0 6rpx rgba(67, 160, 71, 0.12);
+}
+
+.urgency-card.low .urgency-dot {
+  background: rgba(67, 160, 71, 0.45);
+  box-shadow: 0 0 0 6rpx rgba(67, 160, 71, 0.15);
+}
+
+.urgency-card.medium .urgency-dot {
+  background: rgba(245, 166, 35, 0.55);
+  box-shadow: 0 0 0 6rpx rgba(245, 166, 35, 0.18);
+}
+
+.urgency-card.high .urgency-dot {
+  background: rgba(229, 115, 115, 0.6);
+  box-shadow: 0 0 0 6rpx rgba(229, 115, 115, 0.2);
+}
+
+.urgency-desc {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  line-height: 1.55;
+  color: #66736b;
+}
+
+.tip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 22rpx;
+  background: #f8fbf9;
+  border: 1rpx solid #e6eee8;
+}
+
+.tip-index {
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: rgba(67, 160, 71, 0.14);
+  color: #2e7d32;
+  font-size: 20rpx;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #40534a;
+}
+
+.submit-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  border-top: 1rpx solid #ecf0ed;
+  box-shadow: 0 -10rpx 28rpx rgba(17, 60, 42, 0.05);
+}
+
+.submit-bar__hint {
+  display: block;
+  margin-bottom: 14rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #6c7b73;
 }
 
 .submit-btn {
-  width: 100%;
-  height: 90rpx;
-  background-color: #26c48b;
-  color: #ffffff;
-  font-size: 32rpx;
-  font-weight: bold;
-  border-radius: 45rpx;
-  margin-top: 40rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 16rpx 28rpx rgba(46, 125, 50, 0.24);
 }
 
-.submit-btn:disabled {
-  background-color: #cccccc;
+.submit-btn.disabled {
+  background: linear-gradient(135deg, #c7d5ca 0%, #b7c4b9 100%);
+  box-shadow: none;
 }
+
+.submit-btn__text {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+}
+
 </style>

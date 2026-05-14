@@ -271,6 +271,19 @@ export default {
       this.activities = [...this.activities]
     },
     goBack() {
+      const pages = getCurrentPages()
+      if (pages && pages.length > 1) {
+        uni.navigateBack({
+          delta: 1,
+          fail: () => {
+            uni.reLaunch({
+              url: '/pages/elder/index'
+            })
+          }
+        })
+        return
+      }
+
       uni.reLaunch({
         url: '/pages/elder/index'
       })
@@ -373,10 +386,18 @@ export default {
 
 .header-left {
   width: 72rpx;
+  position: relative;
+  z-index: 2;
 }
 
 .back-btn {
   width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
 }
 
 .back-icon {
@@ -401,10 +422,13 @@ export default {
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
   text-align: center;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .header-right {
   width: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .date-picker {

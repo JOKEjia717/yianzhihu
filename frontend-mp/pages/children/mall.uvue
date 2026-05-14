@@ -1,13 +1,7 @@
 <template>
 	<view class="container">
-		<!-- 顶部导航栏 -->
-		<view class="nav-bar">
-			<text class="back-icon">←</text>
-			<text class="title">商城</text>
-			<view class="nav-actions">
-				<text class="cart-icon" @click="goToCart">🛒</text>
-			</view>
-		</view>
+
+
 
 		<!-- 搜索区域 -->
 		<view class="search-area">
@@ -514,7 +508,7 @@
 		padding: 20rpx 30rpx;
 		background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
 		position: fixed;
-		top: 88rpx;
+
 		left: 0;
 		right: 0;
 		z-index: 100;
@@ -710,7 +704,7 @@
 
 	/* 内容区域 */
 	.content {
-		margin-top: 180rpx;
+		margin-top: 15%;
 		padding: 20rpx;
 		box-sizing: border-box;
 	}

@@ -50,6 +50,8 @@ interface UserInfo {
   account: string
   name: string
   phone: string
+  childrenName?: string
+  childrenPhone?: string
   photo?: string
   isEnable: number
 }

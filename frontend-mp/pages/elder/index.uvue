@@ -86,21 +86,40 @@
 			<view class="schedule-section">
 				<view class="section-title">
 					<text class="title-text">今日安排</text>
-					<text class="more-text" @click="showScheduleModal = true">查看全部</text>
+					<view class="more-btn" @click="showScheduleModal = true">
+						<text class="more-text">查看全部</text>
+					</view>
+				</view>
+				<view :class="['schedule-summary', getScheduleSummaryStateClass()]">
+					<view class="schedule-summary-icon">
+						<text class="schedule-summary-icon-text">今</text>
+					</view>
+					<view class="schedule-summary-content">
+						<text class="schedule-summary-label">{{ scheduleSummaryState }}</text>
+						<text class="schedule-summary-title">{{ scheduleSummary.title }}</text>
+						<text class="schedule-summary-desc">{{ scheduleSummary.time }} · {{ scheduleSummary.desc }}</text>
+						<text class="schedule-summary-hint">{{ scheduleSummaryHint }}</text>
+					</view>
 				</view>
 				<view class="schedule-list">
-					<view class="schedule-item">
-						<view class="schedule-time">08:00</view>
-						<view class="schedule-content">
-							<text class="schedule-title">早餐时间</text>
-							<text class="schedule-desc">营养早餐已准备好</text>
+					<view
+						class="schedule-item"
+						v-for="(item, index) in schedules"
+						:key="index"
+						:class="getScheduleItemState(index)"
+					>
+						<view class="schedule-time-block">
+							<text class="schedule-time">{{ item.time }}</text>
+							<text class="schedule-step">第{{ index + 1 }}项</text>
 						</view>
-					</view>
-					<view class="schedule-item">
-						<view class="schedule-time">10:00</view>
 						<view class="schedule-content">
-							<text class="schedule-title">晨练活动</text>
-							<text class="schedule-desc">太极广场集合</text>
+							<text class="schedule-title">{{ item.title }}</text>
+							<text class="schedule-desc">{{ item.desc }}</text>
+							<view class="schedule-status-row">
+								<view class="schedule-status-badge" :class="getScheduleItemState(index)">
+									<text class="schedule-status-text">{{ getScheduleStatusLabel(index) }}</text>
+								</view>
+							</view>
 						</view>
 					</view>
 				</view>
@@ -125,24 +144,54 @@
 
 		<!-- 今日安排弹窗 -->
 		<view v-if="showScheduleModal" class="modal-overlay" @click="showScheduleModal = false">
-			<view class="modal-content" @click.stop>
-				<view class="modal-header">
-					<text class="modal-title">今日安排</text>
+			<view class="modal-content schedule-modal" @click.stop>
+				<view class="schedule-modal-header">
+					<view class="schedule-modal-heading">
+						<text class="modal-title">今日安排</text>
+						<text class="schedule-modal-subtitle">按时间顺序查看今天的生活安排</text>
+					</view>
+					<view :class="['schedule-modal-state', getScheduleSummaryStateClass()]">
+						<text class="schedule-modal-state-text">{{ scheduleSummaryState }}</text>
+					</view>
 				</view>
-				<scroll-view class="modal-body" scroll-y>
+				<scroll-view class="modal-body schedule-modal-body" scroll-y>
+					<view class="schedule-modal-summary">
+						<view class="schedule-modal-summary-top">
+							<text class="schedule-modal-summary-label">{{ scheduleSummaryState }}</text>
+							<text class="schedule-modal-summary-clock">{{ currentDate }} {{ currentClockText }}</text>
+						</view>
+						<view class="schedule-modal-summary-main">
+							<text class="schedule-modal-summary-time">{{ scheduleSummary.time }}</text>
+							<text class="schedule-modal-summary-title">{{ scheduleSummary.title }}</text>
+							<text class="schedule-modal-summary-desc">{{ scheduleSummary.desc }}</text>
+						</view>
+					</view>
 					<view class="schedule-list modal-list">
-						<view class="schedule-item" v-for="(item, index) in schedules" :key="index">
-							<view class="schedule-time">{{ item.time }}</view>
+						<view
+							class="schedule-item"
+							v-for="(item, index) in schedules"
+							:key="index"
+							:class="getScheduleItemState(index)"
+						>
+							<view class="schedule-time-block">
+								<text class="schedule-time">{{ item.time }}</text>
+								<text class="schedule-step">第{{ index + 1 }}项</text>
+							</view>
 							<view class="schedule-content">
 								<text class="schedule-title">{{ item.title }}</text>
 								<text class="schedule-desc">{{ item.desc }}</text>
+								<view class="schedule-status-row">
+									<view class="schedule-status-badge" :class="getScheduleItemState(index)">
+										<text class="schedule-status-text">{{ getScheduleStatusLabel(index) }}</text>
+									</view>
+								</view>
 							</view>
 						</view>
 					</view>
 				</scroll-view>
-				<view class="modal-footer">
-					<view class="modal-close" @click="showScheduleModal = false">
-						<text class="close-icon">×</text>
+				<view class="schedule-modal-footer">
+					<view class="schedule-close-btn" @click="showScheduleModal = false">
+						<text class="schedule-close-text">关闭</text>
 					</view>
 				</view>
 			</view>
@@ -222,6 +271,42 @@
 			</view>
 		</view>
 
+		<!-- 联系子女弹窗 -->
+		<view v-if="showContactModal" class="modal-overlay contact-modal-overlay" @click="closeContactModal">
+			<view class="contact-modal-stack" @click.stop>
+				<view class="modal-content contact-modal">
+				<view class="contact-modal-header">
+					<view class="contact-modal-heading">
+						<text class="modal-title">联系子女</text>
+						<text class="contact-modal-subtitle">这里显示当前绑定的子女电话，点击按钮即可拨打</text>
+					</view>
+				</view>
+				<view class="contact-modal-body">
+					<view class="contact-card">
+						<text class="contact-card-label">子女姓名</text>
+						<text class="contact-card-value">{{ contactChildName || '未设置' }}</text>
+					</view>
+					<view class="contact-card contact-card--phone">
+						<text class="contact-card-label">子女电话</text>
+						<text class="contact-card-value contact-card-value--phone">{{ contactChildPhone || '暂无子女电话' }}</text>
+					</view>
+					<text class="contact-hint" v-if="contactChildPhone">按下“立即拨打”后会直接呼叫对方电话</text>
+					<text class="contact-hint contact-hint--warning" v-else>当前没有可用的子女电话，请先补充绑定信息</text>
+				</view>
+				<view class="modal-footer contact-modal-footer">
+					<view class="contact-call-btn" :class="{ disabled: !contactChildPhone }" @click="callChildPhone">
+						<text class="contact-call-text">立即拨打</text>
+					</view>
+				</view>
+			</view>
+				<view class="contact-modal-close-wrap">
+					<view class="contact-modal-close-btn" @click="closeContactModal">
+						<text class="contact-close-text">关闭</text>
+					</view>
+				</view>
+			</view>
+		</view>
+
 		<!-- 退出登录按钮 -->
 		<view class="logout-section">
 			<view class="logout-btn" @click="handleLogout">
@@ -232,6 +317,19 @@
 </template>
 
 <script lang="uts">
+import { request } from '../../utils/request'
+
+interface ContactChildInfo {
+	childrenName: string
+	childrenPhone: string
+}
+
+interface ApiResponse<T> {
+	code: number
+	msg: string | null
+	data: T
+}
+
 	export default {
 		data() {
 			return {
@@ -244,6 +342,19 @@
 				weatherIcon: '☀',
 				weatherText: '晴',
 				showScheduleModal: false,
+				showContactModal: false,
+				contactChildName: '',
+				contactChildPhone: '',
+				currentClockText: '',
+				currentScheduleIndex: -1,
+				scheduleRefreshTimer: 0,
+				scheduleSummaryState: '下一项安排',
+				scheduleSummaryHint: '当前时间到点后会自动高亮对应安排',
+				scheduleSummary: {
+					time: '08:00',
+					title: '早餐时间',
+					desc: '营养早餐已准备好'
+				},
 				schedules: [
 					{ time: '08:00', title: '早餐时间', desc: '营养早餐已准备好' },
 					{ time: '10:00', title: '晨练活动', desc: '太极广场集合' },
@@ -349,11 +460,19 @@
 			if (userInfo && userInfo.name) {
 				this.userName = userInfo.name
 			}
+			this.loadContactInfo()
 			this.updateDate()
 			this.updateGreeting()
 			this.updateWeather()
 			this.updateHealthData()
 			this.updateScheduleData()
+			this.startScheduleAutoRefresh()
+		},
+		onHide() {
+			this.stopScheduleAutoRefresh()
+		},
+		onUnload() {
+			this.stopScheduleAutoRefresh()
 		},
 		methods: {
 			handleBannerChange(e: any) {
@@ -448,11 +567,164 @@
 				}
 			},
 			updateScheduleData() {
-				const dayOfWeek = new Date().getDay()
+				const now = new Date()
+				const nowMinutes = now.getHours() * 60 + now.getMinutes()
+				this.currentClockText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+				const dayOfWeek = now.getDay()
 				const todaySchedule = this.weeklySchedules.find(item => item.day === dayOfWeek)
 				if (todaySchedule) {
 					this.schedules = [...todaySchedule.items]
+					this.currentScheduleIndex = this.getCurrentScheduleIndex(todaySchedule.items, nowMinutes)
+					const summaryIndex = this.getScheduleSummaryIndex(todaySchedule.items, this.currentScheduleIndex)
+					if (summaryIndex >= 0) {
+						this.scheduleSummary = { ...todaySchedule.items[summaryIndex] }
+					}
+					this.scheduleSummaryState = this.getScheduleSummaryState(todaySchedule.items, this.currentScheduleIndex)
+					this.scheduleSummaryHint = this.currentScheduleIndex < 0
+						? '第一项到点后会自动高亮显示'
+						: '当前进行中的安排已高亮显示'
+					return
 				}
+
+				this.currentScheduleIndex = -1
+				this.schedules = []
+				this.scheduleSummary = {
+					time: '--',
+					title: '暂无安排',
+					desc: '今天暂时没有安排内容'
+				}
+				this.scheduleSummaryState = '暂无安排'
+				this.scheduleSummaryHint = '今天暂时没有安排内容'
+			},
+			startScheduleAutoRefresh() {
+				this.stopScheduleAutoRefresh()
+				this.scheduleRefreshTimer = setInterval(() => {
+					this.updateScheduleData()
+				}, 60000) as unknown as number
+			},
+			stopScheduleAutoRefresh() {
+				if (this.scheduleRefreshTimer) {
+					clearInterval(this.scheduleRefreshTimer)
+					this.scheduleRefreshTimer = 0
+				}
+			},
+			getScheduleMinutes(time: string) {
+				if (!time) return -1
+				const parts = String(time).split(':')
+				if (parts.length !== 2) return -1
+				const hours = parseInt(parts[0])
+				const minutes = parseInt(parts[1])
+				if (isNaN(hours) || isNaN(minutes)) return -1
+				return hours * 60 + minutes
+			},
+			getCurrentScheduleIndex(items: any[], nowMinutes: number) {
+				if (!items || items.length === 0) return -1
+
+				let activeIndex = -1
+				for (let index = 0; index < items.length; index++) {
+					const itemMinutes = this.getScheduleMinutes(items[index].time)
+					if (itemMinutes < 0) {
+						continue
+					}
+					if (nowMinutes >= itemMinutes) {
+						activeIndex = index
+						continue
+					}
+					break
+				}
+
+				if (activeIndex < 0) {
+					return -1
+				}
+
+				return activeIndex
+			},
+			getScheduleSummaryIndex(items: any[], activeIndex: number) {
+				if (!items || items.length === 0) return -1
+				if (activeIndex < 0) {
+					return 0
+				}
+				return activeIndex
+			},
+			getScheduleSummaryState(items: any[], activeIndex: number) {
+				if (!items || items.length === 0) {
+					return '暂无安排'
+				}
+				if (activeIndex < 0) {
+					return '下一项安排'
+				}
+				return '当前进行中'
+			},
+			getScheduleSummaryStateClass() {
+				if (!this.schedules || this.schedules.length === 0) {
+					return 'idle'
+				}
+				if (this.currentScheduleIndex < 0) {
+					return 'upcoming'
+				}
+				return 'active'
+			},
+			getScheduleItemState(index: number) {
+				if (this.currentScheduleIndex < 0) {
+					if (index === 0) {
+						return 'upcoming'
+					}
+					return 'future'
+				}
+				if (index < this.currentScheduleIndex) {
+					return 'completed'
+				}
+				if (index === this.currentScheduleIndex) {
+					return 'active'
+				}
+				if (index === this.currentScheduleIndex + 1) {
+					return 'upcoming'
+				}
+				return 'future'
+			},
+			getScheduleStatusLabel(index: number) {
+				const state = this.getScheduleItemState(index)
+				if (state === 'active') {
+					return '进行中'
+				}
+				if (state === 'completed') {
+					return '已完成'
+				}
+				if (state === 'upcoming') {
+					if (this.currentScheduleIndex < 0 && index === 0) {
+						return '即将开始'
+					}
+					return '下一项'
+				}
+				return '待开始'
+			},
+			applyStoredContactInfo() {
+				const userInfo: any = uni.getStorageSync('userInfo') || {}
+				const childrenName = userInfo.childrenName || userInfo.contactName || ''
+				const childrenPhone = userInfo.childrenPhone || userInfo.contactPhone || ''
+
+				this.contactChildName = String(childrenName || '').trim()
+				this.contactChildPhone = String(childrenPhone || '').trim()
+			},
+			async loadContactInfo() {
+				try {
+					const res = await request.get('/elder/contact-child') as {
+						statusCode: number,
+						data: ApiResponse<ContactChildInfo>
+					}
+
+					if (res.statusCode === 200 && res.data && res.data.code === 1) {
+						const contact = res.data.data || { childrenName: '', childrenPhone: '' }
+						this.contactChildName = String(contact.childrenName || '').trim()
+						this.contactChildPhone = String(contact.childrenPhone || '').trim()
+						return
+					}
+				} catch (error) {
+					console.log('加载子女联系信息失败，使用本地缓存兜底', error)
+				}
+
+				this.applyStoredContactInfo()
 			},
 			goToMall() {
 				uni.navigateTo({
@@ -470,9 +742,30 @@
 				})
 			},
 			goToContact() {
-				uni.showToast({
-					title: '联系子女功能开发中',
-					icon: 'none'
+				this.showContactModal = true
+				this.loadContactInfo()
+			},
+			closeContactModal() {
+				this.showContactModal = false
+			},
+			callChildPhone() {
+				const phoneNumber = String(this.contactChildPhone || '').trim()
+				if (!phoneNumber) {
+					uni.showToast({
+						title: '暂无子女电话',
+						icon: 'none'
+					})
+					return
+				}
+
+				uni.makePhoneCall({
+					phoneNumber,
+					fail: () => {
+						uni.showToast({
+							title: '拨打失败',
+							icon: 'none'
+						})
+					}
 				})
 			},
 			handleLogout() {
@@ -679,9 +972,9 @@
 	}
 
 	.more-text {
-		font-size: 26rpx;
-		color: #43A047;
-		font-weight: 500;
+		font-size: 28rpx;
+		color: #2E7D32;
+		font-weight: 600;
 	}
 
 	.quick-grid {
@@ -748,52 +1041,279 @@
 		padding: 36rpx 32rpx;
 		background: #FFFFFF;
 		margin: 24rpx;
-		border-radius: 24rpx;
+		border-radius: 28rpx;
 		box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06);
+		border: 1rpx solid #E8F0EF;
 	}
 
-	.schedule-list {
-		margin-top: 8rpx;
+	.schedule-summary {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		padding: 28rpx;
+		margin-bottom: 24rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(135deg, #F7FBF8 0%, #EEF7EE 100%);
+		border: 1rpx solid #DDEBDE;
 	}
 
-	.schedule-item {
+	.schedule-summary.active {
+		background: linear-gradient(135deg, #EAF7EB 0%, #F7FBF8 100%);
+		border-color: rgba(67, 160, 71, 0.28);
+		box-shadow: 0 10rpx 28rpx rgba(67, 160, 71, 0.12);
+	}
+
+	.schedule-summary.upcoming {
+		background: linear-gradient(135deg, #F7FBF8 0%, #EEF7EE 100%);
+		border-color: rgba(67, 160, 71, 0.14);
+	}
+
+	.schedule-summary.idle {
+		background: linear-gradient(135deg, #F4F7F5 0%, #F9FBFA 100%);
+		border-color: #E6EEE8;
+	}
+
+	.schedule-summary-icon {
+		width: 92rpx;
+		height: 92rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(135deg, #43A047 0%, #66BB6A 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		box-shadow: 0 10rpx 24rpx rgba(67, 160, 71, 0.22);
+		margin-right: 20rpx;
+	}
+
+	.schedule-summary-icon-text {
+		font-size: 42rpx;
+		color: #FFFFFF;
+		font-weight: 700;
+	}
+
+	.schedule-summary-content {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
-		padding: 24rpx 0;
-		border-bottom: 1rpx solid #F5F5F5;
-		align-items: center;
-		text-align: center;
+		justify-content: center;
 	}
 
-	.schedule-item:last-child {
-		border-bottom: none;
-	}
-
-	.schedule-time {
-		font-size: 30rpx;
+	.schedule-summary-label {
+		font-size: 24rpx;
 		color: #2E7D32;
 		font-weight: 700;
 		margin-bottom: 8rpx;
 	}
 
-	.schedule-content {
+	.schedule-summary-title {
+		font-size: 34rpx;
+		color: #1F2937;
+		font-weight: 700;
+		margin-bottom: 8rpx;
+	}
+
+	.schedule-summary-desc {
+		font-size: 28rpx;
+		color: #4B5563;
+		line-height: 1.5;
+	}
+
+	.schedule-summary-hint {
+		margin-top: 8rpx;
+		font-size: 24rpx;
+		color: #6B7280;
+		line-height: 1.5;
+	}
+
+	.schedule-list {
+		margin-top: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.schedule-item {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		padding: 24rpx;
+		border-radius: 22rpx;
+		background: #F9FBFA;
+		border: 1rpx solid #E6F0E7;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+		margin-top: 18rpx;
+	}
+
+	.schedule-item.active {
+		background: linear-gradient(135deg, #EAF7EB 0%, #FFFFFF 100%);
+		border-color: rgba(67, 160, 71, 0.36);
+		box-shadow: 0 10rpx 28rpx rgba(67, 160, 71, 0.16);
+	}
+
+	.schedule-item.completed {
+		background: #F5F7F6;
+		border-color: #E1E8E3;
+	}
+
+	.schedule-item.upcoming {
+		background: linear-gradient(135deg, #F8FCF8 0%, #FFFFFF 100%);
+		border-color: rgba(67, 160, 71, 0.18);
+	}
+
+	.schedule-item.future {
+		background: #FFFFFF;
+		border-color: #E7EFE8;
+	}
+
+	.schedule-item.active .schedule-time-block {
+		background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
+		box-shadow: 0 8rpx 22rpx rgba(46, 125, 50, 0.24);
+	}
+
+	.schedule-item.completed .schedule-time-block {
+		background: linear-gradient(135deg, #ECEFF1 0%, #F7F9FA 100%);
+	}
+
+	.schedule-item.upcoming .schedule-time-block {
+		background: linear-gradient(135deg, #DFF3E0 0%, #EEF8EF 100%);
+	}
+
+	.schedule-item:first-child {
+		margin-top: 0;
+	}
+
+	.schedule-time-block {
+		width: 132rpx;
+		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: center;
+		padding: 16rpx 10rpx;
+		border-radius: 18rpx;
+		background: linear-gradient(135deg, #E8F5E9 0%, #DFF0E0 100%);
+		margin-right: 20rpx;
+	}
+
+	.schedule-time {
+		font-size: 32rpx;
+		color: #2E7D32;
+		font-weight: 700;
+		line-height: 1.1;
 		text-align: center;
 	}
 
-	.schedule-title {
-		font-size: 30rpx;
-		color: #212121;
-		display: block;
-		margin-bottom: 8rpx;
+	.schedule-item.active .schedule-time,
+	.schedule-item.active .schedule-step {
+		color: #FFFFFF;
+	}
+
+	.schedule-item.completed .schedule-time {
+		color: #546E7A;
+	}
+
+	.schedule-item.completed .schedule-step {
+		color: #78909C;
+	}
+
+	.schedule-item.upcoming .schedule-time {
+		color: #2E7D32;
+	}
+
+	.schedule-item.upcoming .schedule-step {
+		color: #5E8B5B;
+	}
+
+	.schedule-step {
+		margin-top: 6rpx;
+		font-size: 24rpx;
+		color: #558B2F;
 		font-weight: 500;
 	}
 
+	.schedule-content {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: center;
+		flex: 1;
+		text-align: left;
+	}
+
+	.schedule-title {
+		font-size: 32rpx;
+		color: #1F2937;
+		display: block;
+		margin-bottom: 8rpx;
+		font-weight: 700;
+	}
+
 	.schedule-desc {
-		font-size: 26rpx;
-		color: #757575;
+		font-size: 28rpx;
+		color: #6B7280;
+		line-height: 1.5;
+	}
+
+	.schedule-status-row {
+		margin-top: 16rpx;
+		display: flex;
+		justify-content: flex-start;
+	}
+
+	.schedule-status-badge {
+		padding: 8rpx 16rpx;
+		border-radius: 999rpx;
+		background: #EEF2F4;
+		border: 1rpx solid #DCE3E6;
+	}
+
+	.schedule-status-badge.active {
+		background: rgba(46, 125, 50, 0.12);
+		border-color: rgba(46, 125, 50, 0.18);
+	}
+
+	.schedule-status-badge.completed {
+		background: #ECEFF1;
+		border-color: #DDE3E7;
+	}
+
+	.schedule-status-badge.upcoming {
+		background: rgba(67, 160, 71, 0.10);
+		border-color: rgba(67, 160, 71, 0.14);
+	}
+
+	.schedule-status-badge.future {
+		background: #F4F7F5;
+		border-color: #E2EAE4;
+	}
+
+	.schedule-status-text {
+		font-size: 24rpx;
+		line-height: 1.2;
+		color: #546E7A;
+		font-weight: 600;
+	}
+
+	.schedule-status-badge.active .schedule-status-text {
+		color: #2E7D32;
+	}
+
+	.schedule-status-badge.completed .schedule-status-text {
+		color: #607D8B;
+	}
+
+	.schedule-status-badge.upcoming .schedule-status-text {
+		color: #2E7D32;
+	}
+
+	.schedule-status-badge.future .schedule-status-text {
+		color: #62707A;
+	}
+
+	.more-btn {
+		padding: 10rpx 18rpx;
+		border-radius: 999rpx;
+		background: rgba(67, 160, 71, 0.12);
 	}
 
 	/* 健康提示 */
@@ -949,7 +1469,7 @@
 
 	.modal-body {
 		max-height: 50vh;
-		padding: 24rpx 36rpx;
+		padding: 28rpx 32rpx;
 	}
 
 	.modal-footer {
@@ -980,10 +1500,167 @@
 
 	.modal-list {
 		margin-top: 0;
+		display: flex;
+		flex-direction: column;
 	}
 
-	.modal-list .schedule-item:last-child {
-		border-bottom: none;
+	.schedule-modal {
+		width: 92%;
+		max-width: 760rpx;
+		max-height: 88vh;
+		display: flex;
+		flex-direction: column;
+		background: linear-gradient(180deg, #FFFFFF 0%, #FBFEFB 100%);
+		border-radius: 36rpx;
+		position: relative;
+	}
+
+	.schedule-modal-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		padding: 34rpx 32rpx 22rpx;
+		border-bottom: 1rpx solid #EDF2EC;
+		background: linear-gradient(135deg, #F7FBF7 0%, #EEF7EE 100%);
+	}
+
+	.schedule-modal-heading {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		padding-right: 20rpx;
+	}
+
+	.schedule-modal-subtitle {
+		margin-top: 10rpx;
+		font-size: 26rpx;
+		line-height: 1.5;
+		color: #6B7280;
+	}
+
+	.schedule-modal-state {
+		flex-shrink: 0;
+		padding: 12rpx 18rpx;
+		border-radius: 999rpx;
+		border: 1rpx solid #DDEBDE;
+		background: #F5FAF5;
+	}
+
+	.schedule-modal-state.active {
+		background: rgba(46, 125, 50, 0.12);
+		border-color: rgba(46, 125, 50, 0.18);
+	}
+
+	.schedule-modal-state.upcoming {
+		background: rgba(67, 160, 71, 0.10);
+		border-color: rgba(67, 160, 71, 0.14);
+	}
+
+	.schedule-modal-state.idle {
+		background: #F4F7F5;
+		border-color: #E3EAE4;
+	}
+
+	.schedule-modal-state-text {
+		font-size: 26rpx;
+		line-height: 1.2;
+		font-weight: 700;
+		color: #2E7D32;
+	}
+
+	.schedule-modal-state.idle .schedule-modal-state-text {
+		color: #607D8B;
+	}
+
+	.schedule-modal-body {
+		max-height: 58vh;
+		padding: 26rpx 28rpx 12rpx;
+	}
+
+	.schedule-modal-summary {
+		padding: 26rpx 24rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(135deg, #F7FBF8 0%, #EEF7EE 100%);
+		border: 1rpx solid #DDEBDE;
+		margin-bottom: 22rpx;
+	}
+
+	.schedule-modal-summary-top {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 10rpx;
+	}
+
+	.schedule-modal-summary-label {
+		font-size: 24rpx;
+		font-weight: 700;
+		color: #2E7D32;
+	}
+
+	.schedule-modal-summary-clock {
+		font-size: 24rpx;
+		color: #66736A;
+	}
+
+	.schedule-modal-summary-main {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.schedule-modal-summary-time {
+		font-size: 48rpx;
+		line-height: 1.1;
+		font-weight: 800;
+		color: #1B5E20;
+	}
+
+	.schedule-modal-summary-title {
+		margin-top: 10rpx;
+		font-size: 34rpx;
+		font-weight: 700;
+		color: #1F2937;
+	}
+
+	.schedule-modal-summary-desc {
+		margin-top: 8rpx;
+		font-size: 28rpx;
+		line-height: 1.5;
+		color: #4B5563;
+	}
+
+	.modal-list .schedule-item {
+		margin-top: 18rpx;
+	}
+
+	.modal-list .schedule-item:first-child {
+		margin-top: 0;
+	}
+
+	.schedule-modal-footer {
+		padding: 0 28rpx 32rpx;
+	}
+
+	.schedule-close-btn {
+		width: 100%;
+		height: 96rpx;
+		border-radius: 999rpx;
+		background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		box-shadow: 0 12rpx 28rpx rgba(46, 125, 50, 0.24);
+	}
+
+	.schedule-close-btn:active {
+		transform: scale(0.985);
+	}
+
+	.schedule-close-text {
+		font-size: 34rpx;
+		color: #FFFFFF;
+		font-weight: 700;
+		line-height: 1;
 	}
 
 	/* 健康弹窗样式 */
@@ -1047,6 +1724,168 @@
 		color: #2E7D32;
 		line-height: 1;
 		font-weight: 700;
+	}
+
+	.contact-modal {
+		width: 100%;
+		max-width: 700rpx;
+		max-height: 78vh;
+		display: flex;
+		flex-direction: column;
+		background: #FFFFFF;
+		border-radius: 36rpx;
+		position: relative;
+	}
+
+	.contact-modal-overlay {
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding: 32rpx 0;
+		box-sizing: border-box;
+	}
+
+	.contact-modal-stack {
+		width: 92%;
+		max-width: 700rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.contact-modal-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		padding: 34rpx 32rpx 22rpx;
+		border-bottom: 1rpx solid #EDF2EC;
+	}
+
+	.contact-modal-heading {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		padding-right: 20rpx;
+	}
+
+	.contact-modal-subtitle {
+		margin-top: 10rpx;
+		font-size: 24rpx;
+		line-height: 1.5;
+		color: #6B7280;
+	}
+
+	.contact-modal-body {
+		padding: 28rpx 32rpx 16rpx;
+		display: flex;
+		flex-direction: column;
+		gap: 18rpx;
+	}
+
+	.contact-card {
+		padding: 22rpx 20rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(180deg, #F9FFFA 0%, #FFFFFF 100%);
+		border: 1rpx solid rgba(67, 160, 71, 0.12);
+	}
+
+	.contact-card--phone {
+		background: linear-gradient(180deg, rgba(232, 245, 233, 0.92) 0%, #FFFFFF 100%);
+	}
+
+	.contact-card-label {
+		display: block;
+		font-size: 22rpx;
+		line-height: 1.4;
+		color: #6B7280;
+		margin-bottom: 8rpx;
+	}
+
+	.contact-card-value {
+		display: block;
+		font-size: 34rpx;
+		line-height: 1.35;
+		font-weight: 700;
+		color: #1B5E20;
+		word-break: break-all;
+	}
+
+	.contact-card-value--phone {
+		color: #2E7D32;
+	}
+
+	.contact-hint {
+		display: block;
+		font-size: 22rpx;
+		line-height: 1.5;
+		color: #4B5563;
+	}
+
+	.contact-hint--warning {
+		color: #B45309;
+	}
+
+	.contact-modal-footer {
+		padding-top: 0;
+		padding-bottom: 32rpx;
+	}
+
+	.contact-modal-close-wrap {
+		width: 100%;
+		margin-top: 22rpx;
+		display: flex;
+		justify-content: center;
+	}
+
+	.contact-modal-close-btn {
+		width: 100%;
+		height: 96rpx;
+		border-radius: 999rpx;
+		background: linear-gradient(180deg, #F3F7F3 0%, #E8F3E8 100%);
+		border: 1rpx solid rgba(46, 125, 50, 0.16);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 10rpx 24rpx rgba(46, 125, 50, 0.10);
+	}
+
+	.contact-modal-close-btn:active {
+		transform: scale(0.985);
+	}
+
+	.contact-close-text {
+		font-size: 34rpx;
+		line-height: 1;
+		font-weight: 700;
+		color: #2E7D32;
+	}
+
+	.contact-call-btn {
+		width: calc(100% - 72rpx);
+		height: 92rpx;
+		border-radius: 999rpx;
+		margin: 0 36rpx;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
+		box-shadow: 0 12rpx 28rpx rgba(46, 125, 50, 0.32);
+		transition: transform 0.2s ease, opacity 0.2s ease;
+	}
+
+	.contact-call-btn:active {
+		transform: scale(0.985);
+	}
+
+	.contact-call-btn.disabled {
+		opacity: 0.55;
+	}
+
+	.contact-call-text {
+		font-size: 32rpx;
+		line-height: 1;
+		font-weight: 700;
+		color: #FFFFFF;
 	}
 
 	.health-modal-scroll {

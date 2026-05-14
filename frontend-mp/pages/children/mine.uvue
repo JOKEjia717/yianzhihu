@@ -29,6 +29,10 @@
 				</view>
 
 				<view class="hero-actions">
+					<view class="hero-action hero-action--secondary" @click="showBindForm">
+						<text class="hero-action-title">绑定老人信息</text>
+						<text class="hero-action-sub">{{ getBoundElderSummary() }}</text>
+					</view>
 					<view class="hero-action hero-action--primary" @click="showEditForm">
 						<text class="hero-action-title">编辑资料</text>
 						<text class="hero-action-sub">头像、昵称、手机号</text>
@@ -37,27 +41,63 @@
 			</view>
 		</view>
 
-		<view class="panel">
-			<view class="panel-head">
-				<view>
-					<text class="panel-title">快捷入口</text>
-					<text class="panel-subtitle">常用功能一眼可达，点击即可快速进入</text>
+	<view class="panel bind-panel">
+		<view class="panel-head">
+			<view>
+				<text class="panel-title">已绑定老人</text>
+				<text class="panel-subtitle">{{ getBoundElderSummary() }}</text>
+			</view>
+			<view class="panel-action" @click="showBindForm">
+				<text class="panel-action-text">新增绑定</text>
+			</view>
+		</view>
+
+		<view v-if="boundElderList.length" class="bind-list">
+			<view
+				v-for="(item, index) in boundElderList"
+				:key="item.elderId"
+				class="bind-item bind-item--interactive"
+				@click="showBoundElderDetail(item, index)"
+			>
+				<view class="bind-item-main">
+					<text class="bind-item-name">{{ item.name || '未命名老人' }}</text>
+					<text class="bind-item-meta">编号 {{ item.elderId }} · {{ item.phone || '无电话' }}</text>
+				</view>
+				<view class="bind-item-side">
+					<view class="bind-item-tag">
+						<text v-if="item.age > 0">{{ item.age }}岁</text>
+						<text v-else>已绑定</text>
+					</view>
 				</view>
 			</view>
+		</view>
 
-			<view class="shortcut-grid">
-				<view
-					v-for="(item, index) in shortcutItems"
-					:key="item.type"
-					class="shortcut-item"
-					:class="'shortcut-item--' + item.type + ' ' + (index === 0 ? 'shortcut-item--featured' : 'shortcut-item--compact')"
-					@click="handleQuickAction(item.type)"
-				>
-					<view class="shortcut-item-icon-shell" :class="'shortcut-item-icon-shell--' + item.type">
-						<image class="shortcut-item-icon" :src="item.icon" mode="aspectFit"></image>
-					</view>
-					<text class="shortcut-item-name">{{ item.name }}</text>
+		<view v-else class="bind-empty">
+			<text class="bind-empty-title">还没有绑定老人</text>
+			<text class="bind-empty-subtitle">点击右上角「新增绑定」，输入老人编号即可完成关联。</text>
+		</view>
+	</view>
+
+	<view class="panel">
+		<view class="panel-head">
+			<view>
+				<text class="panel-title">快捷入口</text>
+				<text class="panel-subtitle">常用功能一眼可达，点击即可快速进入</text>
+			</view>
+		</view>
+
+		<view class="shortcut-grid">
+			<view
+				v-for="(item, index) in shortcutItems"
+				:key="item.type"
+				class="shortcut-item"
+				:class="'shortcut-item--' + item.type + ' ' + (index === 0 ? 'shortcut-item--featured' : 'shortcut-item--compact')"
+				@click="handleQuickAction(item.type)"
+			>
+				<view class="shortcut-item-icon-shell" :class="'shortcut-item-icon-shell--' + item.type">
+					<image class="shortcut-item-icon" :src="item.icon" mode="aspectFit"></image>
 				</view>
+				<text class="shortcut-item-name">{{ item.name }}</text>
 			</view>
 		</view>
 
@@ -75,9 +115,9 @@
 			<view class="popup-mask" @click="hideEditForm"></view>
 			<view class="popup-content">
 				<view class="popup-handle"></view>
+				<text class="popup-close popup-close--floating" @click="hideEditForm">×</text>
 				<view class="popup-header">
 					<text class="popup-title">编辑资料</text>
-					<text class="popup-close" @click="hideEditForm">×</text>
 				</view>
 				<text class="popup-subtitle">更新头像、昵称和手机号，方便接收家庭通知。</text>
 
@@ -123,10 +163,129 @@
 				</view>
 			</view>
 		</view>
+
+		<view class="popup" v-if="showBindPopup">
+			<view class="popup-mask" @click="hideBindForm"></view>
+			<view class="popup-content bind-popup-content">
+				<view class="popup-handle"></view>
+				<text class="popup-close popup-close--floating" @click="hideBindForm">×</text>
+				<view class="popup-header bind-popup-header">
+					<view class="bind-popup-headcopy">
+						<view class="bind-popup-icon-shell">
+							<image class="bind-popup-icon" src="/static/images/id.png" mode="aspectFit"></image>
+						</view>
+						<view class="bind-popup-headtext">
+							<text class="bind-popup-kicker">家庭绑定</text>
+							<text class="popup-title">绑定老人信息</text>
+						</view>
+					</view>
+				</view>
+				<text class="popup-subtitle bind-popup-subtitle">输入老人编号 elder_id，系统会自动把老人关联到当前子女账号。</text>
+
+				<view class="bind-summary-card">
+					<view class="bind-summary-item">
+						<text class="bind-summary-label">已绑定</text>
+						<text class="bind-summary-value">{{ boundElderList.length }} 位</text>
+					</view>
+					<view class="bind-summary-divider"></view>
+					<view class="bind-summary-item">
+						<text class="bind-summary-label">默认展示</text>
+						<text class="bind-summary-value">{{ boundElderInfo ? (boundElderInfo.name || '未命名老人') : '暂无' }}</text>
+					</view>
+				</view>
+
+				<view class="popup-body bind-popup-body">
+					<view class="form-item">
+						<view class="form-head">
+							<text class="form-label">老人编号</text>
+							<text class="form-tip">elder_id</text>
+						</view>
+						<view class="bind-input-shell">
+							<input class="bind-input" type="text" v-model="elderBindForm.elderId" placeholder="例如：10001" confirm-type="done" @confirm="submitBindForm" />
+<!-- 							<view class="bind-input-action" @click="clearBindForm">
+								<text>清空</text>
+							</view> -->
+						</view>
+						<text class="bind-input-help">建议填写准确编号，绑定后会立即刷新列表。</text>
+					</view>
+				</view>
+
+				<view class="popup-footer">
+					<view class="popup-button popup-button--primary" :class="{ 'is-disabled': isBindSubmitting }" @click="submitBindForm">
+						<text class="popup-button-text">{{ isBindSubmitting ? '绑定中...' : '立即绑定' }}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+
+		<view class="popup" v-if="showBoundDetailPopup">
+			<view class="popup-mask" @click="closeBoundElderDetail"></view>
+			<view class="popup-content bound-detail-popup-content">
+				<view class="popup-handle"></view>
+				<text class="popup-close popup-close--floating" @click="closeBoundElderDetail">×</text>
+				<view class="popup-header bound-detail-popup-header">
+					<view class="bound-detail-headcopy">
+						<text class="bound-detail-kicker">老人详情</text>
+						<text class="popup-title">{{ boundDetailForm.name || '未命名老人' }}</text>
+					</view>
+				</view>
+				<text class="popup-subtitle bound-detail-subtitle">点击可修改姓名、联系电话和年龄，保存后会同步到当前页面缓存。</text>
+
+				<view class="popup-body bound-detail-popup-body">
+					<view class="detail-summary-card">
+						<view class="detail-summary-item">
+							<text class="detail-summary-label">老人编号</text>
+							<text class="detail-summary-value">{{ boundDetailForm.elderId }}</text>
+						</view>
+						<view class="detail-summary-divider"></view>
+						<view class="detail-summary-item">
+							<text class="detail-summary-label">当前年龄</text>
+							<text class="detail-summary-value">{{ boundDetailForm.age || '未填写' }}</text>
+						</view>
+					</view>
+
+					<view class="form-item">
+						<view class="form-head">
+							<text class="form-label">姓名</text>
+							<text class="form-tip">必填</text>
+						</view>
+						<input class="form-input" type="text" v-model="boundDetailForm.name" placeholder="请输入老人姓名" />
+					</view>
+
+					<view class="form-item">
+						<view class="form-head">
+							<text class="form-label">联系电话</text>
+							<text class="form-tip">选填</text>
+						</view>
+						<input class="form-input" type="number" v-model="boundDetailForm.phone" placeholder="请输入联系电话" maxlength="11" />
+					</view>
+
+					<view class="form-item">
+						<view class="form-head">
+							<text class="form-label">年龄</text>
+							<text class="form-tip">数字</text>
+						</view>
+						<input class="form-input" type="number" v-model="boundDetailForm.age" placeholder="请输入年龄" />
+					</view>
+				</view>
+
+				<view class="popup-footer">
+					<view class="popup-button popup-button--ghost" :class="{ 'is-disabled': isBoundDetailSubmitting }" @click="closeBoundElderDetail">
+						<text class="popup-button-text">取消</text>
+					</view>
+					<view class="popup-button popup-button--primary" :class="{ 'is-disabled': isBoundDetailSubmitting }" @click="saveBoundElderDetail">
+						<text class="popup-button-text">{{ isBoundDetailSubmitting ? '保存中...' : '保存修改' }}</text>
+					</view>
+				</view>
+			</view>
+		</view>
 	</view>
+</view>
 </template>
 
 <script lang="uts">
+import { bindElder, getBoundElders } from '../../api/user'
+
 const DEFAULT_AVATAR = '/static/images/default-avatar.png'
 
 interface UserInfo {
@@ -147,6 +306,30 @@ interface EditFormData {
 	confirmPassword: string
 }
 
+interface BoundElderInfo {
+	elderId: string
+	name: string
+	phone: string
+	age: number
+}
+
+interface ApiResponse<T> {
+	code: number
+	msg: string | null
+	data: T
+}
+
+interface ElderBindFormData {
+	elderId: string
+}
+
+interface BoundElderDetailFormData {
+	elderId: string
+	name: string
+	phone: string
+	age: string
+}
+
 interface QuickAction {
 	type: string
 	name: string
@@ -165,7 +348,11 @@ export default {
 				isEnable: 0
 			} as UserInfo,
 			showPopup: false,
+			showBindPopup: false,
+			showBoundDetailPopup: false,
 			isSubmitting: false,
+			isBindSubmitting: false,
+			isBoundDetailSubmitting: false,
 			formData: {
 				avatar: '',
 				tempAvatarPath: '',
@@ -175,6 +362,19 @@ export default {
 				newPassword: '',
 				confirmPassword: ''
 			} as EditFormData,
+			boundElderList: [] as BoundElderInfo[],
+			boundElderInfo: null as BoundElderInfo | null,
+			selectedBoundElderIndex: -1,
+			elderBindForm: {
+				elderId: ''
+			} as ElderBindFormData,
+			boundDetailForm: {
+				elderId: '',
+				name: '',
+				phone: '',
+				age: ''
+			} as BoundElderDetailFormData,
+			boundElderOverrides: {} as any,
 			shortcutItems: [
 				{
 					type: 'ai',
@@ -254,6 +454,142 @@ export default {
 					isEnable: 0
 				}
 			}
+
+			this.boundElderOverrides = this.normalizeBoundElderOverrides(uni.getStorageSync('boundElderOverrides'))
+
+			const cachedBoundElderList = uni.getStorageSync('boundElderList')
+			const cachedBoundElderInfo = uni.getStorageSync('boundElderInfo')
+			const nextBoundElderData = cachedBoundElderList || cachedBoundElderInfo || (cachedUserInfo ? (cachedUserInfo.boundElderList || cachedUserInfo.boundElderInfo) : null)
+			this.boundElderList = this.applyBoundElderOverrides(this.normalizeBoundElderList(nextBoundElderData))
+			this.boundElderInfo = this.boundElderList.length > 0 ? this.boundElderList[0] : null
+			void this.loadBoundElders()
+		},
+		normalizeBoundElderList(value: any) {
+			if (!value) {
+				return [] as BoundElderInfo[]
+			}
+
+			let parsedValue = value
+			if (typeof parsedValue === 'string') {
+				try {
+					parsedValue = JSON.parse(parsedValue)
+				} catch (error) {
+					return [] as BoundElderInfo[]
+				}
+			}
+
+			const normalizedList = [] as BoundElderInfo[]
+			if (Array.isArray(parsedValue)) {
+				for (const item of parsedValue) {
+					const normalizedItem = this.normalizeBoundElderInfo(item)
+					if (normalizedItem) {
+						normalizedList.push(normalizedItem)
+					}
+				}
+				return normalizedList
+			}
+
+			const normalizedItem = this.normalizeBoundElderInfo(parsedValue)
+			if (normalizedItem) {
+				normalizedList.push(normalizedItem)
+			}
+
+			return normalizedList
+		},
+		normalizeBoundElderInfo(value: any) {
+			if (!value) {
+				return null
+			}
+
+			let parsedValue = value
+			if (typeof parsedValue === 'string') {
+				try {
+					parsedValue = JSON.parse(parsedValue)
+				} catch (error) {
+					return null
+				}
+			}
+
+			const elderId = this.normalizeText(parsedValue.elderId || parsedValue.elder_id || parsedValue.id)
+			const name = this.normalizeText(parsedValue.name)
+			const phone = this.normalizeText(parsedValue.phone)
+			const age = Number(parsedValue.age || 0)
+
+			if (!elderId) {
+				return null
+			}
+
+			return {
+				elderId: elderId,
+				name: name,
+				phone: phone,
+				age: age > 0 ? age : 0
+			} as BoundElderInfo
+		},
+		normalizeBoundElderOverrides(value: any) {
+			if (!value) {
+				return {} as any
+			}
+
+			let parsedValue = value
+			if (typeof parsedValue === 'string') {
+				try {
+					parsedValue = JSON.parse(parsedValue)
+				} catch (error) {
+					return {} as any
+				}
+			}
+
+			const normalizedOverrides: any = {}
+			if (Array.isArray(parsedValue)) {
+				for (const item of parsedValue) {
+					const elderId = this.normalizeText(item && (item.elderId || item.elder_id || item.id))
+					if (!elderId) {
+						continue
+					}
+
+					normalizedOverrides[elderId] = {
+						name: this.normalizeText(item.name),
+						phone: this.normalizeText(item.phone),
+						age: Number(item.age || 0) > 0 ? Number(item.age) : 0
+					}
+				}
+				return normalizedOverrides
+			}
+
+			for (const elderId in parsedValue) {
+				const item = parsedValue[elderId]
+				if (!item || typeof item !== 'object') {
+					continue
+				}
+
+				normalizedOverrides[elderId] = {
+					name: this.normalizeText(item.name),
+					phone: this.normalizeText(item.phone),
+					age: Number(item.age || 0) > 0 ? Number(item.age) : 0
+				}
+			}
+
+			return normalizedOverrides
+		},
+		applyBoundElderOverrides(boundElderList: BoundElderInfo[]) {
+			if (!boundElderList.length) {
+				return [] as BoundElderInfo[]
+			}
+
+			return boundElderList.map((item) => {
+				const override = this.boundElderOverrides[item.elderId]
+				if (!override) {
+					return item
+				}
+
+				return {
+					elderId: item.elderId,
+					name: this.normalizeText(override.name || item.name),
+					phone: this.normalizeText(override.phone || item.phone),
+					age: override.age > 0 ? Number(override.age) : item.age
+				} as BoundElderInfo
+			})
 		},
 		getPhoneText() {
 			return this.userInfo.phone || '未绑定手机号'
@@ -266,6 +602,49 @@ export default {
 		},
 		getStatusClass() {
 			return this.userInfo.isEnable === 1 ? 'meta-item--success' : 'meta-item--warning'
+		},
+		getBoundElderSummary() {
+			if (!this.boundElderList.length) {
+				return '输入 elder_id 即可绑定'
+			}
+
+			return '已绑定 ' + this.boundElderList.length + ' 位老人'
+		},
+		persistBoundElderList(boundElderList: BoundElderInfo[]) {
+			const cachedUserInfo = uni.getStorageSync('userInfo')
+			const nextUserInfo: any = cachedUserInfo ? cachedUserInfo : {}
+			nextUserInfo.boundElderList = boundElderList
+			nextUserInfo.boundElderInfo = boundElderList.length > 0 ? boundElderList[0] : null
+
+			uni.setStorageSync('userInfo', nextUserInfo)
+			uni.setStorageSync('boundElderList', boundElderList)
+			if (boundElderList.length > 0) {
+				uni.setStorageSync('boundElderInfo', boundElderList[0])
+			} else {
+				uni.removeStorageSync('boundElderInfo')
+			}
+		},
+		persistBoundElderOverrides() {
+			const overrideKeys = Object.keys(this.boundElderOverrides || {})
+			if (!overrideKeys.length) {
+				uni.removeStorageSync('boundElderOverrides')
+				return
+			}
+
+			uni.setStorageSync('boundElderOverrides', this.boundElderOverrides)
+		},
+		async loadBoundElders() {
+			try {
+				const res = await getBoundElders() as { statusCode: number, data: ApiResponse<BoundElderInfo[]> }
+				if (res.statusCode === 200 && res.data.code === 1) {
+					const boundElders = this.applyBoundElderOverrides(this.normalizeBoundElderList(res.data.data))
+					this.boundElderList = boundElders
+					this.boundElderInfo = boundElders.length > 0 ? boundElders[0] : null
+					this.persistBoundElderList(boundElders)
+				}
+			} catch (error) {
+				// 保留本地缓存，避免拉取失败时列表闪空
+			}
 		},
 		handleQuickAction(type: string) {
 			switch (type) {
@@ -285,6 +664,9 @@ export default {
 				return
 			}
 
+			this.showBindPopup = false
+			this.showBoundDetailPopup = false
+			this.selectedBoundElderIndex = -1
 			this.formData = {
 				avatar: this.userInfo.avatar,
 				tempAvatarPath: '',
@@ -296,6 +678,19 @@ export default {
 			}
 			this.showPopup = true
 		},
+		showBindForm() {
+			if (!this.ensureLoggedIn()) {
+				return
+			}
+
+			this.showPopup = false
+			this.showBoundDetailPopup = false
+			this.selectedBoundElderIndex = -1
+			this.elderBindForm = {
+				elderId: ''
+			} as ElderBindFormData
+			this.showBindPopup = true
+		},
 		hideEditForm() {
 			if (this.isSubmitting) {
 				return
@@ -303,6 +698,137 @@ export default {
 
 			this.showPopup = false
 		},
+		hideBindForm() {
+			if (this.isBindSubmitting) {
+				return
+			}
+
+			this.showBindPopup = false
+		},
+		showBoundElderDetail(item: BoundElderInfo, index: number) {
+			if (!item) {
+				return
+			}
+
+			this.showPopup = false
+			this.showBindPopup = false
+			this.selectedBoundElderIndex = index
+			this.boundDetailForm = {
+				elderId: item.elderId,
+				name: item.name || '',
+				phone: item.phone || '',
+				age: item.age > 0 ? String(item.age) : ''
+			}
+			this.showBoundDetailPopup = true
+		},
+		closeBoundElderDetail() {
+			if (this.isBoundDetailSubmitting) {
+				return
+			}
+
+			this.showBoundDetailPopup = false
+			this.selectedBoundElderIndex = -1
+		},
+		async saveBoundElderDetail() {
+			if (this.isBoundDetailSubmitting) {
+				return
+			}
+
+			const targetIndex = this.selectedBoundElderIndex
+			if (targetIndex < 0 || targetIndex >= this.boundElderList.length) {
+				uni.showToast({
+					title: '未找到老人信息',
+					icon: 'none'
+				})
+				return
+			}
+
+			const elderId = this.boundDetailForm.elderId
+			const name = this.boundDetailForm.name.trim()
+			const phone = this.boundDetailForm.phone.trim()
+			const ageText = this.boundDetailForm.age.trim()
+
+			if (!name) {
+				uni.showToast({
+					title: '请输入老人姓名',
+					icon: 'none'
+				})
+				return
+			}
+
+			if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+				uni.showToast({
+					title: '请输入正确的联系电话',
+					icon: 'none'
+				})
+				return
+			}
+
+			let age = 0
+			if (ageText) {
+				if (!/^\d+$/.test(ageText)) {
+					uni.showToast({
+						title: '年龄只能输入数字',
+						icon: 'none'
+					})
+					return
+				}
+
+				age = Number(ageText)
+				if (age <= 0) {
+					uni.showToast({
+						title: '年龄需大于0',
+						icon: 'none'
+					})
+					return
+				}
+			}
+
+			this.isBoundDetailSubmitting = true
+
+			try {
+				const nextBoundElderList = this.boundElderList.slice()
+				nextBoundElderList[targetIndex] = {
+					elderId: elderId,
+					name: name,
+					phone: phone,
+					age: age
+				} as BoundElderInfo
+
+				this.boundElderOverrides[elderId] = {
+					name: name,
+					phone: phone,
+					age: age
+				}
+
+				const mergedBoundElderList = this.applyBoundElderOverrides(nextBoundElderList)
+				this.boundElderList = mergedBoundElderList
+				this.boundElderInfo = mergedBoundElderList.length > 0 ? mergedBoundElderList[0] : null
+				this.persistBoundElderList(mergedBoundElderList)
+				this.persistBoundElderOverrides()
+
+				this.showBoundDetailPopup = false
+				this.selectedBoundElderIndex = -1
+				uni.showToast({
+					title: '保存成功',
+					icon: 'success'
+				})
+			} catch (error) {
+				uni.showToast({
+					title: '保存失败',
+					icon: 'none'
+				})
+			} finally {
+				this.isBoundDetailSubmitting = false
+			}
+		},
+		// clearBindForm() {
+		// 	if (this.isBindSubmitting) {
+		// 		return
+		// 	}
+
+		// 	this.elderBindForm.elderId = ''
+		// },
 		async chooseAvatar() {
 			try {
 				const res = await uni.chooseImage({
@@ -479,6 +1005,9 @@ export default {
 					nextUserInfo.phone = phone
 					nextUserInfo.childrenId = this.userInfo.childrenId
 					nextUserInfo.isEnable = this.userInfo.isEnable
+					if (this.boundElderInfo) {
+						nextUserInfo.boundElderInfo = this.boundElderInfo
+					}
 					uni.setStorageSync('userInfo', nextUserInfo)
 
 					this.showPopup = false
@@ -505,6 +1034,60 @@ export default {
 			} finally {
 				uni.hideLoading()
 				this.isSubmitting = false
+			}
+		},
+		async submitBindForm() {
+			if (this.isBindSubmitting) {
+				return
+			}
+
+			const elderId = this.elderBindForm.elderId.trim()
+			if (!elderId) {
+				uni.showToast({
+					title: '请输入老人编号',
+					icon: 'none'
+				})
+				return
+			}
+
+			if (!/^\d+$/.test(elderId)) {
+				uni.showToast({
+					title: '老人编号只能是数字',
+					icon: 'none'
+				})
+				return
+			}
+
+			this.isBindSubmitting = true
+			uni.showLoading({
+				title: '绑定中...'
+			})
+
+			try {
+				const res = await bindElder(elderId) as { statusCode: number, data: ApiResponse<any> }
+				if (res.statusCode === 200 && res.data.code === 1) {
+					await this.loadBoundElders()
+					this.elderBindForm.elderId = ''
+					this.showBindPopup = false
+					uni.showToast({
+						title: '绑定成功',
+						icon: 'success',
+						duration: 1600
+					})
+				} else {
+					uni.showToast({
+						title: res.data.msg || '绑定失败',
+						icon: 'none'
+					})
+				}
+			} catch (error) {
+				uni.showToast({
+					title: '绑定失败',
+					icon: 'none'
+				})
+			} finally {
+				uni.hideLoading()
+				this.isBindSubmitting = false
 			}
 		},
 		goToCart() {
@@ -565,9 +1148,24 @@ export default {
 				success: (res) => {
 					if (res.confirm) {
 						this.showPopup = false
+						this.showBindPopup = false
+						this.showBoundDetailPopup = false
 						uni.removeStorageSync('accessToken')
 						uni.removeStorageSync('refreshToken')
 						uni.removeStorageSync('userInfo')
+						uni.removeStorageSync('boundElderList')
+						uni.removeStorageSync('boundElderInfo')
+						uni.removeStorageSync('boundElderOverrides')
+						this.boundElderInfo = null
+						this.boundElderList = []
+						this.boundElderOverrides = {}
+						this.selectedBoundElderIndex = -1
+						this.boundDetailForm = {
+							elderId: '',
+							name: '',
+							phone: '',
+							age: ''
+						} as BoundElderDetailFormData
 
 						uni.showToast({
 							title: '退出成功',
@@ -796,12 +1394,13 @@ export default {
 
 	.hero-actions {
 		display: flex;
+		flex-direction: column;
 		gap: 14rpx;
 		margin-top: 26rpx;
 	}
 
 	.hero-action {
-		flex: 1;
+		width: 100%;
 		min-width: 0;
 		padding: 22rpx 20rpx;
 		border-radius: 24rpx;
@@ -845,6 +1444,7 @@ export default {
 		font-size: 22rpx;
 		line-height: 1.35;
 		color: #64748B;
+		word-break: break-all;
 	}
 
 	.hero-action--secondary .hero-action-sub {
@@ -881,6 +1481,129 @@ export default {
 		font-size: 24rpx;
 		line-height: 1.4;
 		color: #6B7280;
+	}
+
+	.panel-action {
+		flex-shrink: 0;
+		padding: 14rpx 18rpx;
+		border-radius: 999rpx;
+		background: linear-gradient(135deg, rgba(25, 191, 175, 0.14), rgba(49, 124, 255, 0.14));
+		border: 1rpx solid rgba(25, 191, 175, 0.18);
+	}
+
+	.panel-action-text {
+		font-size: 24rpx;
+		line-height: 1;
+		font-weight: 600;
+		color: #147C74;
+	}
+
+	.bind-list {
+		display: flex;
+		flex-direction: column;
+		gap: 14rpx;
+		margin-top: 18rpx;
+	}
+
+	.bind-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 18rpx;
+		padding: 22rpx 20rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.98));
+		border: 1rpx solid rgba(148, 163, 184, 0.12);
+		box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.04);
+	}
+
+	.bind-item--interactive {
+		transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.bind-item--interactive:active {
+		transform: scale(0.992);
+		opacity: 0.96;
+		box-shadow: 0 12rpx 28rpx rgba(15, 23, 42, 0.06);
+	}
+
+	.bind-item-main {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6rpx;
+	}
+
+	.bind-item-name {
+		display: block;
+		font-size: 30rpx;
+		line-height: 1.3;
+		font-weight: 700;
+		color: #0F172A;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.bind-item-meta {
+		display: block;
+		font-size: 22rpx;
+		line-height: 1.45;
+		color: #64748B;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.bind-item-tag {
+		flex-shrink: 0;
+		padding: 10rpx 16rpx;
+		border-radius: 999rpx;
+		background: rgba(79, 209, 197, 0.12);
+		color: #147C74;
+		font-size: 22rpx;
+		line-height: 1.2;
+		font-weight: 600;
+	}
+
+	.bind-item-side {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+	}
+
+/* 	.bind-item-chevron {
+		font-size: 32rpx;
+		line-height: 1;
+		color: #94A3B8;
+		font-weight: 700;
+		padding-right: 2rpx;
+	} */
+
+	.bind-empty {
+		margin-top: 18rpx;
+		padding: 24rpx 20rpx;
+		border-radius: 24rpx;
+		background: rgba(148, 163, 184, 0.08);
+		border: 1rpx dashed rgba(148, 163, 184, 0.2);
+	}
+
+	.bind-empty-title {
+		display: block;
+		font-size: 28rpx;
+		line-height: 1.3;
+		font-weight: 700;
+		color: #334155;
+	}
+
+	.bind-empty-subtitle {
+		display: block;
+		margin-top: 8rpx;
+		font-size: 22rpx;
+		line-height: 1.5;
+		color: #64748B;
 	}
 
 	.shortcut-grid {
@@ -1131,13 +1854,38 @@ export default {
 		position: absolute;
 		left: 0;
 		right: 0;
-		bottom: 0;
-		padding: 24rpx 28rpx 32rpx;
+		bottom: 110rpx;
+		padding: 24rpx 28rpx;
 		box-sizing: border-box;
 		border-radius: 34rpx 34rpx 0 0;
 		background: #FFFFFF;
 		box-shadow: 0 -16rpx 40rpx rgba(15, 23, 42, 0.16);
+		display: flex;
+		flex-direction: column;
+		max-height: 86vh;
 		animation: slideUp 0.26s ease-out;
+	}
+
+	.bind-popup-content {
+		padding-top: 20rpx;
+		padding-bottom: 32rpx;
+		background:
+			radial-gradient(circle at top right, rgba(49, 124, 255, 0.08), transparent 28%),
+			linear-gradient(180deg, #FFFFFF 0%, #F8FCFF 100%);
+		max-height: 86vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.bound-detail-popup-content {
+		padding-top: 20rpx;
+		padding-bottom: 32rpx;
+		background:
+			radial-gradient(circle at top left, rgba(79, 209, 197, 0.08), transparent 32%),
+			linear-gradient(180deg, #FFFFFF 0%, #F7FBFF 100%);
+		max-height: 86vh;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.popup-handle {
@@ -1164,6 +1912,64 @@ export default {
 		gap: 20rpx;
 	}
 
+	.bind-popup-header {
+		align-items: flex-start;
+		gap: 16rpx;
+		padding-right: 72rpx;
+	}
+
+	.bind-popup-headcopy {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 16rpx;
+	}
+
+	.bind-popup-icon-shell {
+		width: 80rpx;
+		height: 80rpx;
+		border-radius: 24rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		background: linear-gradient(135deg, rgba(25, 191, 175, 0.14), rgba(49, 124, 255, 0.14));
+		box-shadow: 0 12rpx 24rpx rgba(25, 191, 175, 0.12);
+	}
+
+	.bind-popup-icon {
+		width: 42rpx;
+		height: 42rpx;
+	}
+
+	.bind-popup-headtext {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 8rpx;
+	}
+
+	.bind-popup-headtext .popup-title {
+		flex: 0;
+	}
+
+	.bind-popup-kicker {
+		display: inline-flex;
+		align-items: center;
+		align-self: flex-start;
+		padding: 6rpx 14rpx;
+		border-radius: 999rpx;
+		background: rgba(25, 191, 175, 0.10);
+		font-size: 20rpx;
+		line-height: 1;
+		color: #147C74;
+		font-weight: 700;
+		letter-spacing: 1rpx;
+	}
+
 	.popup-title {
 		display: block;
 		font-size: 36rpx;
@@ -1180,6 +1986,22 @@ export default {
 		padding: 8rpx 12rpx;
 	}
 
+	.popup-close--floating {
+		position: absolute;
+		top: 18rpx;
+		right: 18rpx;
+		z-index: 2;
+		width: 56rpx;
+		height: 56rpx;
+		padding: 0;
+		border-radius: 50%;
+		background: rgba(15, 23, 42, 0.04);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.08);
+	}
+
 	.popup-subtitle {
 		display: block;
 		margin-top: 10rpx;
@@ -1188,11 +2010,146 @@ export default {
 		color: #64748B;
 	}
 
+	.bind-popup-subtitle {
+		margin-top: 14rpx;
+		padding-right: 76rpx;
+	}
+
+	.bound-detail-popup-header {
+		align-items: flex-start;
+		gap: 16rpx;
+		padding-right: 72rpx;
+	}
+
+	.bound-detail-headcopy {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 8rpx;
+	}
+
+	.bound-detail-kicker {
+		display: inline-flex;
+		align-items: center;
+		align-self: flex-start;
+		padding: 6rpx 14rpx;
+		border-radius: 999rpx;
+		background: rgba(49, 124, 255, 0.10);
+		font-size: 20rpx;
+		line-height: 1;
+		color: #317CFF;
+		font-weight: 700;
+		letter-spacing: 1rpx;
+	}
+
+	.bound-detail-subtitle {
+		margin-top: 14rpx;
+		padding-right: 76rpx;
+	}
+
+	.bound-detail-popup-body {
+		margin-top: 18rpx;
+		max-height: none;
+		overflow-y: auto;
+	}
+
+	.detail-summary-card {
+		margin-bottom: 18rpx;
+		padding: 20rpx 18rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(135deg, rgba(79, 209, 197, 0.10), rgba(49, 124, 255, 0.08));
+		border: 1rpx solid rgba(49, 124, 255, 0.10);
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+	}
+
+	.detail-summary-item {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6rpx;
+	}
+
+	.detail-summary-label {
+		font-size: 20rpx;
+		line-height: 1.3;
+		color: #64748B;
+	}
+
+	.detail-summary-value {
+		font-size: 26rpx;
+		line-height: 1.3;
+		font-weight: 700;
+		color: #0F172A;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.detail-summary-divider {
+		width: 1rpx;
+		height: 40rpx;
+		background: rgba(148, 163, 184, 0.22);
+		flex-shrink: 0;
+	}
+
+	.bind-summary-card {
+		margin-top: 18rpx;
+		padding: 20rpx 18rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(135deg, rgba(25, 191, 175, 0.10), rgba(49, 124, 255, 0.08));
+		border: 1rpx solid rgba(25, 191, 175, 0.10);
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+	}
+
+	.bind-summary-item {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6rpx;
+	}
+
+	.bind-summary-label {
+		font-size: 20rpx;
+		line-height: 1.3;
+		color: #64748B;
+	}
+
+	.bind-summary-value {
+		font-size: 26rpx;
+		line-height: 1.3;
+		font-weight: 700;
+		color: #0F172A;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.bind-summary-divider {
+		width: 1rpx;
+		height: 40rpx;
+		background: rgba(148, 163, 184, 0.22);
+		flex-shrink: 0;
+	}
+
 	.popup-body {
-		margin-top: 24rpx;
-		max-height: 64vh;
+		margin-top: 18rpx;
+		flex: 1;
+		min-height: 0;
 		overflow-y: auto;
 		padding-right: 4rpx;
+	}
+
+	.bind-popup-body {
+		margin-top: 16rpx;
+		max-height: none;
+		overflow-y: auto;
 	}
 
 	.form-item {
@@ -1265,6 +2222,67 @@ export default {
 		border-color: #4FD1C5;
 	}
 
+	.bind-input-shell {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+		padding: 0 16rpx 0 20rpx;
+		box-sizing: border-box;
+		height: 96rpx;
+		border-radius: 22rpx;
+		background: #F8FAFC;
+		border: 2rpx solid transparent;
+		transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.bind-input-shell:active {
+		transform: scale(0.995);
+	}
+
+	.bind-input-shell:focus-within {
+		background: #FFFFFF;
+		border-color: #4FD1C5;
+		box-shadow: 0 10rpx 20rpx rgba(25, 191, 175, 0.10);
+	}
+
+	.bind-input {
+		flex: 1;
+		height: 92rpx;
+		font-size: 28rpx;
+		color: #0F172A;
+		border: none;
+		background: transparent;
+		padding: 0;
+		margin: 0;
+	}
+
+	.bind-input-action {
+		flex-shrink: 0;
+		padding: 0 18rpx;
+		height: 56rpx;
+		line-height: 56rpx;
+		border-radius: 999rpx;
+		background: rgba(25, 191, 175, 0.10);
+		font-size: 22rpx;
+		font-weight: 700;
+		color: #147C74;
+		transition: transform 0.2s ease, opacity 0.2s ease;
+	}
+
+	.bind-input-action:active {
+		transform: scale(0.98);
+		opacity: 0.88;
+	}
+
+	.bind-input-help {
+		display: block;
+		margin-top: 12rpx;
+		padding-left: 6rpx;
+		font-size: 22rpx;
+		line-height: 1.5;
+		color: #64748B;
+	}
+
 	.form-item--password {
 		margin-bottom: 10rpx;
 	}
@@ -1278,7 +2296,9 @@ export default {
 	.popup-footer {
 		display: flex;
 		gap: 18rpx;
-		margin-top: 28rpx;
+		margin-top: 20rpx;
+		flex-shrink: 0;
+		padding-bottom: calc(env(safe-area-inset-bottom) + 16rpx);
 	}
 
 	.popup-button {
@@ -1307,6 +2327,7 @@ export default {
 
 	.popup-button--primary {
 		background: linear-gradient(135deg, #19BFAF 0%, #317CFF 100%);
+		color: #FFFFFF;
 		box-shadow: 0 14rpx 28rpx rgba(49, 124, 255, 0.22);
 	}
 
@@ -1315,4 +2336,5 @@ export default {
 		font-weight: 600;
 		color: inherit;
 	}
+
 </style>

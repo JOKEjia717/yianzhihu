@@ -1,133 +1,169 @@
 <template>
   <view class="page">
-    <!-- 顶部标题 -->
-    <view class="header">
-      <text class="header-title">养老院详情</text>
-    </view>
-    
-    <!-- 主要内容区域 -->
+    <view class="page-glow page-glow--left"></view>
+    <view class="page-glow page-glow--right"></view>
+
     <view class="container">
-      <!-- 轮播图 -->
-      <swiper class="swiper" circular autoplay interval="3000" duration="500">
-        <swiper-item>
-          <image class="swiper-image" :src="nursingHome.photo" mode="aspectFill"></image>
-        </swiper-item>
-      </swiper>
-      
-      <!-- 养老院名称 -->
-      <view class="title-section">
-        <text class="title">{{ nursingHome.name }}</text>
-        <text class="status" :class="{ 'active': nursingHome.isEnable === 1 }">
-          {{ nursingHome.isEnable === 1 ? '正常营业' : '暂停营业' }}
-        </text>
-      </view>
-      <!-- 荣誉资质 -->
-      <view class="honor-card" v-if="nursingHome.honors">
-        <view class="info-header">
-          <view class="header-left">
-            <image class="header-icon" src="/static/images/honor.png" mode="aspectFit"></image>
-            <text class="header-title">荣誉资质</text>
-          </view>
-        </view>
-        <view class="honor-content">
-          <text class="honor-text">{{ nursingHome.honors }}</text>
-        </view>
-      </view>
-      <!-- 基本信息 -->
-      <view class="info-card">
-        <view class="info-header">
-          <view class="header-left">
-            <image class="header-icon" src="/static/images/info.png" mode="aspectFit"></image>
-            <text class="header-title">基本信息</text>
-          </view>
-          <view class="header-right">
-            <text class="update-time">更新时间：{{ formatDate(new Date()) }}</text>
-          </view>
-        </view>
-        
-        <view class="info-content">
-          <!-- 院长信息 -->
-          <view class="info-item">
-            <view class="item-label">
-				<image class="item-icon" src="/static/images/human.png" mode="aspectFit"></image>
-              <text>院长:</text>
-            </view>
-            <view class="item-value">
-              <text>{{ nursingHome.director || '12345678998' }}</text>
-            </view>
-          </view>
-          
-          <!-- 联系电话 -->
-          <view class="info-item">
-            <view class="item-label">
-              <image class="item-icon" src="/static/images/phone.png" mode="aspectFit"></image>
-              <text>联系电话:</text>
-            </view>
-            <view class="item-value">
-              <text>15310093881</text>
-            </view>
-          </view>
-          
-          <!-- 地址信息 -->
-          <view class="info-item">
-            <view class="item-label">
-              <image class="item-icon" src="/static/images/location.png" mode="aspectFit"></image>
-              <text>地址:</text>
-            </view>
-            <view class="item-value">
-              <text>{{ nursingHome.address || '暂无' }}</text>
-            </view>
-          </view>
-          
 
-          
-          <!-- 成立时间 -->
-          <view class="info-item">
-            <view class="item-label">
-              <image class="item-icon" src="/static/images/time.png" mode="aspectFit"></image>
-              <text>成立时间:</text>
+      <view class="hero-card">
+        <image class="hero-image" :src="getHeroImage()" mode="aspectFill"></image>
+        <view class="hero-overlay"></view>
+        <view class="hero-content">
+          <view class="hero-top">
+            <view class="hero-badges">
+              <view class="role-badge">
+                <text class="role-badge-text">管理看板</text>
+              </view>
+              <view class="status-badge" :class="getStatusClass()">
+                <text class="status-badge-text">{{ getStatusText() }}</text>
+              </view>
             </view>
-            <view class="item-value">
-              <text>{{ formatDate(nursingHome.createdTime) }}</text>
-            </view>
-          </view>
-          
-          <!-- 院所编号 -->
-          <view class="info-item">
-            <view class="item-label">
-              <image class="item-icon" src="/static/images/id.png" mode="aspectFit"></image>
-              <text>院所编号:</text>
-            </view>
-            <view class="item-value">
-              <text>{{ nursingHome.nursingHomeId || '暂无' }}</text>
+            <view class="sync-badge">
+              <text class="sync-label">最后更新</text>
+              <text class="sync-value">{{ lastUpdatedText }}</text>
             </view>
           </view>
-        </view>
-        
-        <!-- 快捷操作按钮 -->
-        <view class="action-buttons">
-          <view class="action-btn" @click="makeCall">
-            <image class="action-icon" src="/static/images/call.png" mode="aspectFit"></image>
-            <text>拨打电话</text>
-          </view>
-          <view class="action-btn" @click="openMap">
-            <image class="action-icon" src="/static/images/map.png" mode="aspectFit"></image>
-            <text>查看地图</text>
-          </view>
-          <view class="action-btn" @click="shareInfo">
-            <image class="action-icon" src="/static/images/share.png" mode="aspectFit"></image>
-            <text>分享信息</text>
+
+          <text class="hero-name">{{ nursingHome.name || '养老院详情' }}</text>
+          <text class="hero-address">{{ nursingHome.address || '地址信息待补充' }}</text>
+
+          <view class="hero-chips">
+            <view class="hero-chip">
+              <text class="hero-chip-text">院长：{{ nursingHome.director || '暂无' }}</text>
+            </view>
+            <view class="hero-chip">
+              <text class="hero-chip-text">成立：{{ formatDate(nursingHome.createdTime) }}</text>
+            </view>
+            <view class="hero-chip">
+              <text class="hero-chip-text">编号：{{ nursingHome.nursingHomeId || '暂无' }}</text>
+            </view>
           </view>
         </view>
       </view>
-      
 
+      <view class="section overview-section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">信息概览</text>
+            <text class="section-subtitle">把最常看的资料整理成卡片</text>
+          </view>
+          <view class="section-pill">
+            <text class="section-pill-text">4 项</text>
+          </view>
+        </view>
+        <view class="overview-grid">
+          <view class="overview-card">
+            <text class="overview-label">运营状态</text>
+            <text class="overview-value" :class="getStatusClass()">{{ getStatusText() }}</text>
+          </view>
+          <view class="overview-card">
+            <text class="overview-label">院长</text>
+            <text class="overview-value">{{ nursingHome.director || '暂无' }}</text>
+          </view>
+          <view class="overview-card">
+            <text class="overview-label">成立时间</text>
+            <text class="overview-value">{{ formatDate(nursingHome.createdTime) }}</text>
+          </view>
+          <view class="overview-card">
+            <text class="overview-label">院所编号</text>
+            <text class="overview-value">{{ nursingHome.nursingHomeId || '暂无' }}</text>
+          </view>
+        </view>
+      </view>
+
+
+
+      <view class="section action-section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">快捷操作</text>
+            <text class="section-subtitle">常用动作放在这里，便于快速处理</text>
+          </view>
+        </view>
+        <view class="action-grid">
+          <view class="action-card action-card--phone" @click="makeCall">
+            <view class="action-icon-box action-icon-box--phone">
+              <image class="action-icon" src="/static/images/phone-icon.png" mode="aspectFit"></image>
+            </view>
+            <text class="action-title">拨打电话</text>
+            <text class="action-desc">{{ getDisplayPhone() }}</text>
+          </view>
+          <view class="action-card action-card--map" @click="openMap">
+            <view class="action-icon-box action-icon-box--map">
+              <image class="action-icon" src="/static/images/location.png" mode="aspectFit"></image>
+            </view>
+            <text class="action-title">查看地图</text>
+            <text class="action-desc">{{ hasCoordinates() ? '支持定位直达' : '支持复制地址' }}</text>
+          </view>
+          <view class="action-card action-card--share" @click="shareInfo">
+            <view class="action-icon-box action-icon-box--share">
+              <image class="action-icon" src="/static/images/icon-more.png" mode="aspectFit"></image>
+            </view>
+            <text class="action-title">分享信息</text>
+            <text class="action-desc">发送养老院简介</text>
+          </view>
+          <view class="action-card action-card--refresh" @click="refreshInfo">
+            <view class="action-icon-box action-icon-box--refresh">
+              <image class="action-icon" src="/static/images/refresh.png" mode="aspectFit"></image>
+            </view>
+            <text class="action-title">刷新资料</text>
+            <text class="action-desc">重新拉取最新信息</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section info-section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">基本信息</text>
+            <text class="section-subtitle">院长、地址和编号等核心资料</text>
+          </view>
+        </view>
+        <view class="info-list">
+          <view class="info-row">
+            <image class="info-icon" src="/static/images/human.png" mode="aspectFit"></image>
+            <text class="info-label">院长</text>
+            <text class="info-value">{{ nursingHome.director || '暂无' }}</text>
+          </view>
+          <view class="info-row" @click="makeCall">
+            <image class="info-icon" src="/static/images/phone.png" mode="aspectFit"></image>
+            <text class="info-label">联系电话</text>
+            <text class="info-value info-value--accent">{{ getDisplayPhone() }}</text>
+          </view>
+          <view class="info-row" @click="openMap">
+            <image class="info-icon" src="/static/images/location.png" mode="aspectFit"></image>
+            <text class="info-label">地址</text>
+            <text class="info-value info-value--accent">{{ nursingHome.address || '暂无' }}</text>
+          </view>
+          <view class="info-row">
+            <image class="info-icon" src="/static/images/time.png" mode="aspectFit"></image>
+            <text class="info-label">成立时间</text>
+            <text class="info-value">{{ formatDate(nursingHome.createdTime) }}</text>
+          </view>
+          <view class="info-row">
+            <image class="info-icon" src="/static/images/id.png" mode="aspectFit"></image>
+            <text class="info-label">院所编号</text>
+            <text class="info-value">{{ nursingHome.nursingHomeId || '暂无' }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section honor-section">
+        <view class="section-header">
+          <view>
+            <text class="section-title">荣誉资质</text>
+            <text class="section-subtitle">展示养老院的资质与荣誉</text>
+          </view>
+        </view>
+        <view class="honor-panel" :class="{ 'honor-panel--empty': !nursingHome.honors }">
+          <text class="honor-text">{{ nursingHome.honors || '当前暂无荣誉资质信息，可在后台补充后展示。' }}</text>
+        </view>
+      </view>
     </view>
 
-    <!-- 底部导航�? -->
     <view class="tabbar">
       <view class="tabbar-item active">
-        <image class="tabbar-icon" src="/static/images/home.png"></image>
+        <image class="tabbar-icon" src="/static/images/home-active.png"></image>
         <text class="tabbar-text active">详情</text>
       </view>
       <view class="tabbar-item" @click="redirectTo('/pages/dean/dispute')">
@@ -155,6 +191,8 @@
 </template>
 
 <script lang="uts">
+import { request } from '../../utils/request'
+
 interface NursingHome {
   nursingHomeId: string
   name: string
@@ -165,6 +203,11 @@ interface NursingHome {
   deanId: string
   createdTime: string
   isEnable: number
+  phone?: string
+  contactPhone?: string
+  directorPhone?: string
+  latitude?: number | string
+  longitude?: number | string
 }
 
 interface ApiResponse {
@@ -185,91 +228,162 @@ export default {
         honors: '',
         deanId: '',
         createdTime: '',
-        isEnable: 0
-      } as NursingHome
+        isEnable: -1
+      } as NursingHome,
+      lastUpdatedText: '待同步'
     }
   },
   onLoad() {
     this.fetchNursingHomeInfo()
   },
   methods: {
-    // 格式化日�?
+    getHeroImage() {
+      return this.nursingHome.photo || '/static/images/dean-card-bg.jpg'
+    },
+    getStatusText() {
+      const statusCode = Number(this.nursingHome.isEnable)
+
+      if (statusCode === 1) {
+        return '正常营业'
+      }
+
+      if (statusCode === 0) {
+        return '暂停营业'
+      }
+
+      return '待同步'
+    },
+    getStatusClass() {
+      const statusCode = Number(this.nursingHome.isEnable)
+
+      if (statusCode === 1) {
+        return 'active'
+      }
+
+      if (statusCode === 0) {
+        return 'inactive'
+      }
+
+      return 'loading'
+    },
+    getRawPhone() {
+      const phone =
+        this.nursingHome.directorPhone ||
+        this.nursingHome.contactPhone ||
+        this.nursingHome.phone ||
+        ''
+
+      return String(phone || '').trim()
+    },
+    getDisplayPhone() {
+      const phone = this.getRawPhone()
+      return phone || '未配置'
+    },
+    hasPhone() {
+      return this.getRawPhone().length > 0
+    },
+    hasCoordinates() {
+      const latitudeText = String(this.nursingHome.latitude ?? '').trim()
+      const longitudeText = String(this.nursingHome.longitude ?? '').trim()
+
+      if (!latitudeText || !longitudeText) {
+        return false
+      }
+
+      const latitude = Number(latitudeText)
+      const longitude = Number(longitudeText)
+      return !isNaN(latitude) && !isNaN(longitude)
+    },
+    hasHonors() {
+      return String(this.nursingHome.honors || '').trim().length > 0
+    },
+    getShareSummary() {
+      const director = this.nursingHome.director || '院长信息待完善'
+      const address = this.nursingHome.address || '地址信息待完善'
+      return `院长：${director}，地址：${address}`
+    },
     formatDate(dateStr: string | Date): string {
-      if (!dateStr) return '暂无';
-      
+      if (!dateStr) return '暂无'
+
       try {
         if (dateStr instanceof Date) {
-          const year = dateStr.getFullYear();
-          const month = (dateStr.getMonth() + 1).toString().padStart(2, '0');
-          const day = dateStr.getDate().toString().padStart(2, '0');
-          return `${year}-${month}-${day}`;
+          const year = dateStr.getFullYear()
+          const month = String(dateStr.getMonth() + 1).padStart(2, '0')
+          const day = String(dateStr.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
         }
-        
-        // 简单格式化，只显示年月�?
-        return dateStr.substring(0, 10);
-      } catch (e) {
+
+        const normalizedDate = new Date(String(dateStr).replace(/-/g, '/'))
+        if (!isNaN(normalizedDate.getTime())) {
+          const year = normalizedDate.getFullYear()
+          const month = String(normalizedDate.getMonth() + 1).padStart(2, '0')
+          const day = String(normalizedDate.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+
+        return String(dateStr).substring(0, 10)
+      } catch (error) {
         if (typeof dateStr === 'string') {
-          return dateStr;
+          return dateStr
         }
-        return '暂无';
+        return '暂无'
       }
     },
-    
+    formatDateTime(date: Date): string {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}`
+    },
     async fetchNursingHomeInfo() {
       try {
-        // 从本地存储获取token
-        const accessToken = uni.getStorageSync('accessToken')
-        const refreshToken = uni.getStorageSync('refreshToken')
-        
+        const accessToken = String(uni.getStorageSync('accessToken') || '').trim()
+        const refreshToken = String(uni.getStorageSync('refreshToken') || '').trim()
+
         if (!accessToken || !refreshToken) {
           uni.showToast({
-            title: '未登录或登录已过�?',
+            title: '未登录或登录已过期',
             icon: 'none'
           })
-          // 跳转到登录页
           uni.redirectTo({
             url: '/pages/dean/login'
           })
           return
         }
-        
+
         uni.showLoading({
-          title: '加载�?...'
+          title: '加载中...'
         })
 
-        const result = await uni.request({
-          url: 'http://localhost:8080/home/nursingHome',
-          method: 'GET',
-          header: {
-            'accessToken': accessToken,
-            'refreshToken': refreshToken
-          }
-        })
-        
-        uni.hideLoading()
-        
-        // ��ӡ������Ӧ�����Ա����
-        console.log('获取养老院信息完整响应:', result)
-        
-        const response = result.data as ApiResponse
-        if (response.code === 1 && response.data) {
-          this.nursingHome = response.data
-          console.log('养老院信息:', this.nursingHome)
-        } else {
-          console.error('获取数据失败, 响应详情:', response)
-          uni.showToast({
-            title: '获取数据失败',
-            icon: 'none'
-          })
+        const result = await request.get('/home/nursingHome') as {
+          statusCode: number
+          data: ApiResponse
         }
+
+        if (result.statusCode === 200 && result.data && result.data.code === 1 && result.data.data) {
+          this.nursingHome = result.data.data
+          this.lastUpdatedText = this.formatDateTime(new Date())
+          return
+        }
+
+        uni.showToast({
+          title: result.data?.msg || '获取数据失败',
+          icon: 'none'
+        })
       } catch (error) {
-        uni.hideLoading()
         console.error('请求失败:', error)
         uni.showToast({
           title: '网络错误',
           icon: 'none'
         })
+      } finally {
+        uni.hideLoading()
       }
+    },
+    refreshInfo() {
+      this.fetchNursingHomeInfo()
     },
     redirectTo(url: string) {
       uni.redirectTo({
@@ -277,25 +391,128 @@ export default {
       })
     },
     makeCall() {
-      // 实现拨打电话的功�?
-      uni.showToast({
-        title: '暂无电话号码',
-        icon: 'none'
+      const rawPhoneNumber = this.getRawPhone()
+      const phoneNumber = rawPhoneNumber.replace(/[^\d+]/g, '')
+      if (!phoneNumber) {
+        uni.showToast({
+          title: '联系电话未配置',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (typeof uni.makePhoneCall !== 'function') {
+        uni.setClipboardData({
+          data: rawPhoneNumber,
+          success: () => {
+            uni.showToast({
+              title: '电话已复制',
+              icon: 'none'
+            })
+          },
+          fail: () => {
+            uni.showToast({
+              title: '复制失败',
+              icon: 'none'
+            })
+          }
+        })
+        return
+      }
+
+      uni.makePhoneCall({
+        phoneNumber,
+        fail: () => {
+          uni.showToast({
+            title: '拨打失败',
+            icon: 'none'
+          })
+        }
+      })
+    },
+    copyAddress() {
+      const address = String(this.nursingHome.address || '').trim()
+      if (!address) {
+        uni.showToast({
+          title: '暂无地址信息',
+          icon: 'none'
+        })
+        return
+      }
+
+      uni.setClipboardData({
+        data: address,
+        success: () => {
+          uni.showToast({
+            title: '地址已复制',
+            icon: 'none'
+          })
+        },
+        fail: () => {
+          uni.showToast({
+            title: '复制失败',
+            icon: 'none'
+          })
+        }
       })
     },
     openMap() {
-      // 实现查看地图的功�?
-      uni.showToast({
-        title: '地图功能开发中',
-        icon: 'none'
-      })
+      if (this.hasCoordinates()) {
+        const latitude = Number(this.nursingHome.latitude)
+        const longitude = Number(this.nursingHome.longitude)
+
+        if (typeof uni.openLocation !== 'function') {
+          this.copyAddress()
+          return
+        }
+
+        uni.openLocation({
+          latitude: latitude,
+          longitude: longitude,
+          name: this.nursingHome.name || '养老院详情',
+          address: this.nursingHome.address || '',
+          fail: () => {
+            this.copyAddress()
+          }
+        })
+        return
+      }
+
+      this.copyAddress()
     },
     shareInfo() {
-      // 实现分享信息的功能?
+      if (!this.nursingHome.name) {
+        uni.showToast({
+          title: '暂无可分享信息',
+          icon: 'none'
+        })
+        return
+      }
+
+      if (typeof uni.share !== 'function') {
+        const summary = `${this.nursingHome.name}\n${this.getShareSummary()}`
+        uni.setClipboardData({
+          data: summary,
+          success: () => {
+            uni.showToast({
+              title: '分享文案已复制',
+              icon: 'none'
+            })
+          },
+          fail: () => {
+            uni.showToast({
+              title: '复制失败',
+              icon: 'none'
+            })
+          }
+        })
+        return
+      }
+
       uni.share({
         provider: 'weixin',
         title: this.nursingHome.name,
-        summary: `院长: ${this.nursingHome.director}, 地址: ${this.nursingHome.address}`,
+        summary: this.getShareSummary(),
         success: () => {
           uni.showToast({
             title: '分享成功'
@@ -316,212 +533,484 @@ export default {
 <style>
 .page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(180deg, #f4fbf8 0%, #ffffff 48%, #f6f9f7 100%);
   position: relative;
-  padding-bottom: 120rpx;
+  overflow: hidden;
+  padding-bottom: 160rpx;
 }
 
-.header {
-  background: linear-gradient(to bottom, #26c48b, #ffffff);
-  height: 100rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 30rpx;
+.page-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.7;
 }
 
-.header-title {
-  color: #ffffff;
-  font-size: 40rpx;
-  font-weight: bold;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+.page-glow--left {
+  width: 360rpx;
+  height: 360rpx;
+  top: -120rpx;
+  left: -160rpx;
+  background: radial-gradient(circle, rgba(67, 160, 71, 0.22) 0%, rgba(67, 160, 71, 0) 70%);
+}
+
+.page-glow--right {
+  width: 320rpx;
+  height: 320rpx;
+  top: 160rpx;
+  right: -180rpx;
+  background: radial-gradient(circle, rgba(38, 195, 137, 0.14) 0%, rgba(38, 195, 137, 0) 72%);
 }
 
 .container {
-  padding-bottom: 120rpx;
   position: relative;
   z-index: 2;
+  padding: 24rpx 24rpx 40rpx;
 }
 
-.swiper {
-  width: 100%;
-  height: 400rpx;
+.page-intro {
+  padding: 8rpx 8rpx 18rpx;
 }
 
-.swiper-image {
+.page-kicker {
+  display: block;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  color: #5e8b5b;
+  font-weight: 700;
+}
+
+.page-title {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 48rpx;
+  line-height: 1.2;
+  color: #143c2a;
+  font-weight: 800;
+}
+
+.page-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #5c6b63;
+}
+
+.hero-card {
+  position: relative;
+  height: 420rpx;
+  border-radius: 36rpx;
+  overflow: hidden;
+  border: 1rpx solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 24rpx 60rpx rgba(20, 60, 42, 0.14);
+  background: #dceee5;
+}
+
+.hero-image {
   width: 100%;
   height: 100%;
 }
 
-.title-section {
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(13, 37, 25, 0.08) 0%, rgba(13, 37, 25, 0.35) 58%, rgba(13, 37, 25, 0.72) 100%);
+}
+
+.hero-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20rpx;
-  background-color: #ffffff;
-  margin: 20rpx 30rpx;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  align-items: flex-start;
+  gap: 16rpx;
 }
 
-.title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333333;
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
 }
 
-.status {
+.role-badge,
+.status-badge,
+.sync-badge {
+  border-radius: 999rpx;
+}
+
+.role-badge {
+  padding: 10rpx 18rpx;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1rpx solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14rpx);
+}
+
+.role-badge-text {
   font-size: 24rpx;
-  padding: 6rpx 20rpx;
-  border-radius: 24rpx;
-  background-color: #ff6b6b;
+  font-weight: 700;
   color: #ffffff;
 }
 
-.status.active {
-  background-color: #26c48b;
+.status-badge {
+  padding: 10rpx 18rpx;
 }
 
-.info-card, .honor-card {
-  margin: 20rpx 30rpx;
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+.status-badge.active {
+  background: rgba(46, 125, 50, 0.92);
 }
 
-.info-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+.status-badge.inactive {
+  background: rgba(176, 72, 50, 0.92);
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
+.status-badge.loading {
+  background: rgba(96, 125, 139, 0.92);
 }
 
-.header-icon {
-  width: 40rpx;
-  height: 40rpx;
-  margin-right: 10rpx;
-}
-
-.header-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333333;
-}
-
-.header-right {
+.status-badge-text {
   font-size: 24rpx;
-  color: #999999;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-.update-time {
-  font-size: 24rpx;
-  color: #999999;
-}
-
-.info-content {
-  padding: 20rpx;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: row;
-  margin-left: 10px;
-  /* justify-content: space-between; */
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.info-item:last-child {
-  border-bottom: none;
-}
-
-.item-label {
-  display: flex;
-  	flex-direction: row;
-  align-items: center;
-  color: #666666;
-  font-size: 28rpx;
-}
-
-
-.item-icon {
-  width: 36rpx;
-  height: 36rpx;
-  margin-right: 10rpx;
-}
-
-.item-value {
-  text-align: right;
-  padding-left: 10px;
-  color: #333333;
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
-.honor-content {
-  padding: 20rpx;
-}
-
-.honor-text {
-  font-size: 28rpx;
-  color: #666666;
-  line-height: 1.6;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: space-around;
-  padding: 20rpx;
-  border-top: 1rpx solid #f0f0f0;
-  margin-top: 10rpx;
-}
-
-.action-btn {
-  flex: 1;
+.sync-badge {
+  padding: 10rpx 16rpx;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16rpx 0;
-  margin: 0 10rpx;
-  border-radius: 12rpx;
-  background-color: #f5f5f5;
-  transition: background-color 0.3s;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(14rpx);
 }
 
-.action-btn:active {
-  background-color: #eeeeee;
+.sync-label {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.sync-value {
+  margin-top: 2rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.hero-name {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 46rpx;
+  line-height: 1.2;
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.25);
+  word-break: break-all;
+}
+
+.hero-address {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  word-break: break-all;
+}
+
+.hero-chips {
+  margin-top: 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.hero-chip {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1rpx solid rgba(255, 255, 255, 0.18);
+}
+
+.hero-chip-text {
+  font-size: 22rpx;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.section {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  background: #ffffff;
+  border-radius: 30rpx;
+  border: 1rpx solid #eaf2ed;
+  box-shadow: 0 16rpx 40rpx rgba(17, 60, 42, 0.06);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 34rpx;
+  color: #143c2a;
+  font-weight: 800;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #6c7b73;
+}
+
+.section-pill {
+  flex-shrink: 0;
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(67, 160, 71, 0.12);
+}
+
+.section-pill--soft {
+  background: rgba(67, 160, 71, 0.08);
+}
+
+.section-pill-text {
+  font-size: 22rpx;
+  color: #2e7d32;
+  font-weight: 700;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.overview-card {
+  padding: 22rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #e3eee6;
+  background: linear-gradient(180deg, #f8fbf9 0%, #ffffff 100%);
+}
+
+.overview-label {
+  display: block;
+  margin-bottom: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: #6e7b74;
+  font-weight: 700;
+}
+
+.overview-value {
+  display: block;
+  font-size: 30rpx;
+  line-height: 1.45;
+  color: #1f2d27;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.overview-value.active {
+  color: #2e7d32;
+}
+
+.overview-value.inactive {
+  color: #b04e36;
+}
+
+.overview-value.loading {
+  color: #6b7b75;
+}
+
+
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.action-card {
+  min-height: 188rpx;
+  padding: 22rpx 18rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #e5eee8;
+  background: linear-gradient(180deg, #f9fcfa 0%, #ffffff 100%);
+  box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-card:active {
+  transform: scale(0.985);
+  box-shadow: 0 8rpx 18rpx rgba(0, 0, 0, 0.04);
+}
+
+.action-card--phone {
+  background: linear-gradient(180deg, #f6fbf7 0%, #ffffff 100%);
+}
+
+.action-card--map {
+  background: linear-gradient(180deg, #f7fbf9 0%, #ffffff 100%);
+}
+
+.action-card--share {
+  background: linear-gradient(180deg, #fbfaf7 0%, #ffffff 100%);
+}
+
+.action-card--refresh {
+  background: linear-gradient(180deg, #f7fbf7 0%, #ffffff 100%);
+}
+
+.action-icon-box {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18rpx;
+}
+
+.action-icon-box--phone {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.action-icon-box--map {
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+}
+
+.action-icon-box--share {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+
+.action-icon-box--refresh {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
 }
 
 .action-icon {
-  width: 44rpx;
-  height: 44rpx;
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.action-title {
+  display: block;
   margin-bottom: 8rpx;
+  font-size: 30rpx;
+  color: #182822;
+  font-weight: 800;
 }
 
-.action-btn text {
-  font-size: 24rpx;
-  color: #666666;
+.action-desc {
+  display: block;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #66736b;
+  word-break: break-all;
 }
 
-.status-tag {
-  padding: 6rpx 20rpx;
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: auto 130rpx 1fr;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(180deg, #f8fbf9 0%, #ffffff 100%);
+  border: 1rpx solid #e8f0ec;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-row:active {
+  transform: scale(0.99);
+  background: #f0f7f4;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: #5c6b63;
+  font-weight: 600;
+}
+
+.info-icon {
+  width: 36rpx;
+  height: 36rpx;
+  opacity: 0.85;
+}
+
+.info-value {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #1f2d27;
+  font-weight: 700;
+  text-align: left;
+  word-break: break-all;
+}
+
+.info-value--accent {
+  color: #2e7d32;
+}
+
+.honor-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 18rpx;
+  padding: 22rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(135deg, #f6fbf7 0%, #eef8f0 100%);
+  border: 1rpx solid #ddebdd;
+}
+
+.honor-panel--empty {
+  background: linear-gradient(135deg, #f7f9f8 0%, #ffffff 100%);
+  border-color: #e6eee8;
+}
+
+.honor-mark {
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 24rpx;
-  background-color: #ff6b6b;
-  color: #ffffff;
-  font-size: 24rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  box-shadow: 0 10rpx 24rpx rgba(67, 160, 71, 0.18);
 }
 
-.status-tag.active-tag {
-  background-color: #26c48b;
+.honor-mark-text {
+  font-size: 42rpx;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.honor-text {
+  flex: 1;
+  font-size: 28rpx;
+  line-height: 1.7;
+  color: #1f2d27;
 }
 
 .tabbar {
@@ -529,14 +1018,16 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 100rpx;
-  background-color: #ffffff;
+  height: 108rpx;
+  background: #ffffff;
   display: flex;
   flex-direction: row;
   align-items: center;
-  border-top: 1rpx solid #eeeeee;
+  border-top: 1rpx solid #ecf0ed;
   z-index: 10;
   padding: 0 10rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -8rpx 24rpx rgba(17, 60, 42, 0.04);
 }
 
 .tabbar-item {
@@ -546,7 +1037,12 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 5rpx;
+  padding: 0 4rpx;
+  border-radius: 18rpx;
+}
+
+.tabbar-item.active {
+  background: rgba(67, 160, 71, 0.08);
 }
 
 .tabbar-icon {
@@ -557,10 +1053,11 @@ export default {
 
 .tabbar-text {
   font-size: 20rpx;
-  color: #999999;
+  color: #7a8a84;
 }
 
 .tabbar-text.active {
-  color: #26c48b;
+  color: #2e7d32;
+  font-weight: 700;
 }
-</style> 
+</style>
