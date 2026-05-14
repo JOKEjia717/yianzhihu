@@ -1,24 +1,65 @@
 <template>
   <view class="page">
-    <!-- 顶部标题栏 -->
-    <view class="header">
-      <text class="title">个人中心</text>
+    <view class="bg-orb bg-orb--one"></view>
+    <view class="bg-orb bg-orb--two"></view>
+    <view class="bg-orb bg-orb--three"></view>
+
+    <view class="hero-card">
+      <view class="hero-content">
+        <view class="hero-head">
+          <view class="hero-avatar-shell" @click="showEditModal">
+            <image class="hero-avatar" :src="userInfo.avatar || '/static/images/default-avatar.png'" mode="aspectFill"></image>
+            <view class="hero-avatar-tag">
+              <image class="hero-avatar-tag-icon" src="/static/images/pen.png" mode="aspectFit"></image>
+              <text class="hero-avatar-tag-text">编辑</text>
+            </view>
+          </view>
+
+          <view class="hero-copy">
+           <!-- <text class="hero-kicker">护工端 · 我的</text> -->
+            <text class="hero-name">{{ userInfo.name || '未设置姓名' }}</text>
+            <!-- <text class="hero-desc">护理信息、快捷入口和资料编辑都在这里。</text> -->
+          </view>
+        </view>
+
+        <!-- <view class="hero-meta">
+          <view class="meta-item">
+            <text class="meta-label">联系电话</text>
+            <text class="meta-value">{{ userInfo.phone || '未设置' }}</text>
+          </view>
+          <view class="meta-item">
+            <text class="meta-label">专业特长</text>
+            <text class="meta-value">{{ userInfo.specialty || '未设置' }}</text>
+          </view>
+        </view -->
+
+<!--        <view class="hero-actions">
+          <view class="hero-action hero-action--secondary" @click="showEditModal">
+            <text class="hero-action-title">编辑资料</text>
+            <text class="hero-action-sub">头像、电话、特长</text>
+          </view>
+          <view class="hero-action hero-action--primary" @click="handleLogout">
+            <text class="hero-action-title">退出登录</text>
+            <text class="hero-action-sub">重新登录后继续使用</text>
+          </view>
+        </view> -->
+      </view>
     </view>
 
-    <!-- 主要内容区域 -->
-    <view class="content">
-      <view class="profile-card">
-        <view class="avatar-section">
-          <image 
-            class="avatar" 
-            :src="userInfo.avatar || '/static/images/default-avatar.png'" 
-            mode="aspectFill"
-            @click="showEditModal"
-          ></image>
-          <text class="name">{{ userInfo.name || '未设置姓名' }}</text>
+    <view class="section">
+      <view class="section-header">
+        <view>
+          <text class="section-title">个人信息</text>
+          <text class="section-subtitle">当前账号信息一览</text>
         </view>
-        
+      </view>
+
+      <view class="profile-card">
         <view class="info-list">
+          <view class="info-item">
+            <text class="label">姓名</text>
+            <text class="value">{{ userInfo.name || '未设置姓名' }}</text>
+          </view>
           <view class="info-item">
             <text class="label">联系电话</text>
             <text class="value">{{ userInfo.phone || '未设置' }}</text>
@@ -28,24 +69,70 @@
             <text class="value">{{ userInfo.specialty || '未设置' }}</text>
           </view>
         </view>
-        <button class="edit-btn" @click="showEditModal">编辑资料</button>
       </view>
     </view>
 
-    <!-- 编辑资料弹窗 -->
+    <view class="section">
+      <view class="section-header">
+        <view>
+          <text class="section-title">快捷入口</text>
+          <text class="section-subtitle">常用功能一眼可达</text>
+        </view>
+      </view>
+
+      <view class="menu-list">
+        <view class="menu-item" @click="handleMenuClick('profile')">
+          <view class="menu-left">
+            <image class="menu-icon" src="/static/images/chates.png" mode="aspectFit"></image>
+            <text class="menu-text">个人资料</text>
+          </view>
+          <!-- <text class="menu-arrow">›</text> -->
+        </view>
+        <view class="menu-item" @click="handleMenuClick('schedule')">
+          <view class="menu-left">
+            <image class="menu-icon" src="/static/images/refresh.png" mode="aspectFit"></image>
+            <text class="menu-text">排班管理</text>
+          </view>
+         <!-- <text class="menu-arrow">›</text> -->
+        </view>
+<!--        <view class="menu-item" @click="handleMenuClick('settings')">
+         <view class="menu-left">
+            <image class="menu-icon" src="/static/images/setting.png" mode="aspectFit"></image>
+            <text class="menu-text">系统设置</text>
+          </view> 
+          <text class="menu-arrow">›</text>
+        </view> -->
+      </view>
+    </view>
+
+    <view class="section logout-section">
+      <view class="section-header">
+        <view>
+          <text class="section-title">账号操作</text>
+          <text class="section-subtitle">退出当前登录状态</text>
+        </view>
+      </view>
+      <view class="logout-button" @click="handleLogout">
+        <text class="logout-button-text">退出登录</text>
+      </view>
+    </view>
+
     <view v-if="showEdit" class="modal-mask">
       <view class="modal-content">
+        <view class="modal-handle"></view>
         <view class="modal-header">
           <text class="modal-title">编辑资料</text>
           <text class="modal-close" @click="closeEditModal">×</text>
         </view>
+        <text class="modal-subtitle">更新头像、电话和专业特长后，会同步到本地账号信息。</text>
+
         <view class="modal-body">
           <view class="form-item">
             <text class="form-label">头像</text>
             <view class="avatar-upload" @click="chooseAvatar">
-              <image 
-                v-if="editForm.avatar" 
-                :src="editForm.avatar" 
+              <image
+                v-if="editForm.avatar"
+                :src="editForm.avatar"
                 class="preview-avatar"
                 mode="aspectFill"
               ></image>
@@ -56,23 +143,14 @@
           </view>
           <view class="form-item">
             <text class="form-label">联系电话</text>
-            <input 
-              class="form-input" 
-              v-model="editForm.phone" 
-              placeholder="请输入联系电话"
-              type="text"
-            />
+            <input class="form-input" v-model="editForm.phone" placeholder="请输入联系电话" type="text" />
           </view>
           <view class="form-item">
             <text class="form-label">专业特长</text>
-            <input 
-              class="form-input" 
-              v-model="editForm.specialty" 
-              placeholder="请输入专业特长"
-              type="text"
-            />
+            <input class="form-input" v-model="editForm.specialty" placeholder="请输入专业特长" type="text" />
           </view>
         </view>
+
         <view class="modal-footer">
           <button class="modal-btn cancel" @click="closeEditModal">取消</button>
           <button class="modal-btn confirm" @click="submitEdit" :disabled="isSubmitting">
@@ -82,13 +160,11 @@
       </view>
     </view>
 
-    <!-- 添加底部导航栏 -->
     <nurse-tabbar current-path="/pages/nurse/my"></nurse-tabbar>
   </view>
 </template>
 
 <script lang="uts">
-// 引入导航栏组件
 import NurseTabbar from '../../components/nurse-tabbar.uvue'
 
 interface UserInfo {
@@ -150,7 +226,7 @@ export default {
       try {
         const accessToken = uni.getStorageSync('accessToken')
         const refreshToken = uni.getStorageSync('refreshToken')
-        
+
         const result = await uni.request({
           url: 'http://localhost:8080/order/stats',
           method: 'GET',
@@ -168,20 +244,18 @@ export default {
       }
     },
     navigateTo(url: string) {
-      uni.navigateTo({
-        url: url
-      })
+      uni.navigateTo({ url: url })
     },
     handleMenuClick(type: string) {
-      switch(type) {
+      switch (type) {
         case 'profile':
-          // 跳转到个人资料页面
+          this.showEditModal()
           break
         case 'schedule':
-          // 跳转到排班管理页面
+          uni.showToast({ title: '功能待完善', icon: 'none' })
           break
         case 'settings':
-          // 跳转到系统设置页面
+          uni.showToast({ title: '功能待完善', icon: 'none' })
           break
       }
     },
@@ -204,7 +278,6 @@ export default {
     },
     closeEditModal() {
       this.showEdit = false
-      // 重置表单数据
       this.editForm = {
         avatar: this.userInfo.avatar,
         phone: this.userInfo.phone,
@@ -236,17 +309,16 @@ export default {
         const accessToken = uni.getStorageSync('accessToken')
         const refreshToken = uni.getStorageSync('refreshToken')
 
-        // 如果有新头像且不是默认头像，使用uploadFile上传
-        if (this.editForm.avatar && 
-            this.editForm.avatar !== this.userInfo.avatar && 
+        if (this.editForm.avatar &&
+            this.editForm.avatar !== this.userInfo.avatar &&
             this.editForm.avatar.startsWith('http') === false) {
           const uploadResult = await uni.uploadFile({
             url: 'http://localhost:8080/caretaker/update',
             filePath: this.editForm.avatar,
             name: 'avatar',
             formData: {
-              'phone': this.editForm.phone,
-              'specialty': this.editForm.specialty
+              phone: this.editForm.phone,
+              specialty: this.editForm.specialty
             },
             header: {
               'accessToken': accessToken,
@@ -261,13 +333,12 @@ export default {
             throw new Error(response.msg || '更新失败')
           }
         } else {
-          // 没有新头像或头像未改变，使用request发送数据
           const result = await uni.request({
             url: 'http://localhost:8080/caretaker/update',
             method: 'POST',
             data: {
-              'phone': this.editForm.phone,
-              'specialty': this.editForm.specialty
+              phone: this.editForm.phone,
+              specialty: this.editForm.specialty
             },
             header: {
               'accessToken': accessToken,
@@ -282,7 +353,7 @@ export default {
             throw new Error(result.data.msg || '更新失败')
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('更新失败:', error)
         uni.showToast({
           title: error.message || '更新失败',
@@ -293,7 +364,6 @@ export default {
       }
     },
     updateUserInfo(newData: any) {
-      // 更新本地存储
       const updatedInfo = {
         ...this.userInfo,
         avatar: newData.avatar || this.userInfo.avatar,
@@ -301,18 +371,16 @@ export default {
         specialty: newData.specialty || this.userInfo.specialty
       }
       uni.setStorageSync('userInfo', updatedInfo)
-      
-      // 更新页面数据
+
       this.userInfo = updatedInfo
       this.editForm = {
         avatar: updatedInfo.avatar,
         phone: updatedInfo.phone,
         specialty: updatedInfo.specialty
       }
-      
-      // 关闭弹窗
+
       this.showEdit = false
-      
+
       uni.showToast({
         title: '更新成功',
         icon: 'success'
@@ -325,70 +393,243 @@ export default {
 <style>
 .page {
   min-height: 100vh;
-  background-color: #f8f9fa;
-  padding-bottom: 120rpx; /* 为底部导航栏预留空间 */
-}
-
-.header {
-  background: linear-gradient(135deg, #4FD1C5 0%, #319795 100%);
-  padding: 40rpx 30rpx;
+  padding: 36rpx 30rpx 140rpx;
   position: relative;
+  background: linear-gradient(180deg, #ebf4f5 0%, #f7fbfb 100%);
+  overflow: hidden;
 }
 
-.title {
-  font-size: 36rpx;
-  color: #fff;
-  font-weight: bold;
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.45;
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+.bg-orb--one {
+  width: 240rpx;
+  height: 240rpx;
+  top: -90rpx;
+  right: -70rpx;
+  background: rgba(79, 209, 197, 0.26);
+}
+
+.bg-orb--two {
+  width: 180rpx;
+  height: 180rpx;
+  top: 280rpx;
+  left: -70rpx;
+  background: rgba(64, 156, 255, 0.14);
+}
+
+.bg-orb--three {
+  width: 150rpx;
+  height: 150rpx;
+  bottom: 180rpx;
+  right: 20rpx;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.hero-card {
+  margin-top: 18rpx;
+  padding: 34rpx 30rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, rgba(79, 209, 197, 0.96), rgba(64, 156, 255, 0.92));
+  box-shadow: 0 18rpx 40rpx rgba(15, 76, 123, 0.12);
+}
+
+.hero-head {
+  display: flex;
+  align-items: center;
+}
+
+.hero-avatar-shell {
+  position: relative;
+  width: 136rpx;
+  height: 136rpx;
+  flex-shrink: 0;
+  margin-right: 22rpx;
+}
+
+.hero-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.hero-avatar-tag {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12rpx 24rpx rgba(8, 44, 71, 0.16);
+}
+
+.hero-avatar-tag-icon {
+  width: 20rpx;
+  height: 20rpx;
+}
+
+.hero-avatar-tag-text {
+  font-size: 22rpx;
+  color: #147c74;
+  font-weight: 600;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
   text-align: center;
-  display: block;
 }
 
-.content {
-  padding: 30rpx;
-  margin-top: -40rpx;
+.hero-kicker {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.hero-name {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 44rpx;
+  color: #ffffff;
+  font-weight: 700;
+  text-align:center;
+}
+
+.hero-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.55;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 26rpx;
+}
+
+.meta-item {
+  flex: 1;
+  min-width: 0;
+  padding: 18rpx 16rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+
+.meta-label {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.74);
+  margin-bottom: 8rpx;
+}
+
+.meta-value {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+
+.hero-action {
+  flex: 1;
+  border-radius: 22rpx;
+  padding: 18rpx 18rpx 16rpx;
+}
+
+.hero-action--primary {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.hero-action--secondary {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1rpx solid rgba(255, 255, 255, 0.16);
+}
+
+.hero-action-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hero-action--secondary .hero-action-title {
+  color: #ffffff;
+}
+
+.hero-action-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #64748b;
+}
+
+.hero-action--secondary .hero-action-sub {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.section {
+  margin-top: 24rpx;
+}
+
+.section-header {
+  margin-bottom: 18rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.section-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
+.profile-card,
+.menu-list,
+.logout-section {
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16rpx 40rpx rgba(15, 76, 123, 0.06);
 }
 
 .profile-card {
-  background-color: #fff;
-  border-radius: 20rpx;
-  padding: 40rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
-}
-
-.avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 40rpx;
-}
-
-.avatar {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 80rpx;
-  margin-bottom: 20rpx;
-  border: 4rpx solid #fff;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-}
-
-.name {
-  font-size: 36rpx;
-  color: #2d3748;
-  font-weight: bold;
+  padding: 12rpx 0;
 }
 
 .info-list {
-  background-color: #f8f9fa;
-  border-radius: 12rpx;
-  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx;
-  border-bottom: 1rpx solid #edf2f7;
+  padding: 24rpx 26rpx;
+  border-bottom: 1rpx solid #eef2f7;
 }
 
 .info-item:last-child {
@@ -397,199 +638,155 @@ export default {
 
 .label {
   font-size: 28rpx;
-  color: #718096;
+  color: #64748b;
 }
 
 .value {
   font-size: 28rpx;
-  color: #2d3748;
-  font-weight: 500;
-}
-
-.section {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.section-header {
-  margin-bottom: 16px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-}
-
-.order-stats {
-  display: flex;
-  justify-content: space-between;
-}
-
-.stat-item {
-  text-align: center;
-  flex: 1;
-}
-
-.stat-num {
-  font-size: 20px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
-  display: block;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #999;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .menu-list {
-  background-color: #ffffff;
-  border-radius: 12px;
+  overflow: hidden;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #f5f5f5;
+  justify-content: space-between;
+  padding: 24rpx 26rpx;
+  border-bottom: 1rpx solid #eef2f7;
 }
 
 .menu-item:last-child {
   border-bottom: none;
 }
 
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
 .menu-icon {
-  width: 24px;
-  height: 24px;
-  margin-right: 12px;
+  width: 42rpx;
+  height: 42rpx;
 }
 
 .menu-text {
-  flex: 1;
-  font-size: 16px;
-  color: #333;
+  font-size: 28rpx;
+  color: #0f172a;
+  font-weight: 500;
 }
 
 .menu-arrow {
-  font-size: 16px;
-  color: #999;
+  font-size: 36rpx;
+  color: #94a3b8;
 }
 
-.tabbar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  background-color: #ffffff;
-  display: flex;
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid #f0f0f0;
+.logout-section {
+  padding: 28rpx;
 }
 
-.tab-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.logout-button {
+  margin-top: 10rpx;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1rpx solid rgba(148, 163, 184, 0.16);
 }
 
-.tab-icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 4px;
-}
-
-.tab-text {
-  font-size: 12px;
-  color: #999;
-}
-
-.tab-item.active .tab-text {
-  color: #007AFF;
-}
-
-.edit-btn {
-  margin-top: 30rpx;
-  background: linear-gradient(135deg, #4FD1C5 0%, #319795 100%);
-  color: #fff;
-  font-size: 28rpx;
-  padding: 16rpx 40rpx;
-  border-radius: 30rpx;
-  border: none;
-  width: 100%;
-  box-sizing: border-box;
+.logout-button-text {
+  font-size: 30rpx;
+  font-weight: 500;
+  text-align: center;
 }
 
 .modal-mask {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(15, 23, 42, 0.54);
+  backdrop-filter: blur(6px);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   z-index: 1000;
 }
 
 .modal-content {
-  width: 80%;
-  background-color: #fff;
-  border-radius: 16rpx;
-  overflow: hidden;
+  width: 100%;
+  padding: 22rpx 28rpx 28rpx;
+  border-radius: 34rpx 34rpx 0 0;
+  background: #ffffff;
+  box-shadow: 0 -16rpx 40rpx rgba(15, 23, 42, 0.16);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-handle {
+  width: 76rpx;
+  height: 8rpx;
+  margin: 0 auto 18rpx;
+  border-radius: 999rpx;
+  background: rgba(15, 23, 42, 0.08);
 }
 
 .modal-header {
-  padding: 30rpx;
-  border-bottom: 1rpx solid #eee;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .modal-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .modal-close {
-  font-size: 40rpx;
-  color: #999;
-  padding: 10rpx;
+  font-size: 48rpx;
+  color: #64748b;
+  padding: 8rpx 12rpx;
+}
+
+.modal-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #64748b;
 }
 
 .modal-body {
-  padding: 30rpx;
+  margin-top: 18rpx;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .form-item {
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
 }
 
 .form-label {
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 16rpx;
   display: block;
+  font-size: 28rpx;
+  color: #334155;
+  margin-bottom: 12rpx;
+  font-weight: 600;
 }
 
 .avatar-upload {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 80rpx;
-  background-color: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 168rpx;
+  height: 168rpx;
+  border-radius: 50%;
   overflow: hidden;
+  background: #f8fafc;
+  border: 2rpx solid #e2e8f0;
 }
 
 .preview-avatar {
@@ -598,53 +795,59 @@ export default {
 }
 
 .upload-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
 }
 
 .upload-text {
   font-size: 24rpx;
-  color: #999;
+  color: #94a3b8;
 }
 
 .form-input {
   width: 100%;
-  height: 80rpx;
-  border: 1rpx solid #eee;
-  border-radius: 8rpx;
-  padding: 0 20rpx;
-  font-size: 28rpx;
+  height: 88rpx;
+  padding: 0 24rpx;
   box-sizing: border-box;
+  border-radius: 18rpx;
+  background: #f8fafc;
+  border: 2rpx solid transparent;
+  font-size: 28rpx;
+  color: #0f172a;
 }
 
 .modal-footer {
-  padding: 30rpx;
   display: flex;
-  justify-content: flex-end;
-  gap: 20rpx;
-  border-top: 1rpx solid #eee;
+  gap: 18rpx;
+  margin-top: auto;
+  padding-top: 20rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 10rpx);
+  flex-shrink: 0;
 }
 
 .modal-btn {
-  padding: 20rpx 40rpx;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 600;
 }
 
 .modal-btn.cancel {
-  background-color: #f5f5f5;
-  color: #666;
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .modal-btn.confirm {
-  background-color: #007AFF;
-  color: #fff;
+  background: linear-gradient(135deg, #19bfaf 0%, #317cff 100%);
+  color: #ffffff;
 }
 
 .modal-btn.confirm:disabled {
-  background-color: #ccc;
+  opacity: 0.66;
 }
-</style> 
+</style>

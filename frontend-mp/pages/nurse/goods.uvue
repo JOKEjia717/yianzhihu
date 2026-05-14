@@ -11,10 +11,10 @@
             <text class="hero-name">{{ currentMode === 'items' ? '物品管理' : '物流管理' }}</text>
             <text class="hero-desc">选择老人后查看物品记录或对应物流信息。</text>
           </view>
-          <view class="hero-badge" @click="switchMode">
+          <!-- <view class="hero-badge" @click="switchMode">
             <image class="hero-badge-icon" src="/static/images/switch.png" mode="aspectFit"></image>
             <text class="hero-badge-text">{{ currentMode === 'items' ? '切换物流' : '切换物品' }}</text>
-          </view>
+          </view> -->
         </view>
 
         <view class="hero-actions">
@@ -22,15 +22,15 @@
             <text class="hero-action-label">当前老人</text>
             <picker :range="elderNames" @change="handleElderChange" :value="currentElderIndex">
               <view class="picker-content">
-                <text class="picker-text">{{ elderNames[currentElderIndex] || '选择老人' }}</text>
+                <text class="picker-text">李福全</text>
                 <image class="down-icon" src="/static/images/down.png" mode="aspectFit"></image>
               </view>
             </picker>
           </view>
-          <view class="hero-action hero-action--secondary">
+ <!--         <view class="hero-action hero-action--secondary">
             <text class="hero-action-label">当前模式</text>
             <text class="hero-action-value">{{ currentMode === 'items' ? '物品管理' : '物流管理' }}</text>
-          </view>
+          </view> -->
         </view>
       </view>
     </view>
@@ -178,7 +178,8 @@ export default {
   data() {
     return {
       elders: [] as Elder[],
-      elderNames: [] as string[],
+      elderNames: ['李福全'],
+      selectedElderName: '李福全',
       currentElderIndex: 0,
       selectedElderId: '',
       items: [] as PersonalItem[],
@@ -220,7 +221,9 @@ export default {
           this.elderNames = this.elders.map(elder => elder.name)
 
           if (this.elders.length > 0) {
+            this.selectedElderName = '李福全'
             this.selectedElderId = this.elders[0].elderId
+            this.currentElderIndex = 0
             this.fetchItems()
           }
         } else {
@@ -302,8 +305,10 @@ export default {
       }
     },
     handleElderChange(e: any) {
-      this.currentElderIndex = parseInt(e.detail.value)
+      const nextIndex = Number(e.detail.value)
+      this.currentElderIndex = nextIndex
       if (this.elders[this.currentElderIndex]) {
+        this.selectedElderName = '李福全'
         this.selectedElderId = this.elders[this.currentElderIndex].elderId
         this.refreshCurrentList()
       }
@@ -510,6 +515,11 @@ export default {
   color: #ffffff;
 }
 
+.hero-action--primary .picker-text {
+  color: #0f172a;
+  font-size:15px;
+}
+
 .down-icon {
   width: 22rpx;
   height: 22rpx;
@@ -572,18 +582,21 @@ export default {
 }
 
 .item-card {
-  display: flex;
-  gap: 18rpx;
+  display: grid;
+  grid-template-columns: 60% 40%;
+  grid-template-rows: auto auto;
+  gap: 16rpx;
   padding: 18rpx;
 }
 
 .item-image {
-  width: 154rpx;
-  height: 154rpx;
+  grid-row: span 2;
+  align-self: center;
+  width: 100%;
+  height: 100%;
   border-radius: 18rpx;
   overflow: hidden;
   background: #f1f5f9;
-  flex-shrink: 0;
 }
 
 .item-photo {

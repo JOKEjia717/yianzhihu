@@ -16,7 +16,7 @@
           </view>
 
           <view class="hero-copy">
-            <!-- <text class="hero-kicker">院长端 · 我的</text> -->
+            <!-- hugon -->
             <text class="hero-name">{{ userName || '未设置昵称' }}</text>
             <!-- <text class="hero-desc">管理院内运营，问题反馈与快捷入口集中在这里。</text> -->
           </view>
