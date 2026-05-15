@@ -18,4 +18,6 @@ public class NursingHomePageVo {
     private String address;
 
     private String photo;
+
+    private String phone;
 }

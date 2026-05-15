@@ -23,6 +23,9 @@ public class NursingHome implements Serializable {
     // 养老院照片
     private String photo;
 
+    // 养老院联系电话
+    private String phone;
+
     // 养老院负责人
     private String director;
 

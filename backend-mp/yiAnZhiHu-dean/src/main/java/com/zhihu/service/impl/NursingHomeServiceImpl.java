@@ -43,7 +43,6 @@ public class NursingHomeServiceImpl extends ServiceImpl<NursingHomeMapper, Nursi
     public void createNursingHome(NursingHomeDto nursingHomeDto) {
         NursingHome nursingHome = new NursingHome();
         BeanUtil.copyProperties(nursingHomeDto, nursingHome);
-        System.out.println("nursingHome = " + nursingHome);
         nursingHome.setCreatedTime(LocalDateTime.now());
         nursingHomeMapper.insert(nursingHome);
     }
