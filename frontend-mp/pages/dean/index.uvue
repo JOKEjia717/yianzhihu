@@ -194,14 +194,12 @@ interface NursingHome {
   name: string
   address: string
   photo: string
+  phone: string
   director: string
   honors: string | null
   deanId: string
   createdTime: string
   isEnable: number
-  phone?: string
-  contactPhone?: string
-  directorPhone?: string
   latitude?: number | string
   longitude?: number | string
 }
@@ -220,6 +218,7 @@ export default {
         name: '',
         address: '',
         photo: '',
+        phone: '',
         director: '',
         honors: '',
         deanId: '',
@@ -264,8 +263,6 @@ export default {
     },
     getRawPhone() {
       const phone =
-        this.nursingHome.directorPhone ||
-        this.nursingHome.contactPhone ||
         this.nursingHome.phone ||
         ''
 

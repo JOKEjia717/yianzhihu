@@ -36,6 +36,18 @@
 				</view>
 			</view>
 
+			<!-- 护工登录 -->
+			<view class="option-card" @click="goToNurseLogin">
+				<view class="card-content">
+					<text class="option-title">护工登录</text>
+					<text class="option-subtitle">Nurse Login</text>
+					<view class="sub-options">
+						<text>○ 日常护理</text>
+						<text>○ 健康记录</text>
+					</view>
+				</view>
+			</view>
+
 			<!-- 院长登录 -->
 			<view class="option-card" @click="goToDeanLogin">
 				<view class="card-content">
@@ -48,17 +60,7 @@
 				</view>
 			</view>
 
-			<!-- 护工登录 -->
-			<view class="option-card" @click="goToNurseLogin">
-				<view class="card-content">
-					<text class="option-title">护工登录</text>
-					<text class="option-subtitle">Nurse Login</text>
-					<view class="sub-options">
-						<text>○ 日常护理</text>
-						<text>○ 健康记录</text>
-					</view>
-				</view>
-			</view>
+			
 
 			
 		</view>
@@ -143,27 +145,27 @@
 		box-shadow: 0 8rpx 25rpx rgba(0, 0, 0, 0.1);
 	}
 
-	/* 院长登录卡片样式 */
+	/* 老人登录卡片样式 */
 	.option-card:nth-child(1) {
-		background: url('/static/images/dean-card-bg.jpg') no-repeat center;
+		background: url('https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/login-background/login-elder.png') no-repeat center;
 		background-size: cover;
 	}
 
 	/* 子女登录卡片样式 */
 	.option-card:nth-child(2) {
-		background: url('/static/images/children-card-bg.jpg') no-repeat center;
+		background: url('https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/login-background/login-children.png') no-repeat center;
 		background-size: cover;
 	}
 
 	/* 护工登录卡片样式 */
 	.option-card:nth-child(3) {
-		background: url('/static/images/nurse-card-bg.jpg') no-repeat center;
+		background: url('https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/login-background/login-caretaker.png') no-repeat center;
 		background-size: cover;
 	}
 
-	/* 老人登录卡片样式 */
+	/* 院长登录卡片样式 */
 	.option-card:nth-child(4) {
-		background: url('/static/images/elder-card-bg.jpg') no-repeat center;
+		background: url('https://zhihu7.oss-cn-beijing.aliyuncs.com/yianzhihu/login-background/login-dean.png') no-repeat center;
 		background-size: cover;
 	}
 
