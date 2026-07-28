@@ -43,9 +43,7 @@ spring:
       max-request-size: 10MB
 zhihu:
   alioss:
-    access-key-id: LTAI5tA1RHk5owcaab774xaE
     endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-secret: mT1Pj9IZ9GhFxDMXQj6T2pY4UWNlbm
     bucket-name: zhihu7
   ai:
     a-p-i-key: #改成自己信息
