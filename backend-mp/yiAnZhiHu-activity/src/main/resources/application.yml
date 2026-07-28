@@ -55,7 +55,5 @@ feign:
     enabled: true # 开启OKHttp功能
 zhihu:
   alioss:
-    access-key-id: LTAI5tA1RHk5owcaab774xaE
     endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-secret: mT1Pj9IZ9GhFxDMXQj6T2pY4UWNlbm
     bucket-name: zhihu7
